@@ -1,7 +1,0 @@
-/mnt/c/j.takeda/SlideDeckCreator/memo/slide-lists.md
-/mnt/c/j.takeda/SlideDeckCreator/image
-
-
-
-`wnnun`という、scriptスペニットを埋め込むことでwebsoket通信を利用してWebページをみながらAIと対話できるVS Code拡張機能があります。
-

@@ -1,0 +1,4 @@
+interface:
+  display_name: "03_図解生成"
+  short_description: "設計図に必要な図解画像とマニフェストを生成します"
+  default_prompt: "Use $03-lt-slide-visuals to generate assets under .lt-slide-work/visuals from .lt-slide-work/02-blueprint.yaml."

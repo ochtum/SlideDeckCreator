@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LT Slide</title>
+  <style>
+    :root {
+      --bg:#fff; --navy:#001b4d; --green:#00a83b; --blue:#1d74e8;
+      --cyan:#17b8c8; --line:#d8e6f3; --muted:#5d6b82;
+      --shadow:0 22px 50px rgba(0,27,77,.12);
+      --viewport-gutter:48px;
+    }
+    * { box-sizing:border-box; }
+    @page { size:13.333333in 7.5in; margin:0; }
+    html,body { margin:0; min-height:100%; }
+    body {
+      min-height:100vh; overflow:hidden; display:grid; place-items:center;
+      padding:var(--viewport-gutter); background:#edf4fb;
+      font-family:system-ui,-apple-system,"Segoe UI","Noto Sans JP",sans-serif;
+      color:var(--navy);
+    }
+    .deck { width:1280px; height:720px; position:relative; transform-origin:center; }
+    .slide {
+      width:1280px; height:720px; position:absolute; inset:0; overflow:hidden;
+      padding:72px 64px 60px; background:var(--bg); opacity:0; pointer-events:none;
+      color:var(--navy); transform:translateX(28px) scale(.985); transition:opacity .32s,transform .42s;
+    }
+    .slide.active { opacity:1; pointer-events:auto; transform:none; }
+    .slide::before {
+      content:""; position:absolute; inset:0; pointer-events:none;
+      background-image:linear-gradient(rgba(216,230,243,.35) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(216,230,243,.35) 1px,transparent 1px);
+      background-size:40px 40px; mask-image:linear-gradient(135deg,#000,transparent 70%);
+    }
+    .zone { position:absolute; z-index:1; }
+    .brand-badge {
+      left:48px; top:24px; padding:7px 14px; border-radius:999px;
+      background:linear-gradient(135deg,var(--green),var(--blue)); color:#fff;
+      font-size:18px; font-weight:900;
+    }
+    .page-number { right:48px; bottom:20px; font-size:20px; font-weight:900; color:var(--muted); }
+    h1,h2,h3,p { margin:0; }
+    h1 { font-size:96px; line-height:1.04; font-weight:900; }
+    h2 { font-size:66px; line-height:1.1; font-weight:900; }
+    .body { font-size:30px; line-height:1.5; font-weight:650; }
+    .gradient-line {
+      width:220px; height:8px; margin-top:18px; border-radius:999px;
+      background:linear-gradient(90deg,var(--green),var(--blue));
+    }
+    .card {
+      padding:28px; border:2px solid var(--line); border-radius:22px;
+      background:rgba(255,255,255,.94); box-shadow:var(--shadow);
+    }
+    [data-anim] { opacity:0; transition:opacity .5s,transform .6s,clip-path .7s; }
+    [data-anim="rise"] { transform:translateY(28px); }
+    [data-anim="pop"] { transform:scale(.82); }
+    [data-anim="wipe"] { clip-path:inset(0 100% 0 0); }
+    [data-anim].shown { opacity:1; transform:none; clip-path:inset(0); }
+    @media (prefers-reduced-motion:reduce) {
+      [data-anim] { opacity:1!important; transform:none!important; clip-path:inset(0)!important; transition:none!important; }
+    }
+    @media print {
+      html,body {
+        width:13.333333in; margin:0!important; padding:0!important; overflow:visible;
+        background:#fff; print-color-adjust:exact; -webkit-print-color-adjust:exact;
+      }
+      body { display:block; }
+      .deck { width:13.333333in; height:auto; transform:none!important; }
+      .slide {
+        display:block; position:relative; inset:auto; width:13.333333in; height:7.5in;
+        margin:0; padding:72px 64px 60px; opacity:1; transform:none; transition:none;
+        break-after:page; page-break-after:always; pointer-events:auto;
+      }
+      .slide:last-child { break-after:auto; page-break-after:auto; }
+      [data-anim] { opacity:1!important; transform:none!important; clip-path:inset(0)!important; }
+      .presenter-console,.pager { display:none!important; }
+    }
+    .pager {
+      position:fixed; inset:0; z-index:30; display:none; overflow:auto;
+      padding:32px; background:rgba(11,23,48,.94); color:#fff;
+    }
+    body.overview .pager { display:block; }
+    .pager-grid {
+      display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+      gap:22px; max-width:1480px; margin:0 auto;
+    }
+    .pager-thumb {
+      border:2px solid rgba(255,255,255,.18); border-radius:14px;
+      padding:10px; background:#111f3b; cursor:pointer; color:#fff; text-align:left;
+    }
+    .pager-thumb[aria-current="true"] { border-color:var(--cyan); box-shadow:0 0 0 3px rgba(23,184,200,.28); }
+    .pager-frame { position:relative; width:100%; aspect-ratio:16/9; overflow:hidden; border-radius:9px; background:#fff; }
+    .pager-canvas { width:1280px; height:720px; transform-origin:top left; }
+    .pager-canvas .slide {
+      display:block; opacity:1; pointer-events:none; transform:none; position:absolute; inset:0;
+    }
+    .pager-label { display:flex; justify-content:space-between; gap:12px; margin-top:8px; font-size:18px; font-weight:900; }
+    .presenter-console { display:none; }
+    body.presenter-mode {
+      display:block; overflow:auto; padding:16px; background:#0b1730; color:#fff;
+    }
+    body.presenter-mode > .deck { position:fixed; left:-10000px; top:0; transform:none!important; }
+    body.presenter-mode .presenter-console {
+      display:grid; grid-template-columns:minmax(0,1.45fr) minmax(320px,.75fr);
+      gap:16px; min-height:calc(100vh - 32px);
+    }
+    .presenter-stage,.presenter-panel {
+      border:1px solid rgba(255,255,255,.14); border-radius:18px;
+      background:#111f3b; box-shadow:0 20px 60px rgba(0,0,0,.28);
+    }
+    .presenter-stage { padding:14px; }
+    .presenter-label { margin-bottom:8px; color:#9fb5d8; font-size:18px; font-weight:800; }
+    .presenter-preview {
+      position:relative; width:100%; aspect-ratio:16/9; overflow:hidden;
+      border-radius:12px; background:#fff;
+    }
+    .presenter-preview-canvas { width:1280px; height:720px; transform-origin:top left; }
+    .presenter-preview .slide {
+      display:block; opacity:1; pointer-events:none; transform-origin:top left;
+    }
+    .presenter-stage-bottom {
+      display:grid; grid-template-columns:minmax(280px,.42fr) minmax(0,1fr);
+      gap:12px; align-items:start; margin-top:12px;
+    }
+    .presenter-next { min-width:0; }
+    .presenter-shortcuts {
+      padding:10px 12px; border:1px solid rgba(255,255,255,.14);
+      border-radius:12px; background:#071326;
+    }
+    .presenter-shortcut-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px 12px; }
+    .presenter-shortcut { display:grid; grid-template-columns:auto 1fr; gap:8px; align-items:center; color:#dce8ff; font-size:18px; line-height:1.1; font-weight:800; }
+    .presenter-shortcut kbd {
+      min-width:34px; padding:3px 7px; border-radius:7px; background:#fff; color:#001b4d;
+      font:inherit; font-weight:900; text-align:center; box-shadow:inset 0 -2px 0 rgba(0,27,77,.18);
+    }
+    .presenter-panel { display:flex; flex-direction:column; padding:22px; }
+    .presenter-meta { display:flex; justify-content:space-between; gap:18px; font-weight:900; }
+    .presenter-time { font-size:42px; font-variant-numeric:tabular-nums; }
+    .presenter-position { color:#9fb5d8; font-size:20px; }
+    .presenter-note {
+      flex:1; margin:24px 0; padding:20px; border-radius:14px; background:#f7faff;
+      color:#001b4d; font-size:24px; line-height:1.55; white-space:pre-wrap;
+    }
+    .presenter-controls { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .presenter-controls button {
+      min-height:48px; border:0; border-radius:10px; font:inherit; font-weight:900;
+      color:#001b4d; background:#fff; cursor:pointer;
+    }
+    .presenter-controls .primary { color:#fff; background:#1d74e8; }
+  </style>
+</head>
+<body>
+  <main class="deck" id="deck">
+    <section class="slide active" data-role="cover" data-spoken-note="冒頭の口頭説明">
+      <span class="zone brand-badge" data-overlap-ok>LT資料</span>
+      <div class="zone" data-zone="title" style="left:64px;top:120px;width:720px;height:360px">
+        <h1 data-anim="rise">タイトル</h1>
+        <div class="gradient-line" data-anim="wipe"></div>
+        <p class="body" data-anim="rise" style="margin-top:28px">サブタイトル</p>
+      </div>
+      <span class="zone page-number" data-overlap-ok>1</span>
+    </section>
+    <section class="slide" data-role="recap" data-spoken-note="要点を短く振り返る">
+      <span class="zone brand-badge" data-overlap-ok>LT資料</span>
+      <div class="zone" data-zone="title" style="left:64px;top:92px;width:1152px;height:100px"><h2>まとめ</h2></div>
+      <div class="zone card body" data-zone="content" style="left:64px;top:220px;width:1152px;height:340px">要点</div>
+      <span class="zone page-number" data-overlap-ok>2</span>
+    </section>
+    <section class="slide" data-role="thanks" data-spoken-note="質疑応答へ移る">
+      <div class="zone" data-zone="title" style="left:140px;top:220px;width:1000px;height:220px;text-align:center">
+        <h1>Thank you</h1>
+      </div>
+      <span class="zone page-number" data-overlap-ok>3</span>
+    </section>
+  </main>
+  <aside class="presenter-console" id="presenterConsole" aria-label="発表者ビュー">
+    <section class="presenter-stage">
+      <div class="presenter-label">現在のスライド</div>
+      <div class="presenter-preview" id="presenterCurrent"></div>
+      <div class="presenter-stage-bottom">
+        <div class="presenter-next">
+          <div class="presenter-label">次のスライド</div>
+          <div class="presenter-preview" id="presenterNext"></div>
+        </div>
+        <div class="presenter-shortcuts" aria-label="ショートカットキー">
+          <div class="presenter-label">ショートカット</div>
+          <div class="presenter-shortcut-grid">
+            <div class="presenter-shortcut"><kbd>→</kbd><span>次へ</span></div>
+            <div class="presenter-shortcut"><kbd>←</kbd><span>前へ</span></div>
+            <div class="presenter-shortcut"><kbd>A</kbd><span>全表示</span></div>
+            <div class="presenter-shortcut"><kbd>R</kbd><span>リプレイ</span></div>
+            <div class="presenter-shortcut"><kbd>P</kbd><span>一覧</span></div>
+            <div class="presenter-shortcut"><kbd>F</kbd><span>全画面</span></div>
+            <div class="presenter-shortcut"><kbd>S</kbd><span>発表者ビュー</span></div>
+            <div class="presenter-shortcut"><kbd>Home</kbd><span>先頭へ</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="presenter-panel">
+      <div class="presenter-meta">
+        <div class="presenter-time" id="presenterTime">00:00</div>
+        <div class="presenter-position" id="presenterPosition"></div>
+      </div>
+      <div class="presenter-note" id="presenterNote"></div>
+      <div class="presenter-controls">
+        <button type="button" id="presenterPrevious">前へ</button>
+        <button type="button" class="primary" id="presenterNextButton">次へ</button>
+        <button type="button" id="presenterReset">タイマーをリセット</button>
+      </div>
+    </section>
+  </aside>
+  <aside class="pager" id="pager" aria-label="スライド一覧">
+    <div class="pager-grid" id="pagerGrid"></div>
+  </aside>
+  <script>
+    class SlideDeck {
+      constructor() {
+        this.slides=[...document.querySelectorAll(".slide")];
+        this.index=0; this.step=0;
+        this.presenterMode=new URL(location.href).searchParams.get("presenter")==="1";
+        this.presenterWindow=null; this.startedAt=Date.now(); this.audienceSlideHTML="";
+        this.channel=("BroadcastChannel" in window)?new BroadcastChannel(`lt-slide:${location.pathname}`):null;
+        if(this.channel) this.channel.addEventListener("message",event=>this.receive(event.data));
+        addEventListener("message",event=>this.receive(event.data));
+        if(this.presenterMode) document.body.classList.add("presenter-mode");
+        this.applyZFlow();
+        const hashIndex=Math.max(0,Math.min(this.slides.length-1,Number(location.hash.slice(1)||1)-1));
+        this.show(hashIndex,false,false);
+        addEventListener("resize",()=>this.fit()); this.fit();
+        addEventListener("keydown",event=>this.key(event));
+        if(this.presenterMode) this.setupPresenter();
+        this.send({type:"request-state"});
+        if(new URL(location.href).searchParams.get("audit")==="1") this.audit();
+      }
+      animated(slide=this.slides[this.index]) { return [...slide.querySelectorAll("[data-anim]")]; }
+      stepOf(el) { return Number(el.dataset.step||0); }
+      zFlowBucket(slide,el) {
+        const zone=el.closest(".zone[data-zone]")||el;
+        const zoneName=zone.dataset.zone||"";
+        const sr=slide.getBoundingClientRect();
+        const zr=zone.getBoundingClientRect();
+        const cx=zr.left-sr.left+zr.width/2;
+        const cy=zr.top-sr.top+zr.height/2;
+        if(zoneName==="title") return 1;
+        if(zoneName==="qr") return 2;
+        if(zoneName==="connector") return 4;
+        if(zoneName==="conclusion") return cx<640?5:6;
+        if(zoneName==="visual") {
+          if(cx>=640&&cy<540) return 2;
+          if(cx<426) return 3;
+          return 4;
+        }
+        if(zoneName==="text") return cx<640?3:4;
+        if(cy<190) return cx<640?1:2;
+        if(cy<520) {
+          if(cx<426) return 3;
+          if(cx<854) return 4;
+          return 5;
+        }
+        return cx<640?5:6;
+      }
+      applyZFlow() {
+        this.slides.forEach(slide=>{
+          const items=this.animated(slide).filter(el=>!el.closest(".footer-zone,.brand-badge"));
+          const buckets=[...new Set(items.map(el=>this.zFlowBucket(slide,el)))].sort((a,b)=>a-b);
+          const stepFor=new Map(buckets.map((bucket,index)=>[bucket,index+1]));
+          items.forEach(el=>{ el.dataset.step=String(stepFor.get(this.zFlowBucket(slide,el))||1); });
+        });
+      }
+      state() {
+        return {
+          type:"deck-state", source:this.presenterMode?"presenter":"audience",
+          index:this.index, step:this.step, startedAt:this.startedAt,
+          slideHTML:this.presenterMode?"":this.slides[this.index].outerHTML
+        };
+      }
+      show(index,reveal=false,broadcast=true) {
+        this.index=index;
+        this.slides.forEach((slide,i)=>slide.classList.toggle("active",i===index));
+        const max=Math.max(0,...this.animated().map(el=>this.stepOf(el)));
+        this.step=reveal?max:0;
+        this.animated().forEach(el=>el.classList.toggle("shown",this.stepOf(el)<=this.step));
+        history.replaceState(null,"",`#${index+1}`);
+        this.changed(broadcast);
+      }
+      next() {
+        const max=Math.max(0,...this.animated().map(el=>this.stepOf(el)));
+        if(this.step<max) {
+          this.step++; this.animated().filter(el=>this.stepOf(el)===this.step).forEach(el=>el.classList.add("shown"));
+          this.changed();
+        } else if(this.index<this.slides.length-1) this.show(this.index+1);
+      }
+      previous() {
+        if(this.step>0) {
+          this.animated().filter(el=>this.stepOf(el)===this.step).forEach(el=>el.classList.remove("shown")); this.step--; this.changed();
+        } else if(this.index>0) this.show(this.index-1,true);
+      }
+      revealAll() {
+        this.step=Math.max(0,...this.animated().map(el=>this.stepOf(el)));
+        this.animated().forEach(el=>el.classList.add("shown"));
+        this.changed();
+      }
+      key(event) {
+        if(["ArrowRight"," ","PageDown"].includes(event.key)) { event.preventDefault(); this.next(); }
+        if(["ArrowLeft","PageUp"].includes(event.key)) { event.preventDefault(); this.previous(); }
+        if(event.key==="Home") this.show(0);
+        if(event.key==="End") this.show(this.slides.length-1,true);
+        if(event.key.toLowerCase()==="r") this.show(this.index);
+        if(event.key.toLowerCase()==="f") document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();
+        if(event.key.toLowerCase()==="p") this.toggleOverview();
+        if(event.key==="Escape"&&document.body.classList.contains("overview")) this.toggleOverview(false);
+        if(event.key.toLowerCase()==="s"&&!this.presenterMode) this.openPresenter();
+        if(event.key.toLowerCase()==="a") this.revealAll();
+      }
+      toggleOverview(force) {
+        if(this.presenterMode) return;
+        const next=typeof force==="boolean"?force:!document.body.classList.contains("overview");
+        document.body.classList.toggle("overview",next);
+        if(next) this.renderOverview();
+      }
+      renderOverview() {
+        const grid=document.getElementById("pagerGrid");
+        if(!grid) return;
+        grid.replaceChildren();
+        this.slides.forEach((slide,i)=>{
+          const button=document.createElement("button");
+          button.type="button";
+          button.className="pager-thumb";
+          button.setAttribute("aria-current",String(i===this.index));
+          const frame=document.createElement("div");
+          frame.className="pager-frame";
+          const canvas=document.createElement("div");
+          canvas.className="pager-canvas";
+          const clone=slide.cloneNode(true);
+          clone.classList.add("active");
+          clone.querySelectorAll("[data-anim]").forEach(el=>el.classList.add("shown"));
+          canvas.appendChild(clone);
+          frame.appendChild(canvas);
+          const label=document.createElement("div");
+          label.className="pager-label";
+          const number=document.createElement("span");
+          number.textContent=String(i+1);
+          const role=document.createElement("span");
+          role.textContent=slide.dataset.role||"";
+          label.append(number,role);
+          button.append(frame,label);
+          button.addEventListener("click",()=>{ this.show(i,false); this.toggleOverview(false); });
+          grid.appendChild(button);
+          requestAnimationFrame(()=>{ canvas.style.transform=`scale(${frame.clientWidth/1280})`; });
+        });
+      }
+      fit() {
+        if(this.presenterMode) return;
+        const gutter=parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--viewport-gutter"))||48;
+        const availableWidth=Math.max(320,innerWidth-gutter*2);
+        const availableHeight=Math.max(180,innerHeight-gutter*2);
+        const scale=Math.min(availableWidth/1280,availableHeight/720);
+        document.getElementById("deck").style.transform=`scale(${scale})`;
+      }
+      changed(broadcast=true) {
+        if(this.presenterMode) this.renderPresenter();
+        if(broadcast) this.send(this.state());
+      }
+      send(message) {
+        if(this.channel) this.channel.postMessage(message);
+        if(this.presenterWindow&&!this.presenterWindow.closed) this.presenterWindow.postMessage(message,"*");
+        if(opener&&!opener.closed) opener.postMessage(message,"*");
+      }
+      receive(message) {
+        if(!message||!message.type) return;
+        if(message.type==="request-state") { this.send(this.state()); return; }
+        if(message.type!=="deck-state") return;
+        this.startedAt=message.startedAt||this.startedAt;
+        if(message.source==="audience"&&message.slideHTML) this.audienceSlideHTML=message.slideHTML;
+        const index=Math.max(0,Math.min(this.slides.length-1,Number(message.index)||0));
+        this.show(index,false,false);
+        this.step=Math.max(0,Number(message.step)||0);
+        this.animated().forEach(el=>el.classList.toggle("shown",this.stepOf(el)<=this.step));
+        this.changed(false);
+        if(!this.presenterMode&&message.source==="presenter") this.send(this.state());
+      }
+      openPresenter() {
+        const url=new URL(location.href); url.searchParams.set("presenter","1"); url.hash=`#${this.index+1}`;
+        this.presenterWindow=open(url.href,"lt-presenter","popup,width=1280,height=800");
+        if(this.presenterWindow) this.presenterWindow.focus();
+      }
+      setupPresenter() {
+        document.getElementById("presenterPrevious").addEventListener("click",()=>this.previous());
+        document.getElementById("presenterNextButton").addEventListener("click",()=>this.next());
+        document.getElementById("presenterReset").addEventListener("click",()=>{this.startedAt=Date.now();this.changed();});
+        setInterval(()=>this.renderPresenter(),1000);
+        this.renderPresenter();
+      }
+      mountPreview(target,clone) {
+        target.replaceChildren();
+        if(!clone) return;
+        clone.classList.add("active");
+        clone.removeAttribute("aria-hidden");
+        const canvas=document.createElement("div");
+        canvas.className="presenter-preview-canvas";
+        canvas.style.transform=`scale(${target.clientWidth/1280})`;
+        canvas.appendChild(clone); target.appendChild(canvas);
+      }
+      renderCurrentPreview(target,slide) {
+        if(this.presenterMode&&this.audienceSlideHTML) {
+          const template=document.createElement("template");
+          template.innerHTML=this.audienceSlideHTML.trim();
+          this.mountPreview(target,template.content.firstElementChild);
+          return;
+        }
+        this.mountPreview(target,slide?slide.cloneNode(true):null);
+      }
+      renderNextPreview(target,slide) {
+        if(!slide) { this.mountPreview(target,null); return; }
+        const clone=slide.cloneNode(true);
+        clone.querySelectorAll("[data-anim]").forEach(el=>el.classList.add("shown"));
+        this.mountPreview(target,clone);
+      }
+      renderPresenter() {
+        if(!this.presenterMode) return;
+        this.renderCurrentPreview(document.getElementById("presenterCurrent"),this.slides[this.index]);
+        this.renderNextPreview(document.getElementById("presenterNext"),this.slides[this.index+1]);
+        document.getElementById("presenterNote").textContent=this.slides[this.index].dataset.spokenNote||"（ノートなし）";
+        const max=Math.max(0,...this.animated().map(el=>this.stepOf(el)));
+        document.getElementById("presenterPosition").textContent=`${this.index+1} / ${this.slides.length}  step ${this.step} / ${max}`;
+        const elapsed=Math.max(0,Math.floor((Date.now()-this.startedAt)/1000));
+        document.getElementById("presenterTime").textContent=`${String(Math.floor(elapsed/60)).padStart(2,"0")}:${String(elapsed%60).padStart(2,"0")}`;
+      }
+      audit() {
+        this.slides.forEach((slide,slideIndex)=>{
+          slide.classList.add("active");
+          slide.querySelectorAll("[data-anim]").forEach(el=>el.classList.add("shown"));
+          const zones=[...slide.querySelectorAll("[data-zone]:not([data-overlap-ok])")];
+          zones.forEach((a,i)=>{
+            const ar=a.getBoundingClientRect();
+            if(a.scrollWidth>a.clientWidth||a.scrollHeight>a.clientHeight) console.error("overflow",slideIndex+1,a);
+            zones.slice(i+1).forEach(b=>{
+              const br=b.getBoundingClientRect();
+              if(!(ar.right<=br.left+8||br.right<=ar.left+8||ar.bottom<=br.top+8||br.bottom<=ar.top+8)) console.error("overlap",slideIndex+1,a,b);
+            });
+          });
+          slide.querySelectorAll("img").forEach(img=>{ if(!img.naturalWidth) console.error("broken image",slideIndex+1,img); });
+          slide.classList.remove("active");
+        });
+        this.show(0,true);
+      }
+    }
+    window.slideDeck=new SlideDeck();
+  </script>
+</body>
+</html>

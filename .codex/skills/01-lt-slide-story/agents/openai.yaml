@@ -1,0 +1,4 @@
+interface:
+  display_name: "01_ストーリー生成"
+  short_description: "LTの構成、主張、話の流れをYAMLに整理します"
+  default_prompt: "Use $01-lt-slide-story to save a concise LT story at .lt-slide-work/01-story.yaml."

@@ -1,4 +1,10 @@
-node_modules
+input
+output
+assets
+!.codex/skills/*/assets/
+!.codex/skills/*/assets/**
+config
+.lt-slide-work/
 .DS_Store
 .venv
 .venv_pptx

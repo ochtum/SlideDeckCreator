@@ -1,0 +1,4 @@
+interface:
+  display_name: "06_スライドエディター実装"
+  short_description: "HTML LTスライドにブラウザ編集機能を追加します"
+  default_prompt: "Use $06-lt-slide-editor to add an in-browser editor to output/index.html."
