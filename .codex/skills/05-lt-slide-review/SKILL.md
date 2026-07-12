@@ -1,26 +1,30 @@
 ---
 name: 05-lt-slide-review
-description: Playwrightを使ってLT用HTMLスライドの視覚表示をレビューする。Use when Codex needs to inspect output/index.html or another 16:9 HTML slide deck for animation-complete states, overlapping elements or text, clipped/overflowing content, broken images, and margins that are too close to slide edges before delivery.
+description: Playwrightを使ってLT用HTMLスライドの視覚表示と内容忠実性をレビューする。Use when Codex needs to inspect a 16:9 HTML slide deck for animation-complete states, overlapping or clipped content, presenter notes that explain each page, and complete traceable coverage of the input including tables, code blocks, diagrams, and configuration examples.
 ---
 
 # 05 LT Slide Review
 
-PlaywrightでHTMLスライドを実ブラウザ表示し、各ページをアニメーション完了後の状態にして視覚崩れを検査する。`04-lt-slide-build` 後の最終QA、またはユーザーから「見切れ」「重なり」「余白」「表示確認」を求められたときに使う。
+PlaywrightでHTMLスライドを実ブラウザ表示し、各ページをアニメーション完了後の状態にして視覚崩れを検査する。あわせて、ストーリー・設計図・元入力と照合し、各ページのspoken-noteがページの主張と具体例を説明していること、元資料の内容（表・コード・設定例・図を含む）が端折られず追跡可能であることを検査する。`04-lt-slide-build` 後の最終QA、またはユーザーから「見切れ」「重なり」「余白」「内容確認」を求められたときに使う。
 
 ## 必ず読むもの
 
 - 必要に応じて `references/review-criteria.md`
+- 内容・ノート・入力カバレッジを確認する場合は必ず `references/content-coverage.md`
+- 初見者理解、ページ間接続、後読性を確認する場合は `../01-lt-slide-story/references/presentation-quality.md`
 - 実行スクリプトを調整する場合のみ `scripts/review_deck.js`
 
 ## ワークフロー
 
-1. 対象HTMLを確認する。指定がなければ `output/index.html` を対象にする。
+1. 対象HTMLと対応する `01-story.yaml`、`02-blueprint.yaml`、元入力を確認する。指定がなければ `output/index.html` を対象にする。シリーズでは各パートを独立して確認する。
 2. Playwright実行環境を確認する。通常は同梱Node.jsと `NODE_PATH` を使う。
-3. `scripts/review_deck.js` を実行し、通常表示と発表者ビューの両方を全スライドのアニメーション完了状態で撮影・検査する。
-4. `.lt-slide-work/review/` の `review-report.md`、`review-report.json`、`slide-XX.png`、`presenter-slide-XX.png` を確認する。
-5. findingが出た場合は、通常表示・発表者ビューそれぞれのスクリーンショットとDOM上の要素名・座標を根拠に修正箇所を特定する。
-6. 修正後に再実行し、findingが解消したことを確認する。
-7. 最終回答では、検査対象、ページ数、検出件数、主要な問題、レポートの場所を簡潔に示す。
+3. 対応するストーリーの `visual_plan` と設計図を読み、`python .codex/skills/02-lt-slide-blueprint/scripts/validate_visual_plan.py --story <01-story.yaml> --blueprint <02-blueprint.yaml>` を実行する。`need: required` の計画が、HTMLの `data-visual-plan-id` と実要素（画像、table、pre/code、svg）の両方へ解決されていることを確認する。
+4. `references/content-coverage.md` と `presentation-quality.md` に従って、全スライドについて次を確認する。`spoken_note`はタイトルの読み上げではなく、当該ページの主張・表示中の表／図／コードの読み方・次の判断または行動を説明する。初見者に必要な定義・具体例、前ページからの接続、後読時の主語と結論も照合する。入力から採用した表、コード、設定例、図、フローは、要約の過程で消さず、HTMLのtable/pre/code/SVGまたは提供画像に追跡可能に解決する。
+5. `scripts/review_deck.js` を実行し、通常表示と発表者ビューの両方を全スライドのアニメーション完了状態で撮影・検査する。
+6. `.lt-slide-work/review/` の `review-report.md`、`review-report.json`、`slide-XX.png`、`presenter-slide-XX.png` に加え、内容カバレッジの照合結果を確認する。
+7. findingが出た場合は、通常表示・発表者ビューそれぞれのスクリーンショット、DOM上の要素名・座標、対応する入力行またはsource assetを根拠に修正箇所を特定する。内容不足は、抽象的なカードを足すだけで済ませず、欠落した表・コード・設定・図・完了条件を戻す。
+8. 修正後に視覚レビューと内容カバレッジ照合を再実行し、findingが解消したことを確認する。
+9. 最終回答では、検査対象、ページ数、視覚finding数、内容／ノート／入力カバレッジfinding数、主要な問題、レポートの場所を簡潔に示す。
 
 ## 標準実行
 
@@ -56,16 +60,27 @@ findingを確認しながら途中で止めずにレポートだけ作りたい�
 - 可視要素がスライド境界からはみ出した場合は検出する。
 - 主要なテキスト・カード・画像がスライド端に近すぎる場合は検出する。デフォルトの内側余白は40px。
 - 画像の `naturalWidth` または `naturalHeight` が0の場合は検出する。
+- visual zone、card、playbook、table containerについて、可視テキスト、画像、SVG、table、pre/code、または意味のある図解要素を持たない枠線だけの領域を検出する。これは `empty-visual-zone` として不合格にする。意図的な余白は要素そのものを置かず、空のcontainerで表現しない。
+- `need: required` の `visual_plan` が、画像・SVG・表・コードのいずれにも解決されていない場合は `unresolved-visual-plan` として不合格にする。汎用カードだけでは解決扱いにしない。
+- 各HTMLスライドの `data-spoken-note` を対応するストーリーの同じIDの `spoken_note` と照合する。欠落・空文字・別ページの説明・画面の文字の単純な復唱は `spoken-note-missing`、`spoken-note-mismatch`、`spoken-note-insufficient` として不合格にする。
+- spoken-noteは、そのページの主張、表示している具体物（表・コード・設定・図・フロー）の読み方、聴衆が取る判断または次の一手のうち必要なものを説明しているか、ページ単位で人間またはレビュー担当エージェントが意味を確認する。機械的な文字列一致だけで合格にしてはならない。
+- 初見者が知らない用語・略語・固有工程について、初出の平易な定義、必要性、具体例のいずれかが画面またはノートにあることを確認する。欠落は `first-time-audience-gap` として不合格にする。
+- 表紙、自己紹介、Thanks以外の各スライドで、`reader_context` と `connection_from_previous` またはHTMLの `data-reader-context` と `data-story-bridge` を照合する。前ページとの因果が説明できない場合は `narrative-discontinuity`、後から一枚だけを見て主語・根拠・結論を再構成できない場合は `reader-context-missing` として不合格にする。
+- 新しい章・用語・抽象度の切替で、前提の再導入または次の問いがあることを確認する。単なる章見出しや箇条書きの並びでは接続済みとみなさない。
+- `source_scope_audit`、`coverage_matrix`、`content_inventory`、`source_asset_inventory` を元入力と照合する。`full coverage` の学習単位、採用した画像、表、コードブロック、設定例、Mermaid／フローは、少なくとも一つのスライドとHTML実装へ対応付く必要がある。採用しない場合は、理由と同じ意味を保つ代替実装を残す。
+- 表・コード・設定例・フローを「要約したカード」だけに置換してはいけない。対応するHTML table、pre/code、config表示、インラインSVGまたは提供画像が存在し、最小の具体データを読めることを確認する。欠落は `source-asset-omitted`、内容が抽象化されすぎて再現不能な場合は `evidence-insufficient` として不合格にする。
+- 入力の主張、手順、注意点、デモ候補のすべてがストーリーのカバレッジ先を持つことを確認する。時間短縮のために省略する場合は、ユーザー承認済みの縮小範囲と理由を記録しなければならない。
 - 機械判定は誤検出があり得るため、PNGスクリーンショットで目視確認してから修正判断する。
 
 ## 重要な注意
 
 - このスキルは「視覚レビュー」を目的とする。HTML生成やPDF生成は `04-lt-slide-build` に戻して行う。
-- 判定はアニメーション終了後の状態で行う。`04b-lt-slide-animation` でstepが正しく付与されていない場合、アニメーションが途中で止まった状態で検査される。
+- 判定はアニメーション終了後の状態で行う。`04-lt-slide-build/references/04b-animation.md` の工程でstepが正しく付与されていない場合、アニメーションが途中で止まった状態で検査される。
 - findingがない場合でも、少なくとも数枚のスクリーンショットを目視で確認する。
 - 余白違反はブランドバッジ、フッター、ページ番号、背景装飾には適用しない。
 - `overflow: hidden` で問題が隠れている可能性がある場合は、スクリーンショットとDOM座標の両方を見る。
 - 発表者ビューのfindingは、投影側との差分や手元画面の操作性に直結するため、通常表示のfindingがない場合でも確認する。
+- 入力資料の完全性が最優先である。読みやすさのための圧縮は許可するが、入力の表、コード、設定、図、フロー、完了条件を無断で削除したり、説明力を失う要約へ置き換えたりしてはならない。
 
 ## 出力
 
@@ -73,3 +88,4 @@ findingを確認しながら途中で止めずにレポートだけ作りたい�
 - `.lt-slide-work/review/review-report.json`
 - `.lt-slide-work/review/slide-XX.png`
 - `.lt-slide-work/review/presenter-slide-XX.png`
+- `.lt-slide-work/review/content-coverage.md`（ページ別spoken-note・初見者理解・接続・後読性照合、入力・source asset・HTML実装の対応、未解決項目）

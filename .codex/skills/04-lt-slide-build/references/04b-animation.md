@@ -1,20 +1,17 @@
----
-name: 04b-lt-slide-animation
-description: Add and normalize animation metadata for LT HTML slides, including data-anim, Z-flow step ordering, reveal-all behavior expectations, reduced-motion behavior, and print-safe final states before runtime controls are applied.
----
+# 04b Internal Stage: Animation
 
-# 04b LT Slide Animation
-
-`04a-lt-slide-pages` が作った静的スライドに、LTとして読みやすい段階表示を付ける。ここではアニメーションの意味、順序、stepの契約に集中する。ページ送り、発表者ビュー、ウィンドウ間同期は `04c-lt-slide-runtime` に任せる。
+04a内部工程が作った静的スライドに、LTとして読みやすい段階表示を付ける。ここではアニメーションの意味、順序、stepの契約に集中する。ページ送り、発表者ビュー、ウィンドウ間同期は04c内部工程に任せる。
 
 ## Required Reads
 
-- `../04-lt-slide-build/references/build-contract.md`
-- `../04-lt-slide-build/references/design-system.md`
+- `build-contract.md`
+- `design-system.md`
 
 ## Inputs
 
 - `output/index.html` または `.lt-slide-work/04a-pages.html`
+
+シリーズでは、`../../01-lt-slide-story/references/series-schema.md` の各 `output_dir/index.html` または各パートの `04a-pages.html` を個別に処理する。アニメーションstep、ページ番号、表示状態を複数パートにまたがって共有しない。
 
 ## Output Contract
 
@@ -64,10 +61,11 @@ description: Add and normalize animation metadata for LT HTML slides, including 
 
 ## Handoff To 04c
 
-`04c-lt-slide-runtime` へ渡す前に、次を満たす。
+04c内部工程へ渡す前に、次を満たす。
 
 - 各スライドの初期表示が成立する
 - 各stepで見せたい要素が自然な順序で現れる
 - step数が6以下
 - `A` 全表示で完成状態になる
 - 印刷時に全要素が見える前提でレイアウトが崩れない
+- シリーズでは、上記を各パートのHTMLごとに満たす

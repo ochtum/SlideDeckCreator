@@ -142,6 +142,10 @@
       flex:1; margin:24px 0; padding:20px; border-radius:14px; background:#f7faff;
       color:#001b4d; font-size:24px; line-height:1.55; white-space:pre-wrap;
     }
+    .presenter-context {
+      margin:-8px 0 20px; padding:12px 14px; border:1px solid rgba(159,181,216,.35);
+      border-radius:12px; background:#0b1730; color:#dce8ff; font-size:16px; line-height:1.45; white-space:pre-wrap;
+    }
     .presenter-controls { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
     .presenter-controls button {
       min-height:48px; border:0; border-radius:10px; font:inherit; font-weight:900;
@@ -204,6 +208,7 @@
         <div class="presenter-position" id="presenterPosition"></div>
       </div>
       <div class="presenter-note" id="presenterNote"></div>
+      <div class="presenter-context" id="presenterContext" aria-label="スライドの文脈と接続"></div>
       <div class="presenter-controls">
         <button type="button" id="presenterPrevious">前へ</button>
         <button type="button" class="primary" id="presenterNextButton">次へ</button>
@@ -422,7 +427,15 @@
         if(!this.presenterMode) return;
         this.renderCurrentPreview(document.getElementById("presenterCurrent"),this.slides[this.index]);
         this.renderNextPreview(document.getElementById("presenterNext"),this.slides[this.index+1]);
-        document.getElementById("presenterNote").textContent=this.slides[this.index].dataset.spokenNote||"（ノートなし）";
+        const slide=this.slides[this.index];
+        document.getElementById("presenterNote").textContent=slide.dataset.spokenNote||"（ノートなし）";
+        const context=[
+          slide.dataset.readerContext&&`文脈: ${slide.dataset.readerContext}`,
+          slide.dataset.storyBridge&&`接続: ${slide.dataset.storyBridge}`
+        ].filter(Boolean).join("\n");
+        const contextElement=document.getElementById("presenterContext");
+        contextElement.textContent=context;
+        contextElement.hidden=!context;
         const max=Math.max(0,...this.animated().map(el=>this.stepOf(el)));
         document.getElementById("presenterPosition").textContent=`${this.index+1} / ${this.slides.length}  step ${this.step} / ${max}`;
         const elapsed=Math.max(0,Math.floor((Date.now()-this.startedAt)/1000));

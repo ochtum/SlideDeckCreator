@@ -1,23 +1,20 @@
----
-name: 04c-lt-slide-runtime
-description: Apply the fixed LT slide runtime shell, keyboard navigation, overview mode, reveal-all, synchronized presenter view, viewport scaling, print/PDF CSS, static validation, PDF export, ZIP packaging, and final QA for output/index.html.
----
+# 04c Internal Stage: Runtime And QA
 
-# 04c LT Slide Runtime
-
-`04a` と `04b` で完成したスライドDOMへ、固定ランタイムを適用して配布物を完成させる。ショートカット、一覧表示、発表者ビュー、同期、PDF CSSは毎回新規実装せず、`../04-lt-slide-build/assets/deck-shell.html` の契約を基準にする。
+04a・04b内部工程で完成したスライドDOMへ、固定ランタイムを適用して配布物を完成させる。ショートカット、一覧表示、発表者ビュー、同期、PDF CSSは毎回新規実装せず、`../assets/deck-shell.html` の契約を基準にする。
 
 ## Required Reads
 
-- `../04-lt-slide-build/references/build-contract.md`
-- `../04-lt-slide-build/assets/deck-shell.html`
-- `../04-lt-slide-build/scripts/validate_deck.py`
-- `../04-lt-slide-build/scripts/validate_pdf.py`
+- `build-contract.md`
+- `../assets/deck-shell.html`
+- `../scripts/validate_deck.py`
+- `../scripts/validate_pdf.py`
 
 ## Inputs
 
 - `output/index.html` または `.lt-slide-work/04b-animated.html`
 - `output/assets/*`
+
+シリーズでは、`../../01-lt-slide-story/references/series-schema.md` の各パートを独立して処理し、入力は `<part-output>/index.html` と `<part-output>/assets/*`、出力も同じ `<part-output>/` とする。パート間でHTML、assets、PDF、ZIPを共有しない。
 
 ## Outputs
 
@@ -25,6 +22,8 @@ description: Apply the fixed LT slide runtime shell, keyboard navigation, overvi
 - `output/index.pdf`
 - `output/index_html.zip`
 - 必要に応じて `.lt-slide-work/` 以下の検証スクリーンショットやPDFレンダリング画像
+
+シリーズの出力は各 `<part-output>/index.html`、`index.pdf`、`index_html.zip` とする。
 
 ## Runtime Contract
 
@@ -54,6 +53,7 @@ description: Apply the fixed LT slide runtime shell, keyboard navigation, overvi
 - 「次のスライド」だけは全アニメーション完了後の最終状態で表示する。
 - 現在プレビューと次プレビューのレンダリング処理を共用しない。
 - 片方のウィンドウを閉じても、残ったウィンドウの通常操作を壊さない。
+- 現在スライドの `data-reader-context` と `data-story-bridge` を、ノートの近くに表示する。話者が後から開いても、前ページからの接続を再構成できるようにする。
 
 ## Print And PDF Contract
 
@@ -88,14 +88,14 @@ description: Apply the fixed LT slide runtime shell, keyboard navigation, overvi
 
 1. `deck-shell.html` のCSS/JS契約を基準に、完成済み `.slide` 群を組み込む。
 2. 固定ランタイムのショートカット、overview、reveal all、scale、presenter、audit、print CSSを保持する。
-3. `scripts/validate_deck.py output/index.html` を実行する。
+3. `scripts/validate_deck.py <deck-output>/index.html` を実行する。単発の `<deck-output>` は `output`、シリーズでは各パートの `output_dir` とする。
 4. ブラウザで通常表示を開き、全スライドの初期状態、前後移動、`A` 全表示、`P` overviewを確認する。
-5. `S` で発表者ビューを開き、現在・次スライド、ノート、タイマー、ショートカット一覧、双方向同期を確認する。
+5. `S` で発表者ビューを開き、現在・次スライド、ノート、reader context、bridge、タイマー、ショートカット一覧、双方向同期を確認する。
 6. 各stepで投影側と発表者ビューの現在プレビューが一致することを確認する。
-7. 印刷プレビューで用紙サイズ、余白0、全step表示を確認し、`output/index.pdf` を生成する。
-8. `scripts/validate_pdf.py output/index.pdf output/index.html` を実行する。
+7. 印刷プレビューで用紙サイズ、余白0、全step表示を確認し、`<deck-output>/index.pdf` を生成する。
+8. `scripts/validate_pdf.py <deck-output>/index.pdf <deck-output>/index.html` を実行する。
 9. PDFをPNGへレンダリングし、全ページの見切れ、余白、背景、画像切れを確認する。
-10. ZIP rootに `index.html` と `assets/` が入る形で `output/index_html.zip` を作る。余分な親ディレクトリを入れない。
+10. ZIP rootに `index.html` と `assets/` が入る形で `<deck-output>/index_html.zip` を作る。余分な親ディレクトリを入れない。
 
 ## Quality Gate
 
@@ -110,7 +110,9 @@ description: Apply the fixed LT slide runtime shell, keyboard navigation, overvi
 - 投影側からの前後操作が発表者ビューへ反映される
 - 現在プレビューは投影側DOM状態と一致する
 - 次プレビューは常に最終状態で表示される
+- 発表者ビューで reader context と bridge が読め、後からページ間の論理を復元できる
 - PDFのページ数がHTMLスライド数と一致する
 - PDFページ寸法が960x540pt近似である
+- シリーズでは、上記の品質ゲートを各 `output_dir` のデッキに対して満たす
 
 最終回答では、HTML、PDF、ZIP、ページ数、検証結果だけを簡潔に示す。

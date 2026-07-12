@@ -24,6 +24,11 @@ theme:
 slides:
   - id: s03
     role: conclusion
+    reader_context: "このページだけを読む人のための前提"
+    narrative_continuity:
+      prior_state: "直前までに分かっていること"
+      bridge: "このページが必要になる理由"
+      next_question: "次ページが答える問い"
     spoken_note: "このスライドで口頭説明する内容。投影面には表示しない"
     layout: visual-right
     title: "今日の結論"
@@ -46,6 +51,8 @@ slides:
       kind: generated-image
       pattern: transformation
       asset_id: visual-s03
+      visual_plan_id: plan-s04-impact
+      source_asset_ids: [source-fig-01]
       aspect_ratio: "8:5"
       transparent_background: true
       embedded_text: false
@@ -68,6 +75,15 @@ slides:
       bullets_max: 3
       bullet_max_chars: 24
     notes: "実装上の注意"
+    content_model:
+      type: implementation-playbook # table, flow, implementation-playbook, checklist, code, config, comparison, file-map
+      source_artifacts: [artifact-1]
+      data:
+        steps:
+          - label: "題材選定"
+            artifact: "変更候補リスト"
+            owner: "人"
+            done_when: "影響範囲を限定できる"
 visual_assets:
   - asset_id: visual-s03
     slide_id: s03
@@ -78,3 +94,5 @@ visual_assets:
 `visual.kind` は `none`, `css-component`, `inline-svg`, `generated-image`, `provided-image` から選ぶ。`generated-image` と `provided-image` は必ず `visual_assets` に列挙する。
 
 全スライドに `spoken_note` を置き、`01-story.yaml` の同じIDから内容を変更せず引き継ぐ。ノートがない場合も空文字でキーを残す。
+
+`reader_context` と `narrative_continuity` は `01-story.yaml` の同じIDから引き継ぐ。初見者に必要な定義・具体例は、`text` または非空の `content_model` に置く。`bridge` は投影面に常設する必要はないが、発表者ノートと発表者ビューで失われないようにする。
