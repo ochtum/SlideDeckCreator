@@ -122,6 +122,10 @@ narrative:
 presenter:
   include: true
   data_file: "../config/presenter.json"
+style_profile:
+  data_file: "../config/slide-style-profile.md"
+  status: applied # applied, absent
+  applied_rule_ids: [experiment-turn]
 slides:
   - id: s01
     role: cover
@@ -192,3 +196,5 @@ open_questions: []
 `reader_context` は後から一枚だけを読む人に必要な前提または現在地を短く記録する。`connection_from_previous.prior_state` と `bridge` は前ページからの論理的接続を記録する。表紙、自己紹介、Thanksは空文字または省略してよいが、その他のスライドでは両方を必須とする。
 
 `omitted_phases` は標準phaseを省略した場合だけ `{phase, reason}` で記録する。省略がなければ空配列にする。
+
+`style_profile` は `config/slide-style-profile.md` がある場合だけそのルールを参照したことを記録する。スタイルを理由に入力にない体験を追加しない。ファイルがない場合は `data_file` を残して `status: absent`、`applied_rule_ids: []` とする。

@@ -17,7 +17,8 @@ description: .lt-slide-work/01-story.yaml を .lt-slide-work/02-blueprint.yaml �
 └─ 02-blueprint.yaml
 
 config/
-└─ presenter.json
+├─ presenter.json
+└─ slide-style-profile.md
 ```
 
 設計図や検証用ファイルをプロジェクトルート、`output/`、スキル本体のフォルダへ出力しない。発表者情報は `config/presenter.json` から読み、`.lt-slide-work/` へコピーしない。
@@ -37,10 +38,11 @@ config/
 - `references/layout-rules.md`
 - `../01-lt-slide-story/references/presentation-quality.md`
 - 図版を選ぶときは `references/figure-patterns.md`
+- `config/slide-style-profile.md` があり、Storyの `style_profile.status` が `applied` の場合は、その見出し、感情の転換、視覚構成、Application Limits を読む。
 
 ## Workflow
 
-1. `.lt-slide-work/01-story.yaml` が単発ストーリーかシリーズマニフェストかを確認する。シリーズなら `Series Mode` に従って各パートを処理する。各スライドの `spoken_note`、`reader_context`、`connection_from_previous` を同じIDの設計図へそのまま引き継ぐ。`source_asset_inventory` があれば、対象パートに割り当てられた提供画像・表・コードを先に確認する。
+1. `.lt-slide-work/01-story.yaml` が単発ストーリーかシリーズマニフェストかを確認する。シリーズなら `Series Mode` に従って各パートを処理する。各スライドの `spoken_note`、`reader_context`、`connection_from_previous` を同じIDの設計図へそのまま引き継ぐ。`source_asset_inventory` があれば、対象パートに割り当てられた提供画像・表・コードを先に確認する。Storyの `style_profile.status` が `applied` の場合だけプロファイルを読み、`applied_rule_ids` に対応する表現を設計する。入力に根拠のない感情、失敗、記号、短文スライドを追加してはならない。
 2. 各スライドに1つの `layout` と、実際に描画する1つの `visual_anchor` を割り当てる。表・フロー・設定・コード・プレイブックを表示する場合だけ、後工程がそのまま描画できる非空の `content_model` を置く。`content_model` には表の列と行、フローのノードと矢印、設定・コマンド・チェックリストの実データを置く。
 3. 1280x720座標で `title_zone`, `text_zone`, `visual_zone`, `conclusion_zone`, `footer_zone` を定義する。
 4. テキスト量、文字サイズ、行数を確定する。
@@ -109,6 +111,8 @@ lt-html-slide-skillの見栄えを維持しつつ、slide-builderの小さな文
 - 1枚のstep数は0から4。全入場は原則2秒以内。
 - `prefers-reduced-motion` と印刷では全要素を表示する前提にする。
 - `spoken_note` は投影面のレイアウトや文字量に含めない。発表者ビュー専用データとして保持する。
+- スタイルプロファイルのstatementや会話的な見出しは、実際の転換点・問い・結論があるページに限る。感情中心の短文スライドは本編の20%以下、同種の感嘆符付き見出しは連続禁止、顔文字は全体で最大1回を初期値とする。プロファイルの上限がより厳しい場合はそれを優先する。
+- 感情または転換を表すページの前後には、原因、条件、具体物、結果、次に試す操作のいずれかを設計する。見出しの口調で技術情報を置き換えない。
 - 画面上の文脈ラベルは、主語・現在地・前提が失われる場合だけ置く。毎ページに冗長な「前回」表示を足すのではなく、章の切替、新用語、抽象度の切替で読者を再同期する。
 - `narrative_continuity` に `reader_context`、`prior_state`、`bridge`、`next_question` を残す。`bridge` は話者ノートの冒頭に使い、`next_question` は次ページへ進む理由を保つ。
 - 「明日から取り組める」ことが目的の発表では、HowまたはDemoに、実在するファイル名・手順・受け入れ条件・検証結果のうち少なくとも2種類を画面上の具体例として置く。長い原文の貼り付けではなく、読める最小表・フロー・チェックリストへ圧縮する。

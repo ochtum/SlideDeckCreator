@@ -14,7 +14,8 @@ LTの素材整理、話の流れ、スライドへの割り付けを決める。
 ```text
 <project-root>/
 ├─ config/
-│  └─ presenter.json
+│  ├─ presenter.json
+│  └─ slide-style-profile.md
 ├─ .lt-slide-work/
 │  ├─ 01-story.yaml                  # 単発ストーリー、またはシリーズマニフェスト
 │  └─ parts/                         # シリーズ時のみ
@@ -31,6 +32,7 @@ LTの素材整理、話の流れ、スライドへの割り付けを決める。
 2. URLがある場合は取得可能なものを並列で読み、主題、根拠、数値、出典だけを抽出する。取得不能なURLは記録して残りで進める。
 3. 不足情報だけを質問する。質問は一度に最大3件にまとめ、ソースから分かることは聞かない(`Ask Only What Is Missing`を参照)。
 4. 発表者プロフィールを確認する。
+4a. `config/slide-style-profile.md` がある場合は読み、`python .codex/skills/00-lt-slide-style-extraction/scripts/validate_style_profile.py config/slide-style-profile.md` を実行する。発表者の姿勢、ストーリー、失敗・成功、具体性、話者ノートのルールだけを利用し、`style_profile` に参照パスと採用したrule IDを残す。プロファイルを理由に、入力にない失敗、実験、感情、具体物を追加してはならない。存在しない場合は `style_profile.status: absent` を残して通常のストーリー設計を続ける。
 5. `references/presentation-quality.md` を読み、初見者の既知語・未知語・誤解しやすい前提を `audience` に残す。用語の初出、平易な定義、具体例を決める。
 6. 全体の主張を1文に圧縮し、聴衆が持ち帰る行動を1つ決める。
 7. 入力から `content_inventory` を作り、事実、主張、手順、デモ候補、注意点に加え、表・フロー・設定例・コマンド・ファイル構成・変更パターンを `evidence_artifacts` として素材化する。記事の順番に依存せず、出典と再利用できる最小データを残す。
@@ -95,6 +97,15 @@ LTの素材整理、話の流れ、スライドへの割り付けを決める。
 
 ユーザーが「使わない」と回答した項目だけを不使用として確定する。画像を使わない場合は代替レイアウトを許可する。情報は永続設定として `config/presenter.json` に保存し、`.lt-slide-work/01-story.yaml` から `../config/presenter.json` で参照する。`.lt-slide-work/` や `output/` には保存しない。秘密情報は保存しない。
 
+## Presenter Style Profile
+
+`config/slide-style-profile.md` は、過去資料から抽出した発表者固有の永続設定である。存在する場合だけ読み、内容を今回の事実より優先しない。
+
+- `MUST` / `SHOULD` / `MAY` は、入力資料に対応する出来事または具体物がある場合だけ適用する。
+- `MUST NOT` と Application Limits は必ず守る。会話的な見出し、感情ページ、記号を全ページへ広げない。
+- 実験・検証資料では、入力にある失敗、勘違い、途中結果を成功だけに圧縮しない。次の原因、再試行、注意点を追跡できる位置へ置く。
+- `style_profile` には `data_file`、`status`（`applied` / `absent`）、`applied_rule_ids` を残す。`status: applied` でも、採用できるルールがない場合は空配列にする。
+
 ## Story Rules
 
 - 原稿を貼り付けず、短い話し言葉へ圧縮する。
@@ -134,6 +145,7 @@ LTの素材整理、話の流れ、スライドへの割り付けを決める。
 ## Quality Gate
 
 - `core_claim` が1文である。
+- スタイルプロファイルがある場合は検証済みであり、`style_profile` に参照と採用ルールが追跡できる。プロファイルを理由に入力にない体験を追加していない。
 - `content_inventory` があり、入力資料から抽出した素材と出典が追跡できる。
 - `source_asset_inventory` があり、入力の画像・表・コードブロック・設定例ごとに採否と理由が追跡できる。
 - `Source Scope Audit` と `coverage_matrix` があり、主要見出し・実装ループごとに、入門要約か全内容か、割当パート、代表アーティファクト、最初の作業、完了条件が追跡できる。

@@ -18,7 +18,8 @@ description: .lt-slide-work の成果物をもとに、最終的なライトニ�
 ```text
 <project-root>/
 ├─ config/
-│  └─ presenter.json
+│  ├─ presenter.json
+│  └─ slide-style-profile.md
 ├─ .lt-slide-work/
 │  ├─ 01-story.yaml
 │  ├─ 02-blueprint.yaml
@@ -64,6 +65,7 @@ output/
 - `references/04c-runtime.md`
 - `../01-lt-slide-story/references/presentation-quality.md`
 - 必要に応じて `assets/deck-shell.html`
+- Storyの `style_profile.status` が `applied` の場合は `config/slide-style-profile.md` の Application Limits を確認する。
 
 ## Workflow
 
@@ -85,6 +87,7 @@ output/
 - 外部CDN、外部フォント、外部アイコンライブラリは禁止。
 - `output/index.html` は `assets/deck-shell.html` を起点にする。ランタイムの主要機能を毎回書き直さない。
 - スライド本文の生成、アニメーション付与、ランタイム適用を同時に進めない。段階ごとに出力を見てから次へ進む。
+- スタイルプロファイルを直接解釈して、02-blueprintにない感情表現、記号、顔文字、装飾、短文スライドを追加してはならない。表現上の判断は設計図を正とし、プロファイルは上限の確認だけに使う。
 - `.slide` は1280x720固定。画面にはdeck全体を `scale()` して収める。
 - ブラウザ投影時はdeckをビューポート端へ貼り付けない。`fit()` は上下左右に最低32px、推奨48pxの表示余白を差し引いてscaleを計算する。
 - 印刷用紙は `@page { size: 13.333333in 7.5in; margin: 0; }` に固定する。

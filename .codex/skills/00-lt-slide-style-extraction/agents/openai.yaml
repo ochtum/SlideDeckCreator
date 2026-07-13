@@ -1,0 +1,4 @@
+interface:
+  display_name: "LT Style Extraction"
+  short_description: "過去資料から発表者固有の表現ルールを抽出して再利用する"
+  default_prompt: "Use $00-lt-slide-style-extraction to derive a reusable slide style profile from these past decks."
