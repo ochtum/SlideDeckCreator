@@ -13,7 +13,7 @@
 - `.lt-slide-work/02-blueprint.yaml`
 - `.lt-slide-work/visuals-manifest.yaml`
 - `.lt-slide-work/visuals/*`
-- 必要に応じて `config/presenter.json`
+- `presenter.include: true` の場合は必ず、対応する `config/presenter.json`
 
 ルートの `01-story.yaml` が `kind: lt-slide-series` の場合は、`../../01-lt-slide-story/references/series-schema.md` の各パートについて、そのパートの `blueprint_file`、`visuals_manifest_file`、`visuals/`、`output_dir` を使う。別パートの入力・出力を混在させない。
 
@@ -35,10 +35,11 @@
 - ページ番号は `.page-number` で入れる
 - 画像は `output/assets/` へコピーし、HTMLから相対参照する
 - 発表者ノートは投影面へ表示しない
+- `presenter.include: true` の自己紹介では、JSONの `display_name`、`bio`、全 `links[].platform` / `links[].account`、`qr.use: true` の `qr.label` を投影面に表示する。画像は `avatar.use` / `qr.use` がtrueのときだけJSONの `path` からコピーする。
 
 ## Workflow
 
-1. `02-blueprint.yaml` のページ数、各ページの目的、`spoken_note`、レイアウト指定、`content_model` を確認する。
+1. `02-blueprint.yaml` のページ数、各ページの目的、`spoken_note`、レイアウト指定、`content_model` を確認する。`presenter.include: true` なら `presenter.json` を読み、表示するテキストと有効assetを確定する。
 2. `visuals-manifest.yaml` の画像解決状況を確認する。必須画像が未解決なら先に解消する。
 3. 対象デッキの出力先と `assets/` を用意し、使用画像を対象出力先の `assets/` へコピーする。
 4. `deck-shell.html` を使う場合は、既存サンプルスライドを実ページへ置き換える。ランタイム部分はこの段階で改変しない。
@@ -48,6 +49,7 @@
 7. 本文、図版、結論帯を同じグリッドセルや同じ視覚領域へ重ねない。
 8. 文字量が多い場合は文章を削るかレイアウトを変える。`overflow: hidden`、自動縮小、過小フォントで隠さない。
 9. 最後に全スライドを静的状態で見て、情報階層、余白、画像切れ、読み順を確認する。
+10. 自己紹介スライドでは、JSONの値を画面と `assets/` へ反映できていることを確認する。設計図の一般的なメッセージ、以前の作業用画像、固定のQR文言をJSONより優先してはならない。
 
 ## Layout Rules
 

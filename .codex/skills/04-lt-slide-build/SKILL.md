@@ -32,7 +32,7 @@ description: .lt-slide-work の成果物をもとに、最終的なライトニ�
    └─ assets/
 ```
 
-発表者情報は `config/presenter.json` を参照する。削除対象フォルダへ移動または複製しない。ビルド中の一時ファイルは `.lt-slide-work/` に置き、`output/` には利用者へ渡す完成品だけを残す。
+発表者情報は `config/presenter.json` を唯一の正本として参照する。`presenter.include: true` の場合、自己紹介スライドはこのJSONの表示名、自己紹介文、全リンク、QRラベル、`use: true` の画像を反映する。削除対象フォルダへ移動または複製しない。ビルド中の一時ファイルは `.lt-slide-work/` に置き、`output/` には利用者へ渡す完成品だけを残す。
 
 ## Series Mode
 
@@ -69,11 +69,11 @@ output/
 
 ## Workflow
 
-1. ルートの `01-story.yaml` が単発かシリーズかを確認する。単発は `.lt-slide-work/02-blueprint.yaml` と `.lt-slide-work/visuals-manifest.yaml`、シリーズは各パートの指定ファイルを検証する。必須画像が未解決なら先に解消する。各パートについて、`../01-lt-slide-story/scripts/validate_duration_floor.py --story <part-01-story.yaml> --blueprint <blueprint_file>` と `../02-lt-slide-blueprint/scripts/validate_visual_plan.py --story <part-01-story.yaml> --blueprint <blueprint_file>` を実行し、指定時間の本編最小枚数または必須ビジュアル計画を満たさなければビルドを中止する。
+1. ルートの `01-story.yaml` が単発かシリーズかを確認する。単発は `.lt-slide-work/02-blueprint.yaml` と `.lt-slide-work/visuals-manifest.yaml`、シリーズは各パートの指定ファイルを検証する。`presenter.include: true` のパートでは `data_file` の `presenter.json` を読み、表示名、bio、全links、avatar/qrの `use`・`path`、QRラベルを先に検証する。必須画像が未解決なら先に解消する。各パートについて、`../01-lt-slide-story/scripts/validate_duration_floor.py --story <part-01-story.yaml> --blueprint <blueprint_file>` と `../02-lt-slide-blueprint/scripts/validate_visual_plan.py --story <part-01-story.yaml> --blueprint <blueprint_file>` を実行し、指定時間の本編最小枚数または必須ビジュアル計画を満たさなければビルドを中止する。
 2. `references/04a-pages.md` の指示に従い、設計図から静的な `.slide` 群を作る。ここではページ送り、発表者ビュー、複雑なアニメーション制御を作り込まない。
 3. `references/04b-animation.md` の指示に従い、静的スライドへ `data-anim`、step、reduced motion、印刷時全表示の契約を付与する。
 4. `references/04c-runtime.md` の指示に従い、固定ランタイムを適用してショートカット、一覧表示、ショートカット一覧付き発表者ビュー、同期、PDF CSS、監査、ZIP化を完成させる。
-5. `scripts/validate_deck.py <part-output>/index.html` と `../01-lt-slide-story/scripts/validate_duration_floor.py --story <part-01-story.yaml> --html <part-output>/index.html` を各デッキに実行する。単発の `<part-output>` は `output` とする。
+5. `scripts/validate_deck.py <part-output>/index.html`、`../01-lt-slide-story/scripts/validate_spoken_notes.py --story <part-01-story.yaml> --html <part-output>/index.html`、`../01-lt-slide-story/scripts/validate_duration_floor.py --story <part-01-story.yaml> --html <part-output>/index.html` を各デッキに実行する。自己紹介を含むデッキでは、さらに `python scripts/validate_presenter_binding.py --presenter config/presenter.json <part-output>/index.html` を実行する。単発の `<part-output>` は `output` とする。
 6. ブラウザで全ページを1280x720表示し、初期状態と全step表示状態を確認する。通常表示ではスライド外側に上下左右の表示余白があることも確認する。
 7. `S` で発表者ビューを開き、現在・次スライド、ノート、タイマー、ショートカット一覧、双方向同期を確認する。各stepで投影側と現在プレビューの一致を確認する。
 8. 印刷プレビューでCSS用紙サイズ、余白0、全step表示を確認し、各 `<part-output>/index.pdf` を生成する。
@@ -93,6 +93,8 @@ output/
 - 印刷用紙は `@page { size: 13.333333in 7.5in; margin: 0; }` に固定する。
 - まとめとサンクスを最後に連続配置する。`validate_deck.py` が通るよう、最後の2枚は `data-role="recap"`、`data-role="thanks"` にする。
 - 各 `.slide` に設計図の `spoken_note` を `data-spoken-note` として埋め込む。HTML属性として正しくエスケープし、投影面には表示しない。
+- `presenter.include: true` の自己紹介スライドでは、`config/presenter.json` を実際に読み込む。`display_name`、`bio`、すべての `links[].platform` と `links[].account`、`qr.use: true` の `qr.label` を可視テキストとして表示する。値を汎用文言やハードコードで代替してはならない。
+- `avatar.use` または `qr.use` が true の場合は、対応する `path` のファイルを対象デッキの `assets/` にコピーし、HTMLから相対参照する。`use: false` の要素は表示・コピーしない。`visuals-manifest.yaml` は作業用の出力記録に限り、JSONと異なるassetを正本として採用してはならない。
 - 各 `.slide` に `reader_context` と `narrative_continuity.bridge` を `data-reader-context`、`data-story-bridge` として埋め込む。発表者ビューではノートとともに表示し、話者が後からページ間の接続を再現できるようにする。
 - 初見者向けに必要な平易な定義・具体例は、タイトルだけに頼らず本文または `content_model` で可視にする。章の切替、新用語、抽象度の切替では、設計図が指定した文脈ラベルを表示する。
 - `content_model` を持つスライドは、型に対応する専用HTMLコンポーネントとして描画する。`table` は列と行、`flow` はノード・矢印・判断ゲート、`implementation-playbook` は成果物・担当・完了条件、`code` / `config` は読める最小断片を表示する。
@@ -110,6 +112,8 @@ output/
 
 - 単発は `output/index.html`、`output/index.pdf`、`output/index_html.zip`、シリーズは各 `output/<part-id>/` に同名の3ファイルが存在する
 - 各デッキで `validate_deck.py` が成功する
+- 各デッキで `validate_spoken_notes.py --story <part-01-story.yaml> --html <part-output>/index.html` が成功し、構造化されたページ固有ノートとHTMLへの正確な反映を確認する
+- 自己紹介を含む各デッキで `validate_presenter_binding.py` が成功し、JSONの表示名・bio・全リンク・QRラベルと、`use: true` のassetハッシュが出力と一致する
 - 各デッキで `validate_duration_floor.py --story <part-01-story.yaml> --html <part-output>/index.html` が成功する
 - 各デッキで `validate_pdf.py` が成功する
 - 全スライドの初期状態と全step表示状態を目視確認済み

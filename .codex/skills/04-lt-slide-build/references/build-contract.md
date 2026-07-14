@@ -14,6 +14,17 @@ Recommended `.gitignore` entry:
 .lt-slide-work/
 ```
 
+## Presenter profile binding
+
+`config/presenter.json` は自己紹介スライドの唯一のデータソースとする。Storyで `presenter.include: true` の場合、各出力デッキの `data-role="profile"` は次を満たす。
+
+- `display_name`、`bio`、全リンクの platform と account を可視テキストとして持つ。
+- `qr.use: true` なら、JSONと完全一致する `qr.label` と、`qr.path` からコピーしたQR画像を持つ。
+- `avatar.use: true` なら、`avatar.path` からコピーした画像を持つ。
+- `use: false` の画像を出力しない。作業用の `visuals/` や `visuals-manifest.yaml` に残った古いコピーを使わない。
+
+ビルド後、`scripts/validate_presenter_binding.py --presenter config/presenter.json <part-output>/index.html` を実行する。値の欠落、固定文言、asset不一致はビルド失敗とする。
+
 ## Required behavior
 
 - Right Arrow, Space, PageDown: next step or next slide
