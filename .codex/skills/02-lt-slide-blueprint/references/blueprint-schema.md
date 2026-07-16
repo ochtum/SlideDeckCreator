@@ -85,17 +85,39 @@ slides:
     animation:
       intent: "構造を先に見せ、最後に判断へ注目させる"
       family: structure # quiet-reveal, direction, structure, focus, decision
+      selection:
+        rule_id: content:implementation-playbook
+        role: conclusion
+        content_type: implementation-playbook
+        phase_entry: false
+        rationale: "作業対象を順に切り替え、最後の行動へ焦点を移す"
       entrance:
         - target: title
           preset: rise
+          reason: "本文より先にタイトルを表示する"
           delay_ms: 0
       steps:
         - step: 1
           targets: [visual]
           preset: pop
+          reason: "主役の具体物へ焦点を移す"
+          target_presets: {visual: pop}
+          target_reasons: {visual: "主役の具体物"}
         - step: 2
           targets: [conclusion]
           preset: stomp
+          reason: "最終行動を確定する"
+          target_presets: {conclusion: stomp}
+          target_reasons: {conclusion: "最終行動"}
+      sequence:
+        mode: staged
+        initial_targets: [title, message]
+        ordered_targets: [visual, conclusion]
+        completion_targets: [conclusion]
+        order_basis: narrative
+        spatial_fallback: z-flow
+        coverage: all-meaningful-siblings
+        max_steps: 2
     text_budget:
       title_max_chars: 24
       message_max_chars: 42

@@ -333,9 +333,10 @@
       applyZFlow() {
         this.slides.forEach(slide=>{
           const items=this.animated(slide).filter(el=>!el.closest(".footer-zone,.brand-badge"));
-          const missing=items.filter(el=>!Number(el.dataset.step));
+          const hasExplicitStep=el=>el.hasAttribute("data-step")&&el.dataset.step!=="";
+          const missing=items.filter(el=>!hasExplicitStep(el));
           if(!missing.length) return;
-          const explicitMax=Math.max(0,...items.filter(el=>Number(el.dataset.step)).map(el=>Number(el.dataset.step)));
+          const explicitMax=Math.max(0,...items.filter(hasExplicitStep).map(el=>Number(el.dataset.step)));
           const buckets=[...new Set(missing.map(el=>this.zFlowBucket(slide,el)))].sort((a,b)=>a-b);
           const stepFor=new Map(buckets.map((bucket,index)=>[bucket,explicitMax+index+1]));
           missing.forEach(el=>{ el.dataset.step=String(stepFor.get(this.zFlowBucket(slide,el))||explicitMax+1); });

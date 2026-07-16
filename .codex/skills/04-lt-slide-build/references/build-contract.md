@@ -43,10 +43,12 @@ Storyに `design_system` がある場合、`config/design-systems/registry.yaml`
 
 ## Animation Order
 
-- Animation steps follow a Z-shaped reading path: top-left, top-right, center-left, center, bottom-left, bottom-right.
-- Runtime preserves explicit `[data-step]` values. Zone positionからのZ-flow補完はstep未指定要素だけに行う。
+- Animation steps follow semantic order first: explicit number, cause/effect, dependency, operation, and speaker explanation order. DOM order must match the visual order. Z-shaped position is only the fallback for independent elements with no semantic order.
+- Runtime preserves explicit `[data-step]` values, including `data-step="0"`. Zone positionからのZ-flow補完は属性自体がない要素だけに行い、0を未指定として扱わない。
 - Per-slide step numbers are compressed so navigation has no empty intermediate step.
-- The maximum step count is 6. Fewer steps are preferred when the slide has fewer visual groups.
+- The default maximum step count is 6. An explicit item-by-item sequence may use up to 9 steps; 10 or more must be regrouped by meaning.
+- The title and required context are visible at step 0. Ordered content starts at step 1. Output, completion criteria, and the conclusion appear after the content; the conclusion is last.
+- Every meaningful sibling in a progressive table, card group, checklist, or numbered process must be either animated or explicitly marked `data-static-intentional`. Partial coverage is a build error.
 - Current and presenter previews use the same normalized DOM state.
 
 ## Presenter view
@@ -115,7 +117,7 @@ Review every slide at 1280x720:
 
 - initial entrance state
 - every step revealed
-- step-by-step Z flow from top-left to top-right, center-left, center, bottom-left, then bottom-right
+- every intermediate step follows semantic order; Z flow is checked only for independent items without a semantic sequence
 - normal browser projection with visible outer viewport gutter on all sides
 - previous navigation
 - overview mode

@@ -73,10 +73,10 @@ output/
 
 1. ルートの `01-story.yaml` が単発かシリーズかを確認する。単発は `.lt-slide-work/02-blueprint.yaml` と `.lt-slide-work/visuals-manifest.yaml`、シリーズは各パートの指定ファイルを検証する。`presenter.include: true` のパートでは `data_file` の `presenter.json` を読み、表示名、bio、全links、avatar/qrの `use`・`path`、QRラベルを先に検証する。Storyに `design_system` があればregistryから同じID/versionを解決し、見つからなければ内蔵テーマへfallbackせず中止する。必須画像が未解決なら先に解消する。各パートについて、`../01-lt-slide-story/scripts/validate_duration_floor.py --story <part-01-story.yaml> --blueprint <blueprint_file>`、`../01-lt-slide-story/scripts/validate_explanation_depth.py --story <part-01-story.yaml> --blueprint <blueprint_file>`、`../01-lt-slide-story/scripts/validate_talkability.py --story <part-01-story.yaml> --blueprint <blueprint_file>`、`../02-lt-slide-blueprint/scripts/validate_visual_plan.py --story <part-01-story.yaml> --blueprint <blueprint_file>` を実行し、枚数、説明時間、話せる台本、必須ビジュアル計画のいずれかを満たさなければビルドを中止する。
 2. `references/04a-pages.md` の指示に従い、設計図から静的な `.slide` 群を作る。選択したdesign-system tokenをCSS custom propertiesへ解決し、HTMLへ `data-design-system-id` と `data-design-system-version` を置く。`full-equivalence` では各slideへ `data-source-unit-ids` を置く。ここではページ送り、発表者ビュー、複雑なアニメーション制御を作り込まない。
-3. `references/04b-animation.md` の指示に従い、静的スライドへ `data-anim`、step、reduced motion、印刷時全表示の契約を付与する。`scripts/validate_animation_choreography.py --blueprint <02-blueprint.yaml> --html <index.html>` を実行し、Blueprintのpresetが最終HTMLに保持され、長いデッキでmotionの種類・step数・強弱にリズムがあることを確認する。
+3. `references/04b-animation.md` の指示に従い、静的スライドへ `data-anim`、`data-motion-reason`、step、意味上の順序、reduced motion、印刷時全表示の契約を付与する。スライドIDではなくBlueprintのselectionとtarget別指定を使い、同一stepでも線・カード・結果の役割に応じてpresetを分ける。`scripts/validate_animation_choreography.py --blueprint <02-blueprint.yaml> --html <index.html>` と `scripts/validate_animation_structure.py --html <index.html>` を実行し、Blueprintのpreset保持、targetとの互換性、選択理由、同じ意味グループへの完全割当、意味順とDOM順、タイトルの初期表示、結論の最終表示を確認する。
 4. `references/04c-runtime.md` の指示に従い、固定ランタイムを適用してショートカット、一覧表示、ショートカット一覧付き発表者ビュー、同期、PDF CSS、監査、ZIP化を完成させる。
 5. `scripts/validate_deck.py <part-output>/index.html`、`../01-lt-slide-story/scripts/validate_spoken_notes.py --story <part-01-story.yaml> --html <part-output>/index.html`、`../01-lt-slide-story/scripts/validate_duration_floor.py --story <part-01-story.yaml> --html <part-output>/index.html`、`../01-lt-slide-story/scripts/validate_explanation_depth.py --story <part-01-story.yaml> --blueprint <blueprint_file> --html <part-output>/index.html`、`../01-lt-slide-story/scripts/validate_talkability.py --story <part-01-story.yaml> --blueprint <blueprint_file> --html <part-output>/index.html` を各デッキに実行する。design-system選択時は `../07-lt-design-system-manager/scripts/manage_design_system.py validate-binding --root config/design-systems --story <part-01-story.yaml> --blueprint <blueprint_file> --html <part-output>/index.html` も実行する。自己紹介を含むデッキでは、さらに `python scripts/validate_presenter_binding.py --presenter config/presenter.json <part-output>/index.html` を実行する。単発の `<part-output>` は `output` とする。
-6. ブラウザで全ページを1280x720表示し、初期状態と全step表示状態を確認する。通常表示ではスライド外側に上下左右の表示余白があることも確認する。
+6. ブラウザで全ページを1280x720表示し、初期状態、すべての途中step、全step表示状態を確認する。`scripts/validate_animation_runtime.js <part-output>/index.html` を実行し、後続要素の先出し、タイトルの遅延、結論の早出しがないことを確認する。通常表示ではスライド外側に上下左右の表示余白があることも確認する。
 7. `S` で発表者ビューを開き、現在・次スライド、ノート、タイマー、ショートカット一覧、双方向同期を確認する。各stepで投影側と現在プレビューの一致を確認する。`話す内容` を途中までスクロールし、タイマー更新と同一ページのstep変更で先頭へ戻らないことも確認する。`scripts/validate_presenter_runtime.js` を1280x720と1280x860で実行する。
 8. 印刷プレビューでCSS用紙サイズ、余白0、全step表示を確認し、各 `<part-output>/index.pdf` を生成する。
 9. `scripts/validate_pdf.py <part-output>/index.pdf <part-output>/index.html` を各デッキに実行し、ページ数と16:9寸法を検証する。
@@ -119,13 +119,14 @@ output/
 
 - 単発は `output/index.html`、`output/index.pdf`、`output/index_html.zip`、シリーズは各 `output/<part-id>/` に同名の3ファイルが存在する
 - 各デッキで `validate_deck.py` が成功する
+- 各デッキで `validate_animation_choreography.py`、`validate_animation_structure.py`、`validate_animation_runtime.js` が成功し、初期状態から最終stepまで意味順と完全割当を確認する
 - 各デッキで `validate_spoken_notes.py --story <part-01-story.yaml> --html <part-output>/index.html` が成功し、構造化されたページ固有ノートとHTMLへの正確な反映を確認する
 - 自己紹介を含む各デッキで `validate_presenter_binding.py` が成功し、JSONの表示名・bio・全リンク・QRラベルと、`use: true` のassetハッシュが出力と一致する
 - 各デッキで `validate_duration_floor.py --story <part-01-story.yaml> --html <part-output>/index.html` が成功する
 - 20分以上の各デッキで `validate_explanation_depth.py --story <part-01-story.yaml> --blueprint <blueprint_file> --html <part-output>/index.html` が成功する
 - 20分以上の各デッキで `validate_talkability.py --story <part-01-story.yaml> --blueprint <blueprint_file> --html <part-output>/index.html` が成功する
 - 各デッキで `validate_pdf.py` が成功する
-- 全スライドの初期状態と全step表示状態を目視確認済み
+- 全スライドの初期状態、すべての途中step、全step表示状態を目視確認済み
 - 発表者ビューの現在プレビューが投影側DOM状態と一致する
 - 発表者ビューでphaseの問い、ページの目的、`reader_context`、前ページからのbridge、実際に話す内容、指差し、次の一言を区別して確認でき、投影面を見ずに話の接続を再構成できる。
 - 発表者ビューで `話す内容` が補助キューより広い主領域を持ち、phaseの問いが独立した可読領域にある。タイマー更新で主台本のスクロール位置がリセットされない。

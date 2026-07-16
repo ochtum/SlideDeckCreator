@@ -150,8 +150,48 @@ def main():
 
         animation = slide.get("animation") or {}
         steps = animation.get("steps") or []
-        if len(steps) > 6:
-            errors.append(f"{sid}: animation steps exceed 6")
+        selection = animation.get("selection") or {}
+        if not str(selection.get("rule_id") or "").strip() or not str(selection.get("rationale") or "").strip():
+            errors.append(f"{sid}: animation.selection rule_id and rationale are required")
+        for item in (animation.get("entrance") or []) + steps:
+            if isinstance(item, dict) and not str(item.get("reason") or "").strip():
+                errors.append(f"{sid}: every animation entrance/step needs a semantic reason")
+        for item in steps:
+            if not isinstance(item, dict):
+                continue
+            targets = {str(target) for target in item.get("targets") or []}
+            if targets != set((item.get("target_presets") or {}).keys()):
+                errors.append(f"{sid}: target_presets must cover every step target")
+            if targets != set((item.get("target_reasons") or {}).keys()):
+                errors.append(f"{sid}: target_reasons must cover every step target")
+        sequence = animation.get("sequence") or {}
+        completion_targets = set(sequence.get("completion_targets") or [])
+        for item in steps:
+            if not isinstance(item, dict):
+                continue
+            for target, preset in (item.get("target_presets") or {}).items():
+                if preset in {"stamp", "stomp", "flip-in"} and target not in completion_targets:
+                    errors.append(f"{sid}: strong preset {preset} is not reserved for completion target {target}")
+                if preset == "draw" and target not in {"connection", "harness-map"}:
+                    errors.append(f"{sid}: draw is incompatible with target {target}")
+                if preset == "slide-left" and target != "left-state":
+                    errors.append(f"{sid}: slide-left is incompatible with target {target}")
+                if preset == "slide-right" and target != "right-state":
+                    errors.append(f"{sid}: slide-right is incompatible with target {target}")
+        sequence_mode = str(sequence.get("mode") or "staged")
+        step_limit = 9 if sequence_mode == "item-by-item" else 6
+        if len(steps) > step_limit:
+            errors.append(f"{sid}: animation steps exceed {step_limit} for {sequence_mode}")
+        if int(sequence.get("max_steps") or -1) != len(steps):
+            errors.append(f"{sid}: animation.sequence.max_steps must equal the declared step count")
+        initial_targets = sequence.get("initial_targets") or []
+        if "title" not in initial_targets:
+            errors.append(f"{sid}: animation.sequence.initial_targets must include title")
+        ordered_targets = sequence.get("ordered_targets") or []
+        if not ordered_targets or ordered_targets[-1] != "conclusion":
+            errors.append(f"{sid}: animation.sequence.ordered_targets must end with conclusion")
+        if sequence.get("coverage") != "all-meaningful-siblings":
+            errors.append(f"{sid}: animation.sequence.coverage must be all-meaningful-siblings")
         if not str(animation.get("intent") or "").strip():
             errors.append(f"{sid}: animation.intent is required")
         if animation.get("family") not in {"quiet-reveal", "direction", "structure", "focus", "decision"}:

@@ -35,14 +35,24 @@ def animation_items(slide: dict[str, Any]) -> list[dict[str, Any]]:
     for item in animation.get("steps") or []:
         if isinstance(item, dict):
             items.append(item)
+            for target, preset in (item.get("target_presets") or {}).items():
+                if preset and preset != item.get("preset"):
+                    items.append(
+                        {
+                            **item,
+                            "preset": preset,
+                            "targets": [target],
+                            "reason": (item.get("target_reasons") or {}).get(target),
+                        }
+                    )
     return items
 
 
 class MotionHTMLParser(HTMLParser):
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
-        self.slides: list[list[str]] = []
-        self.current: list[str] | None = None
+        self.slides: list[list[dict[str, str]]] = []
+        self.current: list[dict[str, str]] | None = None
         self.section_depth = 0
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
@@ -54,7 +64,7 @@ class MotionHTMLParser(HTMLParser):
         elif self.current is not None and tag.casefold() == "section":
             self.section_depth += 1
         if self.current is not None and values.get("data-anim"):
-            self.current.append(values["data-anim"])
+            self.current.append(values)
 
     def handle_endtag(self, tag: str) -> None:
         if self.current is None or tag.casefold() != "section":
@@ -77,12 +87,35 @@ def validate(blueprint: dict[str, Any], html_text: str | None = None) -> tuple[l
         animation = slide.get("animation") or {}
         intent = text(animation.get("intent"))
         declared_family = text(animation.get("family"))
+        selection = animation.get("selection") or {}
         items = animation_items(slide)
         presets = [text(item.get("preset")) for item in items if text(item.get("preset"))]
         if not intent:
             errors.append(f"{sid}: animation.intent is required")
         if not declared_family:
             errors.append(f"{sid}: animation.family is required")
+        if not text(selection.get("rule_id")) or not text(selection.get("rationale")):
+            errors.append(f"{sid}: animation.selection rule_id and rationale are required")
+        for item in (animation.get("entrance") or []) + (animation.get("steps") or []):
+            if isinstance(item, dict) and not text(item.get("reason")):
+                errors.append(f"{sid}: every entrance/step needs a semantic reason")
+        for item in animation.get("steps") or []:
+            if not isinstance(item, dict):
+                continue
+            targets = [text(target) for target in item.get("targets") or []]
+            target_presets = item.get("target_presets") or {}
+            target_reasons = item.get("target_reasons") or {}
+            if set(targets) != set(target_presets) or set(targets) != set(target_reasons):
+                errors.append(f"{sid}: target_presets and target_reasons must cover every step target")
+            for target, preset in target_presets.items():
+                if preset in STRONG and target not in set((animation.get("sequence") or {}).get("completion_targets") or []):
+                    errors.append(f"{sid}: strong preset '{preset}' is not reserved for completion target '{target}'")
+                if preset == "draw" and target not in {"connection", "harness-map"}:
+                    errors.append(f"{sid}: draw is incompatible with target '{target}'")
+                if preset == "slide-left" and target != "left-state":
+                    errors.append(f"{sid}: slide-left is incompatible with target '{target}'")
+                if preset == "slide-right" and target != "right-state":
+                    errors.append(f"{sid}: slide-right is incompatible with target '{target}'")
         for preset in presets:
             if preset not in FAMILIES:
                 errors.append(f"{sid}: unsupported preset '{preset}'")
@@ -93,8 +126,20 @@ def validate(blueprint: dict[str, Any], html_text: str | None = None) -> tuple[l
         step_count = max(explicit_steps, default=0)
         step_counts.append(step_count)
         signatures.append(f"{step_count}:" + ">".join(presets))
-        if step_count > 6:
-            errors.append(f"{sid}: maximum step is {step_count}; must be <= 6")
+        sequence = animation.get("sequence") or {}
+        sequence_mode = text(sequence.get("mode"))
+        hard_limit = 9 if sequence_mode == "item-by-item" else 6
+        declared_limit = int(sequence.get("max_steps") or hard_limit)
+        if declared_limit > hard_limit:
+            errors.append(
+                f"{sid}: sequence.max_steps is {declared_limit}; "
+                f"mode '{sequence_mode or 'staged'}' must be <= {hard_limit}"
+            )
+        if step_count > min(declared_limit, hard_limit):
+            errors.append(
+                f"{sid}: maximum step is {step_count}; "
+                f"declared/hard limit is {min(declared_limit, hard_limit)}"
+            )
         if declared_family and declared_family not in set(FAMILIES.values()):
             errors.append(f"{sid}: unknown animation.family '{declared_family}'")
 
@@ -126,7 +171,12 @@ def validate(blueprint: dict[str, Any], html_text: str | None = None) -> tuple[l
     if html_text is not None:
         parser = MotionHTMLParser()
         parser.feed(html_text)
-        html_counts.update(preset for slide in parser.slides for preset in slide)
+        html_counts.update(item["data-anim"] for slide in parser.slides for item in slide)
+        missing_reasons = sum(
+            1 for slide in parser.slides for item in slide if not text(item.get("data-motion-reason"))
+        )
+        if missing_reasons:
+            errors.append(f"html: {missing_reasons} animated elements have no data-motion-reason")
         unknown = sorted(set(html_counts) - set(FAMILIES))
         if unknown:
             errors.append(f"html: unsupported data-anim values: {', '.join(unknown)}")

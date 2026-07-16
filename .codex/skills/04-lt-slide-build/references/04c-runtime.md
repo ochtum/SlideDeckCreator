@@ -95,14 +95,15 @@
 1. `deck-shell.html` のCSS/JS契約を基準に、完成済み `.slide` 群を組み込む。
 2. 固定ランタイムのショートカット、overview、reveal all、scale、presenter、audit、print CSSを保持する。
 3. `scripts/validate_deck.py <deck-output>/index.html` を実行する。単発の `<deck-output>` は `output`、シリーズでは各パートの `output_dir` とする。
-4. ブラウザで通常表示を開き、全スライドの初期状態、前後移動、`A` 全表示、`P` overviewを確認する。
+4. ブラウザで通常表示を開き、全スライドの初期状態、すべての途中step、前後移動、`A` 全表示、`P` overviewを確認する。
 5. `S` で発表者ビューを開き、現在・次スライド、phaseの問い、ページの目的、四区画ノート、reader context、bridge、タイマー、ショートカット一覧、双方向同期を確認する。長い `話す内容` を途中までスクロールし、タイマーが2秒以上進んでも位置が保持されることを確認する。
 6. 各stepで投影側と発表者ビューの現在プレビューが一致することを確認する。
-7. `scripts/validate_presenter_runtime.js <deck-output>/index.html --width 1280 --height 720` と `--height 860` を実行し、主台本・問いの可読領域とスクロール保持を検証する。
-8. 印刷プレビューで用紙サイズ、余白0、全step表示を確認し、`<deck-output>/index.pdf` を生成する。
-9. `scripts/validate_pdf.py <deck-output>/index.pdf <deck-output>/index.html` を実行する。
-10. PDFをPNGへレンダリングし、全ページの見切れ、余白、背景、画像切れを確認する。
-11. ZIP rootに `index.html` と `assets/` が入る形で `<deck-output>/index_html.zip` を作る。余分な親ディレクトリを入れない。
+7. `scripts/validate_animation_runtime.js <deck-output>/index.html` を実行し、初期状態で後続要素が隠れ、各stepで対象だけが順に表示され、タイトルが常に先に読め、結論が最後に表示されることを検証する。
+8. `scripts/validate_presenter_runtime.js <deck-output>/index.html --width 1280 --height 720` と `--height 860` を実行し、主台本・問いの可読領域とスクロール保持を検証する。
+9. 印刷プレビューで用紙サイズ、余白0、全step表示を確認し、`<deck-output>/index.pdf` を生成する。
+10. `scripts/validate_pdf.py <deck-output>/index.pdf <deck-output>/index.html` を実行する。
+11. PDFをPNGへレンダリングし、全ページの見切れ、余白、背景、画像切れを確認する。
+12. ZIP rootに `index.html` と `assets/` が入る形で `<deck-output>/index_html.zip` を作る。余分な親ディレクトリを入れない。
 
 ## Quality Gate
 
@@ -121,6 +122,7 @@
 - `話す内容` が主表示領域として確保され、phaseの問いが独立した可読領域にある
 - タイマーが進んでも、同一スライドの `話す内容` のスクロール位置が変わらない
 - 1280x720と1280x860の両方で `validate_presenter_runtime.js` が成功する
+- `validate_animation_runtime.js` が全スライド・全途中stepで成功する
 - PDFのページ数がHTMLスライド数と一致する
 - PDFページ寸法が960x540pt近似である
 - シリーズでは、上記の品質ゲートを各 `output_dir` のデッキに対して満たす

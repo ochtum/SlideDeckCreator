@@ -51,7 +51,7 @@ config/
 3. 1280x720座標で `title_zone`, `text_zone`, `visual_zone`, `conclusion_zone`, `footer_zone` を定義する。
 4. テキスト量、文字サイズ、行数を確定する。
 5. 図版をコンポーネント、インラインSVG、提供画像、生成画像、なしから選ぶ。意味が一致する提供画像は `provided-image` として優先し、`visual_assets` に必ず列挙する。表・コード・設定例は、読める最小データを `content_model` としてHTMLへ再構成する。正確さが必要なフロー・表・コードを、生成画像や汎用カードに置き換えない。
-6. `references/motion-choreography.md` に従い、各ページへ `animation.intent` と `animation.family` を置き、entranceとページ内stepを最大6段階で設計する。全ページへ同じstep数とpreset列を複製しない。本編20枚以上では5preset・4family以上、3種類以上のstep数をデッキ全体で使い分ける。
+6. `references/motion-choreography.md` に従い、各ページへ `animation.intent`、`animation.family`、`animation.selection`、`animation.sequence` を置く。presetをスライド番号やページ位置へ固定せず、`role -> content_model.type -> targetの意味 -> phase境界` の順で選ぶ。各entrance/stepには選択理由を置き、同一stepで線とノードなど対象の役割が違う場合は `target_presets` と `target_reasons` で分ける。通常はページ内stepを最大6段階にまとめるが、番号付き工程・表の代表行など、話者が一項目ずつ説明する順序列は最大9段階まで許可する。`sequence` には初期表示、全対象、意味上の順序、完了要素を明記し、同じグループの一部だけを段階表示にして残りを初期表示へ漏らさない。全ページへ同じstep数とpreset列を複製しない。本編20枚以上では5preset・4family以上、3種類以上のstep数をデッキ全体で使い分ける。
 6a. 初見者向けの初出用語は、画面上で平易な定義と具体例を読めるようにする。各スライドについて、`speaker_cue.point_at` の全項目を実在する文字、表セル、コード行、図のHTML/SVGラベルとして配置する。直前からの橋渡しと次の一言は発表者ノートに残し、後読時に必要な `reader_context` を表示用・発表者ビュー用のどちらに置くか決める。
 7. 単発は `.lt-slide-work/02-blueprint.yaml`、シリーズは各パートの `blueprint_file` を出力する。
 8. 出力した各設計図に `scripts/validate_blueprint.py`、`scripts/validate_visual_plan.py --story <part-01-story.yaml> --blueprint <blueprint_file>`、`../01-lt-slide-story/scripts/validate_duration_floor.py --story <part-01-story.yaml> --blueprint <blueprint_file>`、`../01-lt-slide-story/scripts/validate_explanation_depth.py --story <part-01-story.yaml> --blueprint <blueprint_file>`、`../01-lt-slide-story/scripts/validate_talkability.py --story <part-01-story.yaml> --blueprint <blueprint_file>` を実行し、エラーをゼロにする。
@@ -115,9 +115,11 @@ lt-html-slide-skillの見栄えを維持しつつ、slide-builderの小さな文
 - 1枚に視覚的主役を1つ置く。
 - 図版に本文と同じ長文を重複させない。
 - 生成画像には原則として文字を焼き込まない。
-- アニメーションはタイトル、主役、補助、結論の順にする。
-- 重要な図を最初に見せ、結論帯は必要なら最後のstepで出す。
-- 1枚のstep数は0から6。全入場は原則2秒以内。比較、フロー、Demo、結論でmotion familyを切り替え、同じanimation signatureを3ページ連続させない。
+- タイトルと、話の前提になるメッセージ・入力はstep 0までに表示する。タイトルの入場は220ms程度の短い動きか静止表示にし、本文より後へ送らない。
+- 順序の優先順位は `番号・因果・依存・話す順 -> 視覚配置と一致するDOM順 -> Z型` とする。Z型は意味順のない独立要素にだけ使う補助規則であり、番号付き工程を並べ替えない。
+- 番号付き工程・表・チェックリストは意味上の一項目を一stepで出し、同じ列・行・カード群の意味要素をすべて `animation.sequence.ordered_targets` へ含める。背景線などの補助は対応する項目と同じstepへまとめる。
+- 重要な図は話し始めに必要な範囲から見せ、出力・完了条件・結論帯は対象説明の後に出す。結論帯は原則として最後のstepにする。
+- 1枚のstep数は通常0から6、説明対象が明示された順序列だけ0から9。10以上になる場合は語句を小分けにせず意味のまとまりへ再設計する。全入場は原則2秒以内。比較、フロー、Demo、結論でmotion familyを切り替え、同じanimation signatureを3ページ連続させない。
 - `prefers-reduced-motion` と印刷では全要素を表示する前提にする。
 - `speaker_cue` と `spoken_note` は投影面のレイアウトや文字量に含めない。発表者ビュー専用データとして文字列を変更せず保持する。ただし `point_at` は画面に実在するアンカーとして実装する。
 - スタイルプロファイルのstatementや会話的な見出しは、実際の転換点・問い・結論があるページに限る。感情中心の短文スライドは本編の20%以下、同種の感嘆符付き見出しは連続禁止、顔文字は全体で最大1回を初期値とする。プロファイルの上限がより厳しい場合はそれを優先する。
