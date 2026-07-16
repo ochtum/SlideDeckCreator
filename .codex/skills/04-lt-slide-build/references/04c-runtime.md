@@ -7,6 +7,7 @@
 - `build-contract.md`
 - `../assets/deck-shell.html`
 - `../scripts/validate_deck.py`
+- `../scripts/validate_presenter_runtime.js`
 - `../scripts/validate_pdf.py`
 
 ## Inputs
@@ -54,6 +55,11 @@
 - 現在プレビューと次プレビューのレンダリング処理を共用しない。
 - 片方のウィンドウを閉じても、残ったウィンドウの通常操作を壊さない。
 - 現在スライドの `data-reader-context` と `data-story-bridge` を、ノートの近くに表示する。話者が後から開いても、前ページからの接続を再構成できるようにする。
+- talkability v2では `data-phase-question` と `data-speaker-purpose` をノートの近くに表示し、`data-spoken-note` の四行を橋渡し・話す内容・指差し・次の一言の区画へ分ける。長い一段落として表示しない。
+- `話す内容` を主表示領域にし、`橋渡し`・`指差し`・`次の一言` は下段の補助領域へ置く。長い橋渡しが主台本の高さを奪うレイアウトは禁止する。
+- phaseの問いは独立した行として表示し、目的・文脈・接続と同じ72px程度の細い一段へ押し込まない。問いを先頭に置き、文脈領域をスクロールしても見つけやすくする。
+- 1秒ごとのタイマー更新は時刻テキストだけを更新する。ノートまたは文脈DOMを毎秒 `replaceChildren()` してはならない。
+- 同一スライド・同一ノートの間は `話す内容` のDOMと `scrollTop` を保持する。step変更、投影側DOM同期、タイマー更新で先頭へ戻さない。
 
 ## Print And PDF Contract
 
@@ -90,12 +96,13 @@
 2. 固定ランタイムのショートカット、overview、reveal all、scale、presenter、audit、print CSSを保持する。
 3. `scripts/validate_deck.py <deck-output>/index.html` を実行する。単発の `<deck-output>` は `output`、シリーズでは各パートの `output_dir` とする。
 4. ブラウザで通常表示を開き、全スライドの初期状態、前後移動、`A` 全表示、`P` overviewを確認する。
-5. `S` で発表者ビューを開き、現在・次スライド、ノート、reader context、bridge、タイマー、ショートカット一覧、双方向同期を確認する。
+5. `S` で発表者ビューを開き、現在・次スライド、phaseの問い、ページの目的、四区画ノート、reader context、bridge、タイマー、ショートカット一覧、双方向同期を確認する。長い `話す内容` を途中までスクロールし、タイマーが2秒以上進んでも位置が保持されることを確認する。
 6. 各stepで投影側と発表者ビューの現在プレビューが一致することを確認する。
-7. 印刷プレビューで用紙サイズ、余白0、全step表示を確認し、`<deck-output>/index.pdf` を生成する。
-8. `scripts/validate_pdf.py <deck-output>/index.pdf <deck-output>/index.html` を実行する。
-9. PDFをPNGへレンダリングし、全ページの見切れ、余白、背景、画像切れを確認する。
-10. ZIP rootに `index.html` と `assets/` が入る形で `<deck-output>/index_html.zip` を作る。余分な親ディレクトリを入れない。
+7. `scripts/validate_presenter_runtime.js <deck-output>/index.html --width 1280 --height 720` と `--height 860` を実行し、主台本・問いの可読領域とスクロール保持を検証する。
+8. 印刷プレビューで用紙サイズ、余白0、全step表示を確認し、`<deck-output>/index.pdf` を生成する。
+9. `scripts/validate_pdf.py <deck-output>/index.pdf <deck-output>/index.html` を実行する。
+10. PDFをPNGへレンダリングし、全ページの見切れ、余白、背景、画像切れを確認する。
+11. ZIP rootに `index.html` と `assets/` が入る形で `<deck-output>/index_html.zip` を作る。余分な親ディレクトリを入れない。
 
 ## Quality Gate
 
@@ -110,7 +117,10 @@
 - 投影側からの前後操作が発表者ビューへ反映される
 - 現在プレビューは投影側DOM状態と一致する
 - 次プレビューは常に最終状態で表示される
-- 発表者ビューで reader context と bridge が読め、後からページ間の論理を復元できる
+- 発表者ビューで phaseの問い、ページの目的、四区画ノート、reader context、bridge が読め、後からページ間の論理と実際の話し方を復元できる
+- `話す内容` が主表示領域として確保され、phaseの問いが独立した可読領域にある
+- タイマーが進んでも、同一スライドの `話す内容` のスクロール位置が変わらない
+- 1280x720と1280x860の両方で `validate_presenter_runtime.js` が成功する
 - PDFのページ数がHTMLスライド数と一致する
 - PDFページ寸法が960x540pt近似である
 - シリーズでは、上記の品質ゲートを各 `output_dir` のデッキに対して満たす

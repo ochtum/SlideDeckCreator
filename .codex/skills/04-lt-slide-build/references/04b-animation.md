@@ -6,6 +6,7 @@
 
 - `build-contract.md`
 - `design-system.md`
+- `../../02-lt-slide-blueprint/references/motion-choreography.md`
 
 ## Inputs
 
@@ -18,7 +19,8 @@
 アニメーション適用後のHTMLは次を満たす。
 
 - 表示タイミングを持つ要素に `data-anim` を付ける
-- `data-anim` は `rise`, `fade`, `pop`, `wipe`, `draw`, `stamp`, `marker`, `stomp` から選ぶ
+- `data-anim` は `rise`, `fade`, `blur-in`, `slide-left`, `slide-right`, `pop`, `zoom-focus`, `flip-in`, `wipe`, `draw`, `stamp`, `marker`, `stomp` から選ぶ
+- Blueprintの各targetに指定されたpresetを同名の `data-anim` へ保存し、未対応を理由に `rise` へ置換しない
 - stepは1枚最大6回
 - stepはZ型の視線誘導に従う
 - 空stepを作らない
@@ -30,10 +32,11 @@
 1. 各スライドの主メッセージ、視線の始点、結論の位置を確認する。
 2. 表示のまとまり単位で `data-anim` を付ける。細かい単語や装飾を過剰に分割しない。
 3. Z型順序で表示されるよう、各 `[data-anim]` の属する `.zone[data-zone]` を確認する。
-4. 手書きstepへ依存しすぎず、`04c` の固定ランタイムにある `applyZFlow()` が再採番しても意図が崩れない構造にする。
+4. Blueprintに明示された `data-step` を正本とする。`04c` の `applyZFlow()` はstepがない要素だけを補完し、明示stepを再採番しない。
 5. 結論帯は最後に出す。図解上へ重ねたり、主役の図版を隠したりしない。
 6. 常時ループは小さな装飾だけに限定する。
 7. 初期状態、各step、全表示状態で、情報が自然に積み上がることを確認する。
+8. `python .codex/skills/04-lt-slide-build/scripts/validate_animation_choreography.py --blueprint <02-blueprint.yaml> --html <index.html>` を実行し、preset消失、同一signatureの連続、step数の均一化、強い演出の多用を修正する。
 
 ## Animation Rules
 

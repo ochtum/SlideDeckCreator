@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import sys
+import re
 from pathlib import Path
 
 try:
@@ -12,6 +13,25 @@ CANVAS_W = 1280
 CANVAS_H = 720
 MIN_GAP = 8
 REQUIRED_ZONES = ("title_zone", "footer_zone")
+
+
+def compact(value):
+    return re.sub(r"\s+", "", str(value or "")).casefold()
+
+
+def flatten_strings(value):
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, list):
+        return [item for child in value for item in flatten_strings(child)]
+    if isinstance(value, dict):
+        return [item for child in value.values() for item in flatten_strings(child)]
+    return []
+
+
+def matches_anchor(point, values):
+    needle = compact(point)
+    return any(needle == compact(value) or needle in compact(value) or compact(value) in needle for value in values)
 
 
 def rect(value):
@@ -37,6 +57,21 @@ def main():
     path = Path(sys.argv[1])
     data = yaml.safe_load(path.read_text(encoding="utf-8"))
     errors = []
+    duration = 0
+    story = {}
+    source_story = data.get("source_story")
+    if source_story:
+        story_path = (path.parent / source_story).resolve()
+        if story_path.exists():
+            story = yaml.safe_load(story_path.read_text(encoding="utf-8")) or {}
+            duration = int((story.get("project") or {}).get("duration_minutes", 0))
+    talkability_version = int((story.get("project") or {}).get("talkability_version", 0) or 0)
+    story_slides = {str(slide.get("id")): slide for slide in story.get("slides") or []}
+    question_spine = {
+        str(item.get("phase")): item
+        for item in (story.get("narrative") or {}).get("question_spine") or []
+        if isinstance(item, dict)
+    }
 
     canvas = data.get("canvas", {})
     if canvas.get("width") != CANVAS_W or canvas.get("height") != CANVAS_H:
@@ -50,6 +85,32 @@ def main():
         sid = slide.get("id", "<missing-id>")
         if "spoken_note" not in slide or not isinstance(slide.get("spoken_note"), str):
             errors.append(f"{sid}: spoken_note must be present as a string")
+        if talkability_version == 2:
+            source = story_slides.get(str(sid))
+            if not source:
+                errors.append(f"{sid}: slide does not exist in source Story")
+            else:
+                if slide.get("speaker_cue") != source.get("speaker_cue"):
+                    errors.append(f"{sid}: speaker_cue must be copied unchanged from Story")
+                if slide.get("spoken_note") != source.get("spoken_note"):
+                    errors.append(f"{sid}: spoken_note must be copied unchanged from Story")
+                phase = str(source.get("flow_phase") or "")
+                if phase:
+                    context = slide.get("phase_context") or {}
+                    expected_context = question_spine.get(phase) or {}
+                    for key in ("audience_question", "answer", "transition_to_next"):
+                        if str(context.get(key) or "") != str(expected_context.get(key) or ""):
+                            errors.append(f"{sid}: phase_context.{key} must match question_spine")
+                point_at = (source.get("speaker_cue") or {}).get("point_at") or []
+                visible = flatten_strings({
+                    "delivery": slide.get("delivery") or {},
+                    "text": slide.get("text") or {},
+                    "content_model": slide.get("content_model") or {},
+                    "annotations": (slide.get("visual") or {}).get("annotations") or [],
+                })
+                for point in point_at:
+                    if compact(point) != "none" and not matches_anchor(point, visible):
+                        errors.append(f"{sid}: speaker_cue.point_at '{point}' is not implemented")
         zones = slide.get("zones") or {}
         for name in REQUIRED_ZONES:
             if name not in zones:
@@ -80,15 +141,25 @@ def main():
         typography = slide.get("typography") or {}
         for key in ("body_px", "message_px"):
             value = typography.get(key)
-            if value is not None and int(value) < 28:
-                errors.append(f"{sid}: {key} must be at least 28")
+            minimum = 24 if duration >= 20 and key == "body_px" else 28
+            if value is not None and int(value) < minimum:
+                errors.append(f"{sid}: {key} must be at least {minimum}")
         source_px = typography.get("source_px")
         if source_px is not None and int(source_px) < 18:
             errors.append(f"{sid}: source_px must be at least 18")
 
-        steps = (slide.get("animation") or {}).get("steps") or []
-        if len(steps) > 4:
-            errors.append(f"{sid}: animation steps exceed 4")
+        animation = slide.get("animation") or {}
+        steps = animation.get("steps") or []
+        if len(steps) > 6:
+            errors.append(f"{sid}: animation steps exceed 6")
+        if not str(animation.get("intent") or "").strip():
+            errors.append(f"{sid}: animation.intent is required")
+        if animation.get("family") not in {"quiet-reveal", "direction", "structure", "focus", "decision"}:
+            errors.append(f"{sid}: animation.family is invalid")
+        if (story.get("project") or {}).get("content_fidelity") == "full-equivalence":
+            source = story_slides.get(str(sid)) or {}
+            if slide.get("source_unit_ids") != source.get("source_unit_ids"):
+                errors.append(f"{sid}: source_unit_ids must be copied unchanged from Story")
 
         budget = slide.get("text_budget") or {}
         bullets = ((slide.get("text") or {}).get("bullets")) or []

@@ -93,6 +93,10 @@ def main() -> int:
     limits = section(text, "Application Limits")
     if not re.search(r"(連続|上限|最大|頻度)", limits) or not re.search(r"(捏造|作らない|追加しない)", limits):
         errors.append("Application Limits must state frequency and fact-invention limits")
+    if not re.search(r"^duration_evidence:\s*$", limits, re.MULTILINE):
+        errors.append("Application Limits must include duration_evidence")
+    if not re.search(r"^\s+long_form_density_source:\s*(quality-default|observed-long-form)\s*$", limits, re.MULTILINE):
+        errors.append("duration_evidence must declare long_form_density_source")
 
     if errors:
         for error in errors:

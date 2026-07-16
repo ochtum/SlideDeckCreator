@@ -20,3 +20,4 @@
 
 Inspect every generated file. Reject malformed hands or faces when people are present, accidental text, clipped arrows, muddy contrast, and compositions that require `object-fit: cover`.
 
+For 20+ minute decks, generated imagery is normally limited to covers, section transitions, and conceptual introductions. Prefer annotated screenshots, HTML tables, code/config blocks, and exact SVG diagrams for explanatory slides. A decorative illustration does not satisfy a required visible anchor or evidence artifact.

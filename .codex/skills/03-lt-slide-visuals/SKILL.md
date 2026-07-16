@@ -22,6 +22,12 @@ description: .lt-slide-work/02-blueprint.yaml から画像アセットを生成�
 
 提供画像の加工版や生成画像を元画像の隣、プロジェクトルート、`output/` へ直接保存しない。最終工程だけが必要な画像を `output/assets/` へコピーする。
 
+## Required Reads
+
+- `references/visual-guidelines.md`
+- 20分以上では `../01-lt-slide-story/references/explanation-depth.md`
+- talkability v2では `../01-lt-slide-story/references/talkability.md`
+
 ## Series Mode
 
 ルートの `01-story.yaml` が `kind: lt-slide-series` なら、`../01-lt-slide-story/references/series-schema.md` の `parts` を `order` 順に処理する。各パートの `blueprint_file` だけを読み、そのパートのディレクトリに `visuals/` と `visuals_manifest_file` を置く。
@@ -33,6 +39,8 @@ description: .lt-slide-work/02-blueprint.yaml から画像アセットを生成�
 ## Workflow
 
 1. 単発は `.lt-slide-work/02-blueprint.yaml`、シリーズは各パートの `blueprint_file` の `visual_assets` を読む。対応するストーリーの `source_asset_inventory` も読み、採用済みの提供画像が `visual_assets` に漏れていないことを確認する。
+1a. Blueprintに `design_system` があればregistryから同じID/versionのspecを読み、生成画像のpalette、明暗、形、質感をそのtokenへ合わせる。ID/versionをvisuals manifestへ引き継ぐ。選択済みspecが見つからない場合は内蔵paletteへfallbackせず停止する。
+1b. 20分以上では、画像を作る前に `../01-lt-slide-story/references/explanation-depth.md` の `visible_anchors` と `talkability.md` の `speaker_cue.point_at` を確認する。説明中に指す文字・値・コード・表を生成画像へ焼き込まず、正確に読めるHTML/SVG側へ残す。
 2. `required: true` の各資産について、生成、既存画像のコピー、または不要判定を行う。提供画像は再生成せず、元ファイルをコピーして `provided` と記録する。採用した表・コード・設定例は画像化せず、後工程のHTML `content_model` へ引き継ぐ。
 
 ## Source Asset Rights
@@ -54,6 +62,9 @@ description: .lt-slide-work/02-blueprint.yaml から画像アセットを生成�
 - 矢印やラベルの正確さが必要なフロー、表、マトリクス、グラフは生成画像ではなくSVG/CSSを使う。
 - 画像内の主役は中央寄りにし、端に重要要素を置かない。
 - `visual_zone` のアスペクト比に合わせ、トリミング前提にしない。
+- `speaker_cue.point_at` の実装を生成画像へ委ねない。指差し対象はHTMLテキスト、表セル、コード行、または正確なSVGラベルとして04へ渡す。
+- 長時間LTの説明ページでは、象徴画像を「具体例があるように見せる」ために使わない。コード、設定、表、画面、差分、判断フローが必要なら、それらを主役にし、生成画像は表紙・章区切り・概念導入に限定する。
+- 同じ生成画像または同じ提供画像を複数の異なる主張へ使い回さない。段階読解で再利用する場合は、HTML/SVGの注釈とfocusをページごとに変える。
 
 ## Presenter And QR Assets
 
@@ -68,7 +79,7 @@ description: .lt-slide-work/02-blueprint.yaml から画像アセットを生成�
 - subject: スライドの唯一のメッセージ
 - composition: 左右、中央、流れなど
 - style: modern Japanese business-tech editorial illustration
-- palette: navy, green, blue, cyan, white
+- palette: 選択済みdesign-systemのbackground、primary、secondary、accent。未選択時だけ内蔵navy/green/blue/cyan/white
 - constraints: no text, no letters, no logos, no watermark
 - background: transparentまたは白
 - safe area: 端から10%以上の余白
@@ -80,6 +91,9 @@ description: .lt-slide-work/02-blueprint.yaml から画像アセットを生成�
 ```yaml
 schema_version: 1
 source_blueprint: "./02-blueprint.yaml"
+design_system:
+  id: trustworthy-blue
+  version: 1.0.0
 assets:
   - asset_id: visual-s03
     slide_id: s03
@@ -105,3 +119,6 @@ assets:
 - altテキストが見た目ではなく意味を説明している。
 - 各パートで、採用済み提供画像がマニフェストに `provided` として存在し、表・コード・設定例の採否理由がストーリー／設計図から追跡できる。
 - `visual_plan.status: required` の各計画が、`provided`、`ready`、または `fallback-svg` のアセット／HTML実装へ解決されている。`none` や未割当のまま最終工程へ渡さない。
+- 20分以上では、生成画像が `delivery.visible_anchors` や具体的な `content_model` の代替になっていない。
+- talkability v2では、すべての `speaker_cue.point_at` が画像外のHTML/SVGアンカーとして解決されている。
+- design-system選択時はmanifestのID/versionがBlueprintと一致し、生成画像のpalette・明暗・形がspec tokenと矛盾しない。

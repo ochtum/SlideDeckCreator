@@ -52,13 +52,30 @@
       padding:28px; border:2px solid var(--line); border-radius:22px;
       background:rgba(255,255,255,.94); box-shadow:var(--shadow);
     }
-    [data-anim] { opacity:0; transition:opacity .5s,transform .6s,clip-path .7s; }
+    [data-anim] {
+      opacity:0; filter:none;
+      transition-property:opacity,transform,clip-path,filter,stroke-dashoffset;
+      transition-duration:var(--motion-duration,.58s);
+      transition-delay:var(--motion-delay,0ms);
+      transition-timing-function:var(--motion-easing,cubic-bezier(.2,.75,.25,1));
+    }
+    [data-anim="fade"] { opacity:0; }
     [data-anim="rise"] { transform:translateY(28px); }
+    [data-anim="blur-in"] { filter:blur(14px); transform:scale(.985); }
+    [data-anim="slide-left"] { transform:translateX(-56px); }
+    [data-anim="slide-right"] { transform:translateX(56px); }
     [data-anim="pop"] { transform:scale(.82); }
+    [data-anim="zoom-focus"] { transform:scale(1.12); filter:blur(5px); }
+    [data-anim="flip-in"] { transform:perspective(900px) rotateX(-70deg); transform-origin:50% 0; }
     [data-anim="wipe"] { clip-path:inset(0 100% 0 0); }
-    [data-anim].shown { opacity:1; transform:none; clip-path:inset(0); }
+    [data-anim="draw"] { clip-path:inset(0 100% 0 0); }
+    path[data-anim="draw"],line[data-anim="draw"],polyline[data-anim="draw"] { clip-path:none; stroke-dasharray:1200; stroke-dashoffset:1200; }
+    [data-anim="marker"] { clip-path:inset(0 100% 0 0); }
+    [data-anim="stamp"] { transform:scale(1.65) rotate(-5deg); }
+    [data-anim="stomp"] { transform:translateY(-44px) scale(1.16); }
+    [data-anim].shown { opacity:1; transform:none; clip-path:inset(0); filter:none; stroke-dashoffset:0; }
     @media (prefers-reduced-motion:reduce) {
-      [data-anim] { opacity:1!important; transform:none!important; clip-path:inset(0)!important; transition:none!important; }
+      [data-anim] { opacity:1!important; transform:none!important; clip-path:inset(0)!important; filter:none!important; stroke-dashoffset:0!important; transition:none!important; }
     }
     @media print {
       html,body {
@@ -73,7 +90,7 @@
         break-after:page; page-break-after:always; pointer-events:auto;
       }
       .slide:last-child { break-after:auto; page-break-after:auto; }
-      [data-anim] { opacity:1!important; transform:none!important; clip-path:inset(0)!important; }
+      [data-anim] { opacity:1!important; transform:none!important; clip-path:inset(0)!important; filter:none!important; stroke-dashoffset:0!important; }
       .presenter-console,.pager { display:none!important; }
     }
     .pager {
@@ -98,18 +115,19 @@
     .pager-label { display:flex; justify-content:space-between; gap:12px; margin-top:8px; font-size:18px; font-weight:900; }
     .presenter-console { display:none; }
     body.presenter-mode {
-      display:block; overflow:auto; padding:16px; background:#0b1730; color:#fff;
+      display:block; height:100vh; overflow:hidden; padding:16px; background:#0b1730; color:#fff;
     }
     body.presenter-mode > .deck { position:fixed; left:-10000px; top:0; transform:none!important; }
     body.presenter-mode .presenter-console {
-      display:grid; grid-template-columns:minmax(0,1.45fr) minmax(320px,.75fr);
-      gap:16px; min-height:calc(100vh - 32px);
+      display:grid; grid-template-columns:minmax(0,1.12fr) minmax(500px,.88fr);
+      gap:16px; height:calc(100vh - 32px); min-height:0;
     }
     .presenter-stage,.presenter-panel {
       border:1px solid rgba(255,255,255,.14); border-radius:18px;
       background:#111f3b; box-shadow:0 20px 60px rgba(0,0,0,.28);
+      min-width:0; min-height:0; overflow:hidden;
     }
-    .presenter-stage { padding:14px; }
+    .presenter-stage { height:100%; padding:14px; }
     .presenter-label { margin-bottom:8px; color:#9fb5d8; font-size:18px; font-weight:800; }
     .presenter-preview {
       position:relative; width:100%; aspect-ratio:16/9; overflow:hidden;
@@ -134,17 +152,63 @@
       min-width:34px; padding:3px 7px; border-radius:7px; background:#fff; color:#001b4d;
       font:inherit; font-weight:900; text-align:center; box-shadow:inset 0 -2px 0 rgba(0,27,77,.18);
     }
-    .presenter-panel { display:flex; flex-direction:column; padding:22px; }
+    .presenter-panel {
+      display:grid; grid-template-rows:auto minmax(260px,1fr) minmax(120px,18vh) auto;
+      gap:10px; height:100%; padding:18px;
+    }
     .presenter-meta { display:flex; justify-content:space-between; gap:18px; font-weight:900; }
-    .presenter-time { font-size:42px; font-variant-numeric:tabular-nums; }
+    .presenter-time { font-size:38px; font-variant-numeric:tabular-nums; }
     .presenter-position { color:#9fb5d8; font-size:20px; }
     .presenter-note {
-      flex:1; margin:24px 0; padding:20px; border-radius:14px; background:#f7faff;
-      color:#001b4d; font-size:24px; line-height:1.55; white-space:pre-wrap;
+      display:grid; grid-template-rows:minmax(0,1fr) 84px; gap:10px;
+      min-height:0; margin:0; padding:12px; border-radius:14px; background:#f7faff;
+      color:#001b4d; overflow:hidden;
     }
+    .presenter-cue-primary {
+      display:grid; grid-template-rows:auto minmax(0,1fr); min-height:0;
+      border:2px solid #b9d7f4; border-radius:12px; background:#fff; overflow:hidden;
+    }
+    .presenter-cue-primary .presenter-cue-label { padding:10px 12px 6px; }
+    .presenter-cue-primary .presenter-cue-body {
+      min-height:0; padding:0 12px 12px; overflow:auto; scrollbar-gutter:stable;
+      font-size:21px; line-height:1.48;
+    }
+    .presenter-cue-support {
+      display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; min-height:0;
+    }
+    .presenter-cue-support .presenter-cue-row {
+      display:grid; grid-template-rows:auto minmax(0,1fr); gap:4px; min-width:0; min-height:0;
+      padding:7px 9px; border:1px solid #d4e3f2; border-radius:10px; background:#f8fbff; overflow:hidden;
+    }
+    .presenter-cue-label { color:#1761c3; font-size:18px; font-weight:900; }
+    .presenter-cue-body { min-width:0; white-space:pre-wrap; overflow-wrap:anywhere; }
+    .presenter-cue-support .presenter-cue-body {
+      min-height:0; overflow:auto; font-size:18px; line-height:1.28; scrollbar-gutter:stable;
+    }
+    .presenter-note-plain { min-height:0; overflow:auto; font-size:20px; line-height:1.45; white-space:pre-wrap; }
     .presenter-context {
-      margin:-8px 0 20px; padding:12px 14px; border:1px solid rgba(159,181,216,.35);
-      border-radius:12px; background:#0b1730; color:#dce8ff; font-size:16px; line-height:1.45; white-space:pre-wrap;
+      min-height:0; margin:0; padding:6px; border:1px solid rgba(159,181,216,.35);
+      border-radius:12px; background:#071326; color:#dce8ff; overflow:auto; scrollbar-gutter:stable;
+    }
+    .presenter-context-row {
+      display:grid; grid-template-columns:72px minmax(0,1fr); gap:10px;
+      padding:8px 10px; border-bottom:1px solid rgba(159,181,216,.18);
+      font-size:18px; line-height:1.38;
+    }
+    .presenter-context-row:last-child { border-bottom:0; }
+    .presenter-context-row.is-question {
+      position:sticky; top:0; z-index:1; min-height:58px;
+      border:1px solid #b9d7f4; border-radius:9px; background:#eef6ff; color:#001b4d;
+      font-size:20px; line-height:1.4;
+    }
+    .presenter-context-label { color:#76b7ff; font-weight:900; }
+    .presenter-context-row.is-question .presenter-context-label { color:#1761c3; }
+    .presenter-context-body { min-width:0; overflow-wrap:anywhere; }
+    .presenter-controls { align-self:end; }
+    @media (max-height:760px) {
+      .presenter-panel { grid-template-rows:auto minmax(250px,1fr) minmax(120px,18vh) auto; padding:14px; }
+      .presenter-time { font-size:34px; }
+      .presenter-cue-primary .presenter-cue-body { font-size:20px; line-height:1.42; }
     }
     .presenter-controls { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
     .presenter-controls button {
@@ -269,9 +333,12 @@
       applyZFlow() {
         this.slides.forEach(slide=>{
           const items=this.animated(slide).filter(el=>!el.closest(".footer-zone,.brand-badge"));
-          const buckets=[...new Set(items.map(el=>this.zFlowBucket(slide,el)))].sort((a,b)=>a-b);
-          const stepFor=new Map(buckets.map((bucket,index)=>[bucket,index+1]));
-          items.forEach(el=>{ el.dataset.step=String(stepFor.get(this.zFlowBucket(slide,el))||1); });
+          const missing=items.filter(el=>!Number(el.dataset.step));
+          if(!missing.length) return;
+          const explicitMax=Math.max(0,...items.filter(el=>Number(el.dataset.step)).map(el=>Number(el.dataset.step)));
+          const buckets=[...new Set(missing.map(el=>this.zFlowBucket(slide,el)))].sort((a,b)=>a-b);
+          const stepFor=new Map(buckets.map((bucket,index)=>[bucket,explicitMax+index+1]));
+          missing.forEach(el=>{ el.dataset.step=String(stepFor.get(this.zFlowBucket(slide,el))||explicitMax+1); });
         });
       }
       state() {
@@ -394,8 +461,8 @@
       setupPresenter() {
         document.getElementById("presenterPrevious").addEventListener("click",()=>this.previous());
         document.getElementById("presenterNextButton").addEventListener("click",()=>this.next());
-        document.getElementById("presenterReset").addEventListener("click",()=>{this.startedAt=Date.now();this.changed();});
-        setInterval(()=>this.renderPresenter(),1000);
+        document.getElementById("presenterReset").addEventListener("click",()=>{this.startedAt=Date.now();this.renderPresenterTimer();this.changed();});
+        setInterval(()=>this.renderPresenterTimer(),1000);
         this.renderPresenter();
       }
       mountPreview(target,clone) {
@@ -423,23 +490,67 @@
         clone.querySelectorAll("[data-anim]").forEach(el=>el.classList.add("shown"));
         this.mountPreview(target,clone);
       }
+      renderPresenterNote(target,note) {
+        const noteKey=String(note||"");
+        if(target.dataset.noteKey===noteKey) return;
+        const labels=["橋渡し","話す内容","指差し","次の一言"];
+        const parts=new Map();
+        noteKey.split(/\r?\n/).forEach(line=>{
+          const match=line.match(/^\s*(橋渡し|話す内容|指差し|次の一言)\s*[:：]\s*(.+?)\s*$/);
+          if(match) parts.set(match[1],match[2]);
+        });
+        target.replaceChildren();
+        target.dataset.noteKey=noteKey;
+        if(!labels.every(label=>parts.has(label))) {
+          const plain=document.createElement("div"); plain.className="presenter-note-plain";
+          plain.textContent=note||"（ノートなし）"; target.appendChild(plain);
+          return;
+        }
+        const makeRow=(label,className="presenter-cue-row")=>{
+          const row=document.createElement("div"); row.className=className; row.dataset.cueLabel=label;
+          const heading=document.createElement("div"); heading.className="presenter-cue-label"; heading.textContent=label;
+          const body=document.createElement("div"); body.className="presenter-cue-body"; body.textContent=parts.get(label);
+          row.append(heading,body); return row;
+        };
+        target.appendChild(makeRow("話す内容","presenter-cue-row presenter-cue-primary"));
+        const support=document.createElement("div"); support.className="presenter-cue-support";
+        ["橋渡し","指差し","次の一言"].forEach(label=>support.appendChild(makeRow(label)));
+        target.appendChild(support);
+      }
+      renderPresenterContext(target,slide) {
+        const items=[
+          ["問い",slide.dataset.phaseQuestion,"question"],
+          ["目的",slide.dataset.speakerPurpose,"purpose"],
+          ["文脈",slide.dataset.readerContext,"context"],
+          ["接続",slide.dataset.storyBridge,"bridge"]
+        ].filter(([,value])=>value);
+        const contextKey=JSON.stringify(items);
+        if(target.dataset.contextKey===contextKey) return;
+        target.replaceChildren(); target.dataset.contextKey=contextKey; target.hidden=!items.length;
+        items.forEach(([label,value,kind])=>{
+          const row=document.createElement("div");
+          row.className=`presenter-context-row${kind==="question"?" is-question":""}`;
+          row.dataset.contextKind=kind;
+          const heading=document.createElement("div"); heading.className="presenter-context-label"; heading.textContent=label;
+          const body=document.createElement("div"); body.className="presenter-context-body"; body.textContent=value;
+          row.append(heading,body); target.appendChild(row);
+        });
+      }
+      renderPresenterTimer() {
+        if(!this.presenterMode) return;
+        const elapsed=Math.max(0,Math.floor((Date.now()-this.startedAt)/1000));
+        document.getElementById("presenterTime").textContent=`${String(Math.floor(elapsed/60)).padStart(2,"0")}:${String(elapsed%60).padStart(2,"0")}`;
+      }
       renderPresenter() {
         if(!this.presenterMode) return;
         this.renderCurrentPreview(document.getElementById("presenterCurrent"),this.slides[this.index]);
         this.renderNextPreview(document.getElementById("presenterNext"),this.slides[this.index+1]);
         const slide=this.slides[this.index];
-        document.getElementById("presenterNote").textContent=slide.dataset.spokenNote||"（ノートなし）";
-        const context=[
-          slide.dataset.readerContext&&`文脈: ${slide.dataset.readerContext}`,
-          slide.dataset.storyBridge&&`接続: ${slide.dataset.storyBridge}`
-        ].filter(Boolean).join("\n");
-        const contextElement=document.getElementById("presenterContext");
-        contextElement.textContent=context;
-        contextElement.hidden=!context;
+        this.renderPresenterNote(document.getElementById("presenterNote"),slide.dataset.spokenNote);
+        this.renderPresenterContext(document.getElementById("presenterContext"),slide);
         const max=Math.max(0,...this.animated().map(el=>this.stepOf(el)));
         document.getElementById("presenterPosition").textContent=`${this.index+1} / ${this.slides.length}  step ${this.step} / ${max}`;
-        const elapsed=Math.max(0,Math.floor((Date.now()-this.startedAt)/1000));
-        document.getElementById("presenterTime").textContent=`${String(Math.floor(elapsed/60)).padStart(2,"0")}:${String(elapsed%60).padStart(2,"0")}`;
+        this.renderPresenterTimer();
       }
       audit() {
         this.slides.forEach((slide,slideIndex)=>{

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 const fs = require("fs");
 const path = require("path");
+const { spawnSync } = require("child_process");
 
 function parseArgs(argv) {
   const args = {
@@ -13,6 +14,9 @@ function parseArgs(argv) {
     noFail: false,
     includePresenter: true,
     presenterOnly: false,
+    story: null,
+    blueprint: null,
+    python: process.env.PYTHON || null,
   };
   const rest = [...argv];
   if (rest[0] && !rest[0].startsWith("--")) args.html = rest.shift();
@@ -27,14 +31,155 @@ function parseArgs(argv) {
     else if (key === "--no-fail") args.noFail = true;
     else if (key === "--skip-presenter") args.includePresenter = false;
     else if (key === "--presenter") { args.presenterOnly = true; args.includePresenter = true; }
+    else if (key === "--story") { args.story = value; i++; }
+    else if (key === "--blueprint") { args.blueprint = value; i++; }
+    else if (key === "--python") { args.python = value; i++; }
     else if (key === "--help" || key === "-h") {
-      console.log("Usage: review_deck.js [html] [--out dir] [--min-margin px] [--skip-presenter] [--presenter] [--no-fail]");
+      console.log("Usage: review_deck.js [html] [--story story.yaml] [--blueprint blueprint.yaml] [--out dir] [--min-margin px] [--skip-presenter] [--presenter] [--no-fail]");
       process.exit(0);
     } else {
       throw new Error(`Unknown argument: ${key}`);
     }
   }
   return args;
+}
+
+function findWorkspaceRoot(htmlPath) {
+  let current = path.dirname(path.resolve(htmlPath));
+  while (true) {
+    if (fs.existsSync(path.join(current, ".lt-slide-work"))) return current;
+    const parent = path.dirname(current);
+    if (parent === current) return null;
+    current = parent;
+  }
+}
+
+function resolveContractPaths(args) {
+  const html = path.resolve(args.html);
+  const root = findWorkspaceRoot(html);
+  const result = {
+    root,
+    story: args.story ? path.resolve(args.story) : null,
+    blueprint: args.blueprint ? path.resolve(args.blueprint) : null,
+  };
+  if (!root) return result;
+
+  const relative = path.relative(path.join(root, "output"), html).split(path.sep);
+  const partId = relative.length === 2 && relative[1] === "index.html" ? relative[0] : null;
+  if (!result.story) {
+    result.story = partId
+      ? path.join(root, ".lt-slide-work", "parts", partId, "01-story.yaml")
+      : path.join(root, ".lt-slide-work", "01-story.yaml");
+  }
+  if (!result.blueprint) {
+    result.blueprint = partId
+      ? path.join(root, ".lt-slide-work", "parts", partId, "02-blueprint.yaml")
+      : path.join(root, ".lt-slide-work", "02-blueprint.yaml");
+  }
+  return result;
+}
+
+function runPythonCheck(python, script, args) {
+  const result = spawnSync(python, [script, ...args], {
+    encoding: "utf8",
+    env: { ...process.env, PYTHONUTF8: "1" },
+  });
+  const output = `${result.stdout || ""}${result.stderr || ""}`.trim();
+  return {
+    script,
+    args,
+    exitCode: typeof result.status === "number" ? result.status : 2,
+    output: output || (result.error ? result.error.message : "validator produced no output"),
+  };
+}
+
+function validateContracts(args) {
+  const paths = resolveContractPaths(args);
+  const checks = [];
+  const failures = [];
+  if (!paths.root) {
+    failures.push({ type: "contract-input-missing", message: "ワークスペースルートを特定できません。--story と --blueprint を指定してください。" });
+    return { paths, checks, failures };
+  }
+  if (!paths.story || !fs.existsSync(paths.story)) {
+    failures.push({ type: "contract-input-missing", message: `対応する01-story.yamlがありません: ${paths.story || "(未指定)"}` });
+  }
+  if (!paths.blueprint || !fs.existsSync(paths.blueprint)) {
+    failures.push({ type: "contract-input-missing", message: `対応する02-blueprint.yamlがありません: ${paths.blueprint || "(未指定)"}` });
+  }
+  if (failures.length) return { paths, checks, failures };
+
+  const python = args.python || (process.platform === "win32" ? "python" : "python3");
+  const spoken = runPythonCheck(
+    python,
+    path.join(paths.root, ".codex", "skills", "01-lt-slide-story", "scripts", "validate_spoken_notes.py"),
+    ["--story", paths.story, "--html", path.resolve(args.html)],
+  );
+  const talkability = runPythonCheck(
+    python,
+    path.join(paths.root, ".codex", "skills", "01-lt-slide-story", "scripts", "validate_talkability.py"),
+    ["--story", paths.story, "--blueprint", paths.blueprint, "--html", path.resolve(args.html)],
+  );
+  const visual = runPythonCheck(
+    python,
+    path.join(paths.root, ".codex", "skills", "02-lt-slide-blueprint", "scripts", "validate_visual_plan.py"),
+    ["--story", paths.story, "--blueprint", paths.blueprint],
+  );
+  const depth = runPythonCheck(
+    python,
+    path.join(paths.root, ".codex", "skills", "01-lt-slide-story", "scripts", "validate_explanation_depth.py"),
+    ["--story", paths.story, "--blueprint", paths.blueprint, "--html", path.resolve(args.html)],
+  );
+  const motion = runPythonCheck(
+    python,
+    path.join(paths.root, ".codex", "skills", "04-lt-slide-build", "scripts", "validate_animation_choreography.py"),
+    ["--blueprint", paths.blueprint, "--html", path.resolve(args.html)],
+  );
+  const designSystem = runPythonCheck(
+    python,
+    path.join(paths.root, ".codex", "skills", "07-lt-design-system-manager", "scripts", "manage_design_system.py"),
+    ["validate-binding", "--root", path.join(paths.root, "config", "design-systems"), "--story", paths.story, "--blueprint", paths.blueprint, "--html", path.resolve(args.html)],
+  );
+  const rootStory = path.join(paths.root, ".lt-slide-work", "01-story.yaml");
+  const sourceInventory = path.join(paths.root, ".lt-slide-work", "source-inventory.yaml");
+  let contentEquivalence = null;
+  if (fs.existsSync(rootStory) && fs.existsSync(sourceInventory)) {
+    const outputRoot = path.join(paths.root, "output");
+    const htmlFiles = [];
+    const single = path.join(outputRoot, "index.html");
+    if (fs.existsSync(single)) htmlFiles.push(single);
+    if (fs.existsSync(outputRoot)) {
+      for (const entry of fs.readdirSync(outputRoot, { withFileTypes: true })) {
+        const candidate = entry.isDirectory() ? path.join(outputRoot, entry.name, "index.html") : null;
+        if (candidate && fs.existsSync(candidate)) htmlFiles.push(candidate);
+      }
+    }
+    const contentArgs = ["--inventory", sourceInventory, "--story", rootStory];
+    for (const htmlFile of htmlFiles) contentArgs.push("--html", htmlFile);
+    contentEquivalence = runPythonCheck(
+      python,
+      path.join(paths.root, ".codex", "skills", "01-lt-slide-story", "scripts", "audit_content_equivalence.py"),
+      contentArgs,
+    );
+  }
+  checks.push(
+    { name: "spoken-notes", ...spoken },
+    { name: "talkability", ...talkability },
+    { name: "visual-plan", ...visual },
+    { name: "explanation-depth", ...depth },
+    { name: "animation-choreography", ...motion },
+    { name: "design-system-binding", ...designSystem },
+  );
+  if (contentEquivalence) checks.push({ name: "content-equivalence", ...contentEquivalence });
+  for (const check of checks) {
+    if (check.exitCode !== 0) {
+      failures.push({
+        type: `contract-${check.name}-failed`,
+        message: check.output,
+      });
+    }
+  }
+  return { paths, checks, failures };
 }
 
 function loadPlaywright() {
@@ -239,6 +384,32 @@ async function inspectSlide(page, index, options) {
       }
     }
 
+    const genericPhrases = ["対象を確認する", "証拠を残す", "完了条件を確認する", "次の判断を確認する"];
+    const slideText = (slide.innerText || "").replace(/\s+/g, " ");
+    const genericHits = genericPhrases.filter((phrase) => slideText.includes(phrase));
+    if (genericHits.length >= 2) {
+      findings.push({
+        type: "generic-explanation",
+        message: `ページ固有の説明ではない汎用チェックが使われています: ${genericHits.join(" / ")}`,
+      });
+    }
+
+    const estimatedSeconds = Number(slide.dataset.estimatedSeconds || 0);
+    if (estimatedSeconds >= 60) {
+      const detailTexts = [...slide.querySelectorAll("p,li,td,th,pre,code,.card,.flow-node,.check-item,[data-detail]")]
+        .filter((el) => isVisible(el) && !el.closest("[data-zone='title'],.brand-badge,.footer-zone,.page-number,.page-num"))
+        .map((el) => (el.innerText || "").trim().replace(/\s+/g, " "))
+        .filter((text) => text.length >= 6);
+      const uniqueDetails = new Set(detailTexts);
+      const hasStructuredEvidence = Boolean(slide.querySelector("table,pre,code,img,svg"));
+      if (uniqueDetails.size < 2 && !hasStructuredEvidence) {
+        findings.push({
+          type: "explanation-thin",
+          message: `${estimatedSeconds}秒の説明に対して、投影面の具体的な説明要素が不足しています`,
+        });
+      }
+    }
+
     return { findings };
   }, { slideIndex: index, minMargin: options.minMargin, overlapTolerance: options.overlapTolerance });
 }
@@ -314,6 +485,43 @@ async function inspectPresenter(page, index, expectedCurrentHTML, expectedStyles
       findings.push({ type: "presenter-shortcuts-missing", message: "ショートカット一覧が発表者ビューに表示されていません" });
     }
 
+    const sourceSlide = [...document.querySelectorAll("body > .deck .slide")][slideIndex];
+    const primaryScript = root.querySelector(".presenter-cue-primary .presenter-cue-body");
+    const minimumPrimaryHeight = Math.round(Math.min(220, Math.max(160, innerHeight * .25)));
+    if (!primaryScript || !isVisible(primaryScript)) {
+      findings.push({ type: "presenter-primary-script-missing", message: "「話す内容」の主表示領域がありません" });
+    } else {
+      const primaryRect = rectOf(primaryScript);
+      if (primaryRect.height < minimumPrimaryHeight) {
+        findings.push({
+          type: "presenter-primary-script-too-small",
+          element: label(primaryScript),
+          rect: primaryRect,
+          message: `「話す内容」の表示高が不足しています: ${primaryRect.height}px < ${minimumPrimaryHeight}px`,
+        });
+      }
+    }
+
+    const contextPanel = root.querySelector("#presenterContext");
+    const minimumContextHeight = Math.round(Math.min(160, Math.max(120, innerHeight * .18)));
+    if (contextPanel && isVisible(contextPanel)) {
+      const contextRect = rectOf(contextPanel);
+      if (contextRect.height < minimumContextHeight) {
+        findings.push({
+          type: "presenter-context-too-small",
+          element: label(contextPanel),
+          rect: contextRect,
+          message: `問い・文脈の表示高が不足しています: ${contextRect.height}px < ${minimumContextHeight}px`,
+        });
+      }
+    }
+    if (sourceSlide?.dataset.phaseQuestion) {
+      const question = root.querySelector(".presenter-context-row.is-question .presenter-context-body");
+      if (!question || !isVisible(question)) {
+        findings.push({ type: "presenter-question-missing", message: "phaseの問いが独立した領域に表示されていません" });
+      }
+    }
+
     const currentSlide = root.querySelector("#presenterCurrent .slide");
     if (!currentSlide || !isVisible(currentSlide)) {
       findings.push({ type: "presenter-current-missing", message: "現在スライドのプレビューが表示されていません" });
@@ -354,9 +562,30 @@ async function inspectPresenter(page, index, expectedCurrentHTML, expectedStyles
     }
 
     const visible = [...root.querySelectorAll("*")].filter(isVisible);
+    const isClippedByScrollableAncestor = (el) => {
+      let ancestor = el.parentElement;
+      while (ancestor && ancestor !== root) {
+        const style = getComputedStyle(ancestor);
+        const scrollable = /(auto|scroll|hidden|clip)/.test(`${style.overflow} ${style.overflowX} ${style.overflowY}`);
+        if (scrollable) {
+          const a = ancestor.getBoundingClientRect();
+          const r = el.getBoundingClientRect();
+          const extendsBeyondAncestor =
+            r.left < a.left - 1 || r.top < a.top - 1 || r.right > a.right + 1 || r.bottom > a.bottom + 1;
+          const ancestorInsideWindow =
+            a.left >= -1 && a.top >= -1 && a.right <= innerWidth + 1 && a.bottom <= innerHeight + 1;
+          if (extendsBeyondAncestor && ancestorInsideWindow) return true;
+        }
+        ancestor = ancestor.parentElement;
+      }
+      return false;
+    };
     for (const el of visible) {
       const r = rectOf(el);
-      if (r.x < -1 || r.y < -1 || r.right > innerWidth + 1 || r.bottom > innerHeight + 1) {
+      if (
+        (r.x < -1 || r.y < -1 || r.right > innerWidth + 1 || r.bottom > innerHeight + 1) &&
+        !isClippedByScrollableAncestor(el)
+      ) {
         findings.push({ type: "presenter-overflow-window", element: label(el), rect: r, message: "発表者ビューの要素がウィンドウ外へはみ出しています" });
       }
     }
@@ -387,6 +616,43 @@ async function inspectPresenter(page, index, expectedCurrentHTML, expectedStyles
   }, { slideIndex: index, expectedHTML: expectedCurrentHTML, expectedStyleSnapshot: expectedStyles });
 }
 
+async function inspectPresenterScrollStability(page) {
+  return await page.evaluate(async () => {
+    const primary = () => document.querySelector(".presenter-cue-primary .presenter-cue-body");
+    const scroller = primary();
+    if (!scroller || scroller.scrollHeight <= scroller.clientHeight + 4) {
+      return { tested: false, findings: [] };
+    }
+    const maximum = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
+    scroller.scrollTop = Math.min(80, maximum);
+    const before = {
+      scrollTop: scroller.scrollTop,
+      timer: document.getElementById("presenterTime")?.textContent || "",
+    };
+    await new Promise((resolve) => setTimeout(resolve, 1250));
+    const current = primary();
+    const after = {
+      scrollTop: current?.scrollTop || 0,
+      timer: document.getElementById("presenterTime")?.textContent || "",
+    };
+    const findings = [];
+    if (Math.abs(after.scrollTop - before.scrollTop) > 2) {
+      findings.push({
+        type: "presenter-note-scroll-reset",
+        message: `タイマー更新後に「話す内容」のスクロール位置が変化しました: ${before.scrollTop}px -> ${after.scrollTop}px`,
+      });
+    }
+    if (after.timer === before.timer) {
+      findings.push({
+        type: "presenter-timer-stalled",
+        message: `スクロール保持試験中にタイマーが進みませんでした: ${before.timer}`,
+      });
+    }
+    current?.scrollTo?.({ top: 0 });
+    return { tested: true, before, after, findings };
+  });
+}
+
 function buildMarkdown(report) {
   const lines = [];
   lines.push("# LTスライド視覚レビューレポート");
@@ -396,8 +662,22 @@ function buildMarkdown(report) {
   lines.push(`- finding数: ${report.findingCount}`);
   lines.push(`- 通常表示finding数: ${report.audienceFindingCount}`);
   lines.push(`- 発表者ビューfinding数: ${report.presenterFindingCount}`);
+  lines.push(`- 契約検証finding数: ${report.contractFindingCount}`);
   lines.push(`- viewport: ${report.viewport.width}x${report.viewport.height}`);
   lines.push(`- 最小余白: ${report.minMargin}px`);
+  lines.push("");
+  lines.push("## 契約検証");
+  lines.push("");
+  if (!report.contract.findings.length) {
+    lines.push("- findings: なし");
+  } else {
+    for (const finding of report.contract.findings) {
+      lines.push(`- ${finding.type}: ${finding.message}`);
+    }
+  }
+  for (const check of report.contract.checks) {
+    lines.push(`- ${check.name}: ${check.exitCode === 0 ? "OK" : "FAILED"}`);
+  }
   lines.push("");
   if (report.slides.length) {
     lines.push("## 通常表示");
@@ -447,6 +727,7 @@ function buildMarkdown(report) {
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   ensureDir(args.out);
+  const contract = validateContracts(args);
   const playwright = loadPlaywright();
   const browser = await launchBrowser(playwright);
   const audiencePage = await browser.newPage({ viewport: { width: args.width, height: args.height }, deviceScaleFactor: 1 });
@@ -466,7 +747,14 @@ async function main() {
     presenterSlides: [],
     audienceFindingCount: 0,
     presenterFindingCount: 0,
+    contractFindingCount: contract.failures.length,
     findingCount: 0,
+    contract: {
+      story: contract.paths.story,
+      blueprint: contract.paths.blueprint,
+      checks: contract.checks,
+      findings: contract.failures,
+    },
   };
 
   if (!args.presenterOnly) {
@@ -486,6 +774,7 @@ async function main() {
     await disableMotion(presenterPage);
     await presenterPage.waitForTimeout(300);
 
+    let scrollStabilityTested = false;
     for (let i = 0; i < slideCount; i++) {
       await revealSlide(audiencePage, i);
       const expectedCurrentHTML = await audiencePage.evaluate(() => document.querySelector(".slide.active")?.outerHTML || "");
@@ -496,6 +785,13 @@ async function main() {
       const screenshot = path.join(args.out, `presenter-slide-${String(i + 1).padStart(2, "0")}.png`);
       await presenterPage.screenshot({ path: screenshot, fullPage: false });
       const result = await inspectPresenter(presenterPage, i, expectedCurrentHTML, expectedStyles);
+      if (!scrollStabilityTested) {
+        const stability = await inspectPresenterScrollStability(presenterPage);
+        if (stability.tested) {
+          scrollStabilityTested = true;
+          result.findings.push(...stability.findings);
+        }
+      }
       report.presenterFindingCount += result.findings.length;
       report.presenterSlides.push({ index: i, screenshot, findings: result.findings });
     }
@@ -503,7 +799,7 @@ async function main() {
     await presenterPage.close();
   }
 
-  report.findingCount = report.audienceFindingCount + report.presenterFindingCount;
+  report.findingCount = report.audienceFindingCount + report.presenterFindingCount + report.contractFindingCount;
   await audiencePage.close();
   await browser.close();
 

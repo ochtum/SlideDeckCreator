@@ -1,0 +1,7 @@
+interface:
+  display_name: "LTデザインシステム管理"
+  short_description: "質問に答えるだけでLT用デザインを安全に追加・変更・削除"
+  brand_color: "#1D74E8"
+  default_prompt: "Use $07-lt-design-system-manager to create or manage an LT slide design system through simple questions."
+policy:
+  allow_implicit_invocation: true

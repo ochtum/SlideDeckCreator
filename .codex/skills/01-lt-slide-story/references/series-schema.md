@@ -9,7 +9,15 @@ project:
   title: "発表シリーズの総題"
   language: ja
   requested_duration_minutes: 30
+  content_fidelity: full-equivalence
   work_dir: "../.lt-slide-work"
+design_system:
+  id: trustworthy-blue
+  version: 1.0.0
+  registry: "../config/design-systems/registry.yaml"
+source_inventory: "./source-inventory.yaml"
+coverage_matrix: [] # content-equivalence.mdの全source unitを割り当てる
+approved_omissions: []
 series_analysis:
   decision: series # single または series
   reason: "一回で扱うと、三つの独立した実装ループのサンプルと完了条件を省略してしまうため"
@@ -44,7 +52,7 @@ parts:
     order: 2
     title: "第2回: AIが迷わない知識の入口を作る"
     duration_minutes: 30
-    target_slide_count: 20
+    target_slide_count: 22
     slide_count_rationale: "機能地図と設定地図の二つの代表サンプルを比較して扱うため"
     learning_goal: "機能地図と読み順をリポジトリに置ける"
     scope:
@@ -59,7 +67,7 @@ parts:
     order: 3
     title: "第3回: 実行・検証・失敗を仕組みに戻す"
     duration_minutes: 30
-    target_slide_count: 20
+    target_slide_count: 19
     slide_count_rationale: "再現環境、検証、失敗分類、改善ループを一件の実行例で扱うため"
     learning_goal: "再現環境と失敗の反映ループを作れる"
     scope:
@@ -77,6 +85,12 @@ open_questions: []
 
 `coverage` は `content_inventory` の ID を漏れなく追跡する。ある素材を意図的に扱わない場合は、その理由を `series_analysis.reason` または各パートの `scope.exclude` に残す。
 
+`full-equivalence` では概要用の `series_analysis.coverage` だけで合格にしない。`content-equivalence.md` のsource inventory全unitをルート `coverage_matrix` へ置き、part ID、slide ID、伝達面、構造保存方法、artifact IDを追跡する。各パートStoryとBlueprintの `source_unit_ids`、最終HTMLの `data-source-unit-ids` まで同じIDを保持する。
+
 `target_slide_count` は各パートの物理本編枚数であり、同じ発表時間や話数を理由に同じ値へそろえない。`slide_count_rationale` に、各回で必要な代表サンプル、デモ、最初の作業、完了条件から見積もった理由を残す。時間が余る場合は、具体例の比較、演習、質疑の余白を優先し、内容のないスライドで埋めない。
 
-各パートは指定時間の本編最小枚数を個別に満たす。`cover`、`profile`、`thanks` は本編枚数に含めず、`recap` は含める。30分以上の各パートは28枚以上である。`scripts/validate_duration_floor.py --story <root-01-story.yaml>` が全パートで成功するまで、設計図またはビルドへ進めない。
+各パートは指定時間の本編安全下限を個別に満たす。`cover`、`profile`、`thanks` は本編枚数に含めず、`recap` は含める。30分以上の安全下限は16枚、標準範囲は18〜24枚だが、各回の問い・例・実演・完了条件から決める。`scripts/validate_duration_floor.py --story <root-01-story.yaml>` が全パートで成功するまで、設計図またはビルドへ進めない。
+
+20分以上の各パートは、`story-schema.md` の `project.time_budget` と各スライドの `delivery` を独立して持つ。シリーズ合計時間だけで説明量を満たした扱いにしない。`scripts/validate_explanation_depth.py --story <root-01-story.yaml>` が全パートで成功するまで次工程へ進めない。
+
+20分以上の各パートは `talkability.md` の問いの背骨、Demo runbook、明日の一手、全ページの話者キューを独立して持つ。シリーズ全体の問いや最終回のTakeawayで代用しない。`scripts/validate_talkability.py --story <root-01-story.yaml>` が全パートで成功するまで次工程へ進めない。

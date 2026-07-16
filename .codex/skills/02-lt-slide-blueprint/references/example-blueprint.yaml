@@ -19,6 +19,8 @@ slides:
       body_px: 30
       source_px: 18
     animation:
+      intent: "タイトルを静かに提示して発表を始める"
+      family: quiet-reveal
       steps: []
     text:
       bullets: []
@@ -40,6 +42,8 @@ slides:
       body_px: 30
       source_px: 18
     animation:
+      intent: "三つの要点を順に振り返る"
+      family: quiet-reveal
       steps:
         - step: 1
           targets: [text]
@@ -61,6 +65,8 @@ slides:
       body_px: 30
       source_px: 18
     animation:
+      intent: "終了メッセージへ視線を集中させる"
+      family: focus
       steps: []
     text:
       bullets: []

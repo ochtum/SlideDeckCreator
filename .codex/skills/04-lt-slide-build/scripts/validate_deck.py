@@ -30,6 +30,14 @@ def main():
         "presenter view": r"presenter-mode|presenter=1",
         "presenter shortcut display": r"presenter-shortcuts|ショートカット",
         "speaker notes": r"data-spoken-note",
+        "structured presenter notes": r"renderPresenterNote\s*\(",
+        "primary presenter script area": r"presenter-cue-primary",
+        "presenter note render cache": r"dataset\.noteKey",
+        "timer-only presenter refresh": r"setInterval\s*\(\s*\(\)\s*=>\s*this\.renderPresenterTimer\(\)\s*,\s*1000\s*\)",
+        "structured presenter context": r"renderPresenterContext\s*\(",
+        "presenter context rows": r"presenter-context-row",
+        "phase question presenter context": r"dataset\.phaseQuestion",
+        "speaker purpose presenter context": r"dataset\.speakerPurpose",
         "window synchronization": r"BroadcastChannel|postMessage",
         "current preview exact clone": r"renderCurrentPreview\s*\(",
         "next preview final-state renderer": r"renderNextPreview\s*\(",
@@ -49,6 +57,8 @@ def main():
 
     if re.search(r"https?://", html, flags=re.I):
         errors.append("external URL dependency found")
+    if re.search(r"setInterval\s*\(\s*\(\)\s*=>\s*this\.renderPresenter\(\)\s*,\s*1000\s*\)", html):
+        errors.append("presenter timer must not rebuild notes every second")
 
     slide_count = len(re.findall(r"<section\b[^>]*class=[\"'][^\"']*\bslide\b", html, re.I))
     if slide_count < 3:

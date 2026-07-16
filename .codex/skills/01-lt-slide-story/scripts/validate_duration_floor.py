@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Fail LT artifacts that do not meet the duration-based body-slide floor."""
+"""Fail LT artifacts that are implausibly short for their duration.
+
+The floor is deliberately lower than the recommended range.  Slide count is a
+safety rail, not a target: long talks must earn their duration through examples,
+speaker cues, demos, and evidence rather than one sparse statement per minute.
+"""
 
 from __future__ import annotations
 
@@ -14,16 +19,16 @@ NON_BODY_ROLES = {"cover", "profile", "thanks"}
 
 
 def minimum_body_slides(duration_minutes: int) -> int:
-    """Return the non-negotiable floor; cover/profile/thanks are excluded."""
+    """Return the safety floor; cover/profile/thanks are excluded."""
     if duration_minutes <= 5:
-        return 8
+        return 6
     if duration_minutes <= 10:
-        return 12
+        return 8
     if duration_minutes <= 15:
-        return 18
+        return 10
     if duration_minutes < 30:
-        return 23
-    return 28
+        return 14
+    return 16
 
 
 def body_count(slides: list[dict]) -> int:
@@ -53,7 +58,7 @@ def validate_story(path: Path) -> tuple[list[str], list[tuple[Path, dict]]]:
     if actual < floor:
         errors.append(
             f"{path}: {duration} minutes requires at least {floor} body slides; found {actual}. "
-            "Add substantive examples, comparisons, exercises, or demos, or shorten the duration."
+            "Add only substantive examples, comparisons, exercises, or demos, or shorten the duration."
         )
     return errors, [(path, data)]
 

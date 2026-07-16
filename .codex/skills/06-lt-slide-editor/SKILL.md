@@ -5,7 +5,7 @@ description: 04-lt-slide-build によって生成された HTML ライトニン�
 
 # 06 LT Slide Editor
 
-`04-lt-slide-build` が生成した `output/index.html` に、ブラウザ内エディターを追加する。通常の発表モードは変えず、`?edit=1` のときだけ編集UIを表示する。
+`04-lt-slide-build` が生成したHTMLデッキに、ブラウザ内エディターを追加する。単発は `output/index.html`、シリーズは対象パートの `output/<part-id>/index.html` を明示する。通常の発表モードは変えず、`?edit=1` のときだけ編集UIを表示する。
 
 ## Required Reads
 
@@ -14,22 +14,24 @@ description: 04-lt-slide-build によって生成された HTML ライトニン�
 
 ## Workflow
 
-1. 対象HTMLを確認する。指定がなければ `output/index.html` を使う。
+1. 対象HTMLを確認する。単発だけ指定がなければ `output/index.html` を使う。シリーズでは対象パートの `output/<part-id>/index.html` を必ず指定する。
 2. 対象が `04-lt-slide-build` 系の構造を持つことを確認する。最低限 `.deck` と `.slide` が必要。
 3. `scripts/inject_editor.js` を実行して編集ランタイムを注入する。
 4. `scripts/serve_editor.js` で対象HTMLをローカル配信し、表示された `http://127.0.0.1:<port>/?edit=1` を開く。
-5. 要素選択、ドラッグ移動、テキスト編集、spoken_note編集、テキスト追加、画像追加、フォントサイズを含むスタイル変更、ページ追加、ページ複製、`E` キーによる通常URL/編集URLの切り替え、`V` キーによる編集UI表示/非表示切り替え、`Save HTML` による対象HTMLの上書き保存を確認する。
+5. 要素選択、ドラッグ移動、テキスト編集、spoken_note編集、テキスト追加、画像追加、フォントサイズを含むスタイル変更、ページ追加、ページ複製、`E` キーによる通常URL/編集URLの切り替え、`V` キーによる編集UI表示/非表示切り替え、`Save HTML` による対象HTMLの上書き保存を確認する。Spoken Note欄では `橋渡し`、`話す内容`、`指差し`、`次の一言` の不足がその場で分かることを確認する。
 6. `Export PDF` で対象HTMLを先に上書きし、同じディレクトリに同名PDF（既定は `output/index.pdf`）が生成されることを確認する。
 7. `file://` で開いた場合、`Save HTML` はブラウザのファイル保存ピッカーまたはダウンロードへフォールバックし、`Export PDF` は印刷ダイアログを開くことを確認する。
 8. `?edit=1` なしの通常表示で、キーボード操作、発表者ビュー、印刷表示が壊れていないことを確認する。
-9. 必要なら `05-lt-slide-review` で視覚レビューする。
+9. 20分以上のデッキでページ追加、複製、本文・図表・ノート変更を行った場合は、`data-delivery-mode`、`data-estimated-seconds`、`data-content-model-type`、`data-evidence-artifact-ids`、`data-source-unit-ids`、`data-flow-phase`、`data-phase-question`、`data-speaker-purpose` を保持または更新する。deck rootの `data-design-system-id` / `data-design-system-version` も保持する。空白ページと複製ページは説明契約未完了のdraftとして扱う。
+10. 内容を変更した場合は必ず `05-lt-slide-review` を実行し、`validate_explanation_depth.py` と `validate_talkability.py` を含む契約検証が成功することを確認する。位置・色だけの変更でも、長時間LTのtraceability属性を削除していないことを確認する。
 
 ## Standard Command
 
 PowerShellでは次を使う。
 
 ```powershell
-$node="C:\Users\okuto\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe"
+$node=Join-Path $env:LOCALAPPDATA ".cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe"
+if (!(Test-Path $node)) { $node=(Get-Command node -ErrorAction Stop).Source }
 & $node .codex\skills\06-lt-slide-editor\scripts\inject_editor.js output\index.html
 & $node .codex\skills\06-lt-slide-editor\scripts\serve_editor.js output\index.html
 ```
@@ -51,7 +53,7 @@ $node="C:\Users\okuto\.cache\codex-runtimes\codex-primary-runtime\dependencies\n
 - 編集パネルはヘッダーをドラッグして移動でき、位置は同じブラウザの `localStorage` に保存する。
 - 対象要素は主に `.zone`。絶対配置の `left`, `top`, `width`, `height` を編集する。
 - テキスト編集は選択要素内の文字要素を `contenteditable` にする。
-- Spoken Note 欄は現在スライドの `data-spoken-note` を編集する。スライド移動時は現在スライドのノートを読み直し、保存時はHTML属性として残す。
+- Spoken Note 欄は現在スライドの `data-spoken-note` を編集する。`橋渡し`、`話す内容`、`指差し`、`次の一言` の四区画を案内し、不足区画をdraft警告として表示する。スライド移動時は現在スライドのノートを読み直し、保存時はHTML属性として残す。
 - 画像追加はローカルファイルをData URLとしてHTMLに埋め込む。配布用に軽く保ちたい場合は、後で `output/assets/` 参照へ差し替える。
 - 保存は `serve_editor.js` の `POST /__lt_editor_save` へクリーンなHTMLを送信し、対象HTMLを上書きする。ダウンロード保存を標準経路にしない。
 - `Save HTML` は成功時にサーバーが返した保存先パスをステータス表示する。失敗時は原因メッセージを表示し、押しても無反応に見える状態にしない。
@@ -73,6 +75,9 @@ $node="C:\Users\okuto\.cache\codex-runtimes\codex-primary-runtime\dependencies\n
 - 追加する `.slide` は既存スライドと同じ構造に寄せ、`.page-number` を再採番する。
 - 追加する要素は `.zone` とし、`data-zone` を設定する。
 - 既存の `data-spoken-note` を保持し、Spoken Note 欄で編集できるようにする。
+- 既存の `data-delivery-mode`、`data-estimated-seconds`、`data-content-model-type`、`data-evidence-artifact-ids`、`data-source-unit-ids`、`data-flow-phase`、`data-phase-question`、`data-speaker-purpose`、deck rootの `data-design-system-id` / `data-design-system-version` を保持する。ページ複製時に同じ時間・証拠・source unit・話者目的をそのまま確定扱いにせず、ユーザーが内容を更新するまでdraft表示またはレビューfindingとして残す。
+- エディタの色変更でregistryのdesign-system specを暗黙に上書きしない。デザインシステム自体の追加・変更・削除は `07-lt-design-system-manager` へ戻し、個別ページの局所調整と区別する。
+- 空白スライドや複製スライドを追加した後は、タイトル、具体的な投影アンカー、説明時間、spoken noteを埋めないまま完成品として保存・配布しない。
 - 保存前後で対象HTMLの更新時刻が変わること、`Export PDF` 後に同名PDFの更新時刻が変わること、通常表示の初期スライド、次へ/前へ、`A` reveal、`S` presenterを確認する。
 
 ## Output

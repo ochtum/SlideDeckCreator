@@ -1,5 +1,7 @@
 # Design system
 
+これはStoryでデザインシステムが選択されていない場合だけ使う内蔵fallbackである。`config/design-systems/registry.yaml` のID/versionが選択されている場合は、そのspecを優先し、この値へ暗黙に戻さない。追加・変更・削除は `07-lt-design-system-manager` を使う。
+
 ## Tokens
 
 ```css
@@ -27,6 +29,15 @@
 - Body: 28 to 34px, weight 600 to 750
 - Supporting text: 22 to 26px
 - Source and page: 18 to 22px
+
+For 20+ minute explanatory decks, use a denser technical mode:
+
+- Slide title: 44 to 56px
+- Body: 24 to 30px
+- Table, code, config, and diagram annotations: 18 to 22px
+- Statement layouts may keep larger type, but they are transitions rather than the default page template
+
+Technical mode is not permission to paste long prose. It exists so a concrete table, code/config excerpt, annotated screenshot, or decision flow can occupy 60 to 85 percent of the safe content area at a readable size.
 
 Use system fonts only. Keep Japanese line-height between 1.3 and 1.55.
 

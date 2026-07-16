@@ -20,6 +20,7 @@ The editor augments a finished HTML deck. It is not a replacement for the story,
 - Move selected elements by dragging.
 - Edit text in place.
 - Edit the active slide's `data-spoken-note`.
+- Show whether the note contains non-empty `橋渡し`, `話す内容`, `指差し`, and `次の一言` sections while editing.
 - Add text zones.
 - Add image zones from a local file or pasted asset.
 - Apply common styles: font size, text color, background color, bold, alignment, card style, animation type, geometry.
@@ -36,6 +37,8 @@ The editor augments a finished HTML deck. It is not a replacement for the story,
 ## Preservation rules
 
 - Preserve every slide's `data-spoken-note`.
+- Preserve `data-delivery-mode`, `data-estimated-seconds`, `data-content-model-type`, `data-evidence-artifact-ids`, `data-source-unit-ids`, `data-flow-phase`, `data-phase-question`, and `data-speaker-purpose` on existing slides.
+- Preserve deck-level `data-design-system-id` and `data-design-system-version`. Per-slide edits must not rewrite the registry design-system spec.
 - Save edited `data-spoken-note` values as slide attributes.
 - Preserve presentation keyboard shortcuts in normal mode.
 - Preserve presenter view behavior.
@@ -43,6 +46,7 @@ The editor augments a finished HTML deck. It is not a replacement for the story,
 - Preserve print CSS and 16:9 page sizing.
 - Preserve local `output/assets/` references.
 - Avoid rewriting unrelated deck markup.
+- Treat duplicated and blank slides as content drafts until their timing, visible anchors, evidence traceability, and spoken notes are made page-specific.
 - Keep save-server writes scoped to the explicit HTML file passed to `serve_editor.js`.
 - Keep PDF export scoped to the same directory and basename as the explicit HTML file passed to `serve_editor.js`.
 
@@ -60,6 +64,7 @@ Before delivery, verify:
 - A selected text zone's font size can be changed even when the visible text is inside nested heading or paragraph elements.
 - Text can be changed and remains after saving and reopening the saved HTML.
 - The Spoken Note field follows the active slide and updates that slide's `data-spoken-note`.
+- The Spoken Note field warns when any talkability v2 section is missing and reports ready only when all four sections are non-empty.
 - Edited spoken notes remain after saving and reopening the saved HTML.
 - `Save HTML` overwrites the original target file when opened from `serve_editor.js`.
 - `Save HTML` reports the saved path or a concrete failure reason in the editor status.
@@ -76,3 +81,4 @@ Before delivery, verify:
 - `?edit=1` absent keeps the normal presentation view clean.
 - `?presenter=1` does not show editor UI.
 - Print preview does not show editor UI.
+- After content edits in a 20+ minute deck, the explanation-depth and talkability reviews pass and no duplicated slide keeps another page's timing/evidence/speaker purpose without a new focus.

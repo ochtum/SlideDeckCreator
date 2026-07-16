@@ -187,6 +187,14 @@ body.lt-editor-view-mode .lt-editor-selection {
   font-size: 18px;
   line-height: 1.45;
 }
+.lt-editor-note-status {
+  margin: 8px 0 0;
+  color: #a33a12;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+.lt-editor-note-status.is-ok { color: #087a35; }
 .lt-editor-mode-badge {
   display: none;
   position: fixed;
@@ -293,8 +301,9 @@ function editorRuntime() {
     '</section>',
     '<section class="lt-editor-section">',
     '<h2>Spoken Note</h2>',
-    '<textarea data-spoken-note rows="5" spellcheck="false"></textarea>',
-    '<p class="lt-editor-muted">Presenter note for the current slide.</p>',
+    '<textarea data-spoken-note rows="8" spellcheck="false" placeholder="橋渡し: 前ページから進む理由&#10;話す内容: 実際に口にする説明&#10;指差し: 画面にあるラベル&#10;次の一言: 次へ渡す発話"></textarea>',
+    '<p class="lt-editor-note-status" data-note-status>台本形式を確認中</p>',
+    '<p class="lt-editor-muted">Storyの台本と同じ四区画を保ちます。</p>',
     '</section>',
     '<section class="lt-editor-section">',
     '<h2>Output</h2>',
@@ -329,6 +338,7 @@ function editorRuntime() {
 
   const imagePicker = root.querySelector("[data-image-picker]");
   const spokenNoteInput = root.querySelector("[data-spoken-note]");
+  const noteStatus = root.querySelector("[data-note-status]");
   const status = root.querySelector("[data-status]");
   const fields = Object.fromEntries([...root.querySelectorAll("[data-field]")].map((el) => [el.dataset.field, el]));
 
@@ -567,6 +577,17 @@ function editorRuntime() {
     if (!slide) return;
     slide.dataset.spokenNote = spokenNoteInput.value;
     noteSlide = slide;
+    updateSpokenNoteStatus();
+  }
+
+  function updateSpokenNoteStatus() {
+    const labels = ["橋渡し", "話す内容", "指差し", "次の一言"];
+    const missing = labels.filter((label) => {
+      const pattern = new RegExp("^\\s*" + label + "\\s*[:：]\\s*\\S.+$", "m");
+      return !pattern.test(spokenNoteInput.value);
+    });
+    noteStatus.classList.toggle("is-ok", missing.length === 0);
+    noteStatus.textContent = missing.length ? "未入力: " + missing.join(" / ") : "台本形式OK（四区画入力済み）";
   }
 
   function onImagePicked(event) {
@@ -998,6 +1019,7 @@ function editorRuntime() {
     if (document.activeElement === spokenNoteInput) return;
     noteSlide = slide;
     spokenNoteInput.value = slide.dataset.spokenNote || "";
+    updateSpokenNoteStatus();
   }
 
   function restorePanelPosition() {

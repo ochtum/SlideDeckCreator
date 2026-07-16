@@ -25,6 +25,10 @@ Recommended `.gitignore` entry:
 
 ビルド後、`scripts/validate_presenter_binding.py --presenter config/presenter.json <part-output>/index.html` を実行する。値の欠落、固定文言、asset不一致はビルド失敗とする。
 
+## Design system binding
+
+Storyに `design_system` がある場合、`config/design-systems/registry.yaml` から同じID/versionのspecを解決し、Blueprintへ参照をそのまま引き継ぐ。最終HTMLの `body` または `.deck` に `data-design-system-id` と `data-design-system-version` を置く。選択済みIDが存在しない、versionが違う、HTML属性が違う場合は内蔵テーマへfallbackせずビルド失敗とする。Storyに選択がない場合だけ `references/design-system.md` を内蔵fallbackとして使う。
+
 ## Required behavior
 
 - Right Arrow, Space, PageDown: next step or next slide
@@ -40,7 +44,7 @@ Recommended `.gitignore` entry:
 ## Animation Order
 
 - Animation steps follow a Z-shaped reading path: top-left, top-right, center-left, center, bottom-left, bottom-right.
-- Runtime normalizes `[data-step]` from element zone positions before the first slide is shown.
+- Runtime preserves explicit `[data-step]` values. Zone positionからのZ-flow補完はstep未指定要素だけに行う。
 - Per-slide step numbers are compressed so navigation has no empty intermediate step.
 - The maximum step count is 6. Fewer steps are preferred when the slide has fewer visual groups.
 - Current and presenter previews use the same normalized DOM state.
@@ -50,6 +54,12 @@ Recommended `.gitignore` entry:
 - Keep the original window as the audience display and open the presenter view with `?presenter=1`.
 - Synchronize slide index and animation step in both directions.
 - Show the current slide, next slide, current `spoken_note`, elapsed time, page number, and step.
+- For talkability v2, parse the four note lines into visible `橋渡し`、`話す内容`、`指差し`、`次の一言` sections. Do not collapse them into an undifferentiated paragraph.
+- Treat `話す内容` as the primary reading area. Place `橋渡し`、`指差し`、`次の一言` in a subordinate support area so a long bridge cannot consume the script height.
+- Show the current phase question and speaker purpose near the note when present.
+- Show the phase question as a distinct, readable row. Do not compress question, purpose, reader context, and bridge into a 1–3 line strip.
+- Update elapsed time without rebuilding the note or context DOM. Scrolling `話す内容` must keep the same position while the timer advances and while animation steps change on the same slide.
+- Rebuild the note only when `data-spoken-note` changes, and rebuild the context only when its values change. Reset their scroll positions when moving to a different note, not on timer ticks.
 - Show the embedded keyboard shortcut list in the presenter view, near the next-slide preview.
 - Clone the current audience slide exactly as rendered. Preserve its runtime classes, attributes, inline styles, SVG state, and deck-specific reveal markers.
 - Include the audience slide's current DOM snapshot in synchronization messages; index and step alone are insufficient for deck-specific reveal state.
@@ -70,6 +80,19 @@ Recommended `.gitignore` entry:
 - Focus is not trapped
 - Reduced motion reveals all content
 - Print reveals all content
+
+## Long-form explanation traceability
+
+For decks of 20 minutes or longer:
+
+- Copy `delivery.mode` and `delivery.estimated_seconds` to `data-delivery-mode` and `data-estimated-seconds` on each body slide.
+- Render every `delivery.visible_anchors` value as visible audience text.
+- Add `data-content-model-type` and comma-separated `data-evidence-artifact-ids` when a blueprint content model exists.
+- `full-equivalence` では各 `.slide` に空白区切りの `data-source-unit-ids` を置き、StoryとBlueprintの同じIDを保持する。
+- Render the actual content-model data. A generic checklist, stock icon, or repeated diagram is not an implementation of different source artifacts.
+- When the same artifact is shown again, render the blueprint's page-specific focus and highlight so the new reading is visible.
+- Copy `flow_phase`, the matching phase question, and `speaker_cue.purpose` to `data-flow-phase`, `data-phase-question`, and `data-speaker-purpose`.
+- Preserve `speaker_cue.point_at` as visible HTML/SVG anchors. A generated image with approximate text does not satisfy this requirement.
 
 ## PDF print
 
@@ -101,5 +124,7 @@ Review every slide at 1280x720:
 - audience/current-preview parity at the initial state, every intermediate step, and reveal-all state
 - print preview
 - exported PDF page count and 16:9 page dimensions
+- presenter note scroll position after at least one timer tick
+- presenter usability at both 1280x720 and a taller 1280x860 viewport, including minimum readable areas for `話す内容` and the phase question
 
 Reject the deck when text is clipped, the deck is flush against the browser viewport edge, any content zone intersects another, body text falls below 28px, a visual uses cover cropping, a QR is too small, or a conclusion obscures the main diagram.
