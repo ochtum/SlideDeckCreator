@@ -83,40 +83,154 @@ function editorCss() {
   .lt-editor-selection {
     display: none !important;
   }
+  body.lt-editor-enabled {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+  body.lt-editor-enabled > .deck {
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    z-index: auto !important;
+    transform: none !important;
+  }
 }
 body.lt-editor-enabled {
   --lt-editor-accent: #1d74e8;
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  padding: 0;
+  background: #0b1730;
+}
+body.lt-editor-enabled > .deck {
+  position: fixed;
+  z-index: 2147483000;
+  transform-origin: top left !important;
+}
+body.lt-editor-enabled .pager,
+body.lt-editor-enabled .presenter-console {
+  display: none !important;
 }
 body.lt-editor-view-mode .lt-editor-root,
 body.lt-editor-view-mode .lt-editor-selection {
   display: none !important;
 }
+body.lt-editor-enabled.lt-editor-view-mode {
+  display: grid;
+  place-items: center;
+  padding: var(--viewport-gutter, 48px);
+  background: #edf4fb;
+}
+body.lt-editor-enabled.lt-editor-view-mode > .deck {
+  position: relative;
+  left: auto !important;
+  top: auto !important;
+  z-index: auto;
+  transform-origin: center !important;
+}
 .lt-editor-root {
   position: fixed;
-  z-index: 2147483647;
-  left: 18px;
-  top: 18px;
-  width: 330px;
-  max-height: calc(100vh - 36px);
-  overflow: auto;
-  border: 1px solid rgba(0, 27, 77, .18);
-  border-radius: 8px;
-  background: #ffffff;
-  box-shadow: 0 22px 60px rgba(0, 27, 77, .24);
-  color: #001b4d;
+  z-index: 2147482000;
+  inset: 16px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(420px, .88fr);
+  gap: 16px;
+  color: #dce8ff;
   font-family: system-ui, -apple-system, "Segoe UI", "Noto Sans JP", sans-serif;
+  pointer-events: none;
 }
 .lt-editor-root * {
   box-sizing: border-box;
+}
+.lt-editor-stage-shell,
+.lt-editor-side-shell {
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid rgba(255, 255, 255, .14);
+  border-radius: 18px;
+  background: #111f3b;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .28);
+  overflow: hidden;
+}
+.lt-editor-stage-shell {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) minmax(230px, 34vh);
+  gap: 10px;
+  padding: 14px;
+}
+.lt-editor-stage-head,
+.lt-editor-side-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #9fb5d8;
+  font-size: 18px;
+  line-height: 1.2;
+  font-weight: 900;
+}
+.lt-editor-stage-viewport {
+  min-width: 0;
+  min-height: 0;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: inset 0 0 0 1px rgba(0, 27, 77, .12);
+  overflow: hidden;
+}
+.lt-editor-dock {
+  position: relative;
+  z-index: 2147483200;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid rgba(255, 255, 255, .14);
+  border-radius: 12px;
+  background: #071326;
+  overflow: hidden;
+  pointer-events: auto;
+}
+.lt-editor-dock.is-floating {
+  position: fixed;
+  width: min(960px, calc(100vw - 32px));
+  height: min(340px, calc(100vh - 32px));
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .42);
+}
+.lt-editor-dock-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(250px, .8fr);
+  min-height: 0;
+  overflow: hidden;
+}
+.lt-editor-quick-stack {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  min-width: 0;
+  min-height: 0;
+  border-left: 1px solid rgba(159, 181, 216, .18);
+}
+.lt-editor-side-shell {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  padding: 18px;
+  pointer-events: auto;
 }
 .lt-editor-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 12px;
-  border-bottom: 1px solid #d8e6f3;
-  background: #f7faff;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(159, 181, 216, .22);
+  background: #102644;
+  color: #fff;
+  font-size: 16px;
   font-weight: 900;
   cursor: grab;
   user-select: none;
@@ -134,12 +248,12 @@ body.lt-editor-view-mode .lt-editor-selection {
   background: #fff;
   color: #001b4d;
   font: inherit;
-  font-size: 18px;
+  font-size: 16px;
 }
 .lt-editor-root textarea {
   width: 100%;
-  min-height: 110px;
-  resize: vertical;
+  min-height: 0;
+  resize: none;
   line-height: 1.45;
 }
 .lt-editor-root button {
@@ -151,50 +265,125 @@ body.lt-editor-view-mode .lt-editor-selection {
   background: var(--lt-editor-accent);
   color: #fff;
 }
+.lt-editor-dock button,
+.lt-editor-dock input,
+.lt-editor-dock select {
+  min-height: 28px;
+  font-size: 14px;
+}
 .lt-editor-section {
-  padding: 12px;
-  border-bottom: 1px solid #e8f0f8;
+  min-width: 0;
+  min-height: 0;
+  padding: 10px;
+  border-bottom: 1px solid rgba(159, 181, 216, .18);
+  overflow: auto;
 }
 .lt-editor-section h2 {
-  margin: 0 0 8px;
-  font-size: 18px;
+  margin: 0 0 6px;
+  color: #9fc8ff;
+  font-size: 16px;
   line-height: 1.2;
   letter-spacing: 0;
 }
 .lt-editor-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(86px, 1fr));
+  gap: 6px;
 }
 .lt-editor-wide {
   grid-column: 1 / -1;
 }
 .lt-editor-field {
   display: grid;
-  gap: 4px;
-  font-size: 18px;
+  gap: 3px;
+  color: #b8cae4;
+  font-size: 14px;
   font-weight: 800;
   color: #385170;
 }
 .lt-editor-actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  gap: 6px;
 }
 .lt-editor-muted {
-  margin-top: 8px;
-  color: #5d6b82;
-  font-size: 18px;
-  line-height: 1.45;
+  margin-top: 6px;
+  color: #9fb5d8;
+  font-size: 14px;
+  line-height: 1.35;
 }
 .lt-editor-note-status {
   margin: 8px 0 0;
-  color: #a33a12;
-  font-size: 18px;
+  color: #ffb18e;
+  font-size: 15px;
   font-weight: 800;
   line-height: 1.4;
 }
-.lt-editor-note-status.is-ok { color: #087a35; }
+.lt-editor-note-status.is-ok { color: #70e29d; }
+.lt-editor-element-section {
+  border-bottom: 0;
+}
+.lt-editor-element-section .lt-editor-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+.lt-editor-element-section .lt-editor-actions {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.lt-editor-add-section,
+.lt-editor-mode-section {
+  padding: 8px;
+}
+.lt-editor-mode-section .lt-editor-actions {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.lt-editor-note-section {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  border: 0;
+  border-radius: 14px;
+  background: #f7faff;
+  color: #001b4d;
+  overflow: hidden;
+}
+.lt-editor-note-section h2 { color: #1761c3; }
+.lt-editor-note-section textarea {
+  padding: 12px;
+  border: 2px solid #b9d7f4;
+  background: #fff;
+  font-size: 18px;
+  line-height: 1.5;
+  overflow: auto;
+}
+.lt-editor-note-section .lt-editor-muted { color: #5d6b82; }
+.lt-editor-output-section {
+  border: 1px solid rgba(159, 181, 216, .28);
+  border-radius: 12px;
+  background: #071326;
+}
+.lt-editor-status-line {
+  min-height: 38px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .07);
+}
+.lt-editor-dock-toggle {
+  min-height: 28px !important;
+  padding: 2px 10px;
+  border-color: rgba(255, 255, 255, .32) !important;
+  background: transparent !important;
+  color: #dce8ff !important;
+  font-size: 14px !important;
+}
+@media (max-width: 1120px) {
+  .lt-editor-root { grid-template-columns: minmax(0, 1fr) minmax(360px, .72fr); }
+  .lt-editor-stage-shell { grid-template-rows: auto minmax(0, 1fr) minmax(250px, 38vh); }
+  .lt-editor-dock-body { grid-template-columns: minmax(0, 1fr) 220px; }
+}
+@media (max-height: 800px) {
+  .lt-editor-stage-shell { grid-template-rows: auto minmax(0, 1fr) minmax(260px, 37vh); }
+  .lt-editor-side-shell { padding: 14px; }
+  .lt-editor-note-section textarea { font-size: 16px; line-height: 1.42; }
+}
 .lt-editor-mode-badge {
   display: none;
   position: fixed;
@@ -270,9 +459,14 @@ function editorRuntime() {
   const root = document.createElement("aside");
   root.className = "lt-editor-root";
   root.innerHTML = [
-    '<div class="lt-editor-head"><span>Slide Editor</span></div>',
-    '<section class="lt-editor-section">',
-    '<h2>Element</h2>',
+    '<section class="lt-editor-stage-shell">',
+    '<div class="lt-editor-stage-head"><span>編集中のスライド</span><span data-editor-position></span></div>',
+    '<div class="lt-editor-stage-viewport" data-editor-stage-viewport aria-label="編集対象スライド領域"></div>',
+    '<div class="lt-editor-dock" data-editor-dock>',
+    '<div class="lt-editor-head"><span>Slide Editor</span><button type="button" class="lt-editor-dock-toggle" data-action="dock" data-dock-toggle>フロート</button></div>',
+    '<div class="lt-editor-dock-body">',
+    '<section class="lt-editor-section lt-editor-element-section">',
+    '<h2>選択要素</h2>',
     '<div class="lt-editor-grid">',
     field("X", "x", "number"), field("Y", "y", "number"), field("W", "w", "number"), field("H", "h", "number"),
     field("Font", "fontSize", "number", 'min="1" step="1"'), field("Text", "color", "color"),
@@ -281,49 +475,62 @@ function editorRuntime() {
     '<label class="lt-editor-field">Anim<select data-field="anim"><option value="">none</option><option value="rise">rise</option><option value="fade">fade</option><option value="pop">pop</option><option value="wipe">wipe</option><option value="draw">draw</option><option value="stamp">stamp</option><option value="marker">marker</option><option value="stomp">stomp</option></select></label>',
     '<label class="lt-editor-field">Zone<select data-field="zone"><option value="text">text</option><option value="visual">visual</option><option value="content">content</option><option value="title">title</option><option value="conclusion">conclusion</option><option value="qr">qr</option></select></label>',
     '</div>',
-    '<div class="lt-editor-actions" style="margin-top:8px">',
+    '<div class="lt-editor-actions" style="margin-top:6px">',
     '<button type="button" data-action="bold">Bold</button>',
     '<button type="button" data-action="card">Card</button>',
     '<button type="button" data-action="front">Front</button>',
     '<button type="button" data-action="delete">Delete</button>',
     '</div>',
-    '<p class="lt-editor-muted" data-status>Select a slide element.</p>',
+    '<p class="lt-editor-muted lt-editor-status-line" data-status>Select a slide element.</p>',
     '</section>',
-    '<section class="lt-editor-section">',
-    '<h2>Add</h2>',
+    '<div class="lt-editor-quick-stack">',
+    '<section class="lt-editor-section lt-editor-add-section">',
+    '<h2>追加</h2>',
     '<div class="lt-editor-actions">',
     '<button type="button" data-action="addText">Text</button>',
     '<button type="button" data-action="addImage">Image</button>',
-    '<button type="button" data-action="duplicateSlide">Duplicate page</button>',
+    '<button type="button" data-action="duplicateSlide">Duplicate</button>',
     '<button type="button" data-action="addSlide">Blank page</button>',
     '</div>',
     '<input type="file" accept="image/*" data-image-picker hidden>',
     '</section>',
-    '<section class="lt-editor-section">',
+    '<section class="lt-editor-section lt-editor-mode-section">',
+    '<h2>表示・移動</h2>',
+    '<div class="lt-editor-actions">',
+    '<button type="button" data-action="toggleMode" data-mode-toggle>View mode</button>',
+    '<button type="button" data-action="prev">Prev</button>',
+    '<button type="button" data-action="next">Next</button>',
+    '</div>',
+    '<p class="lt-editor-muted"><strong>E</strong>: 終了 / <strong>V</strong>: UI表示切替</p>',
+    '</section>',
+    '</div>',
+    '</div>',
+    '</div>',
+    '</section>',
+    '<section class="lt-editor-side-shell">',
+    '<div class="lt-editor-side-head"><span>台本・出力</span><span>E: 終了 / V: 表示切替</span></div>',
+    '<section class="lt-editor-section lt-editor-note-section">',
     '<h2>Spoken Note</h2>',
     '<textarea data-spoken-note rows="8" spellcheck="false" placeholder="橋渡し: 前ページから進む理由&#10;話す内容: 実際に口にする説明&#10;指差し: 画面にあるラベル&#10;次の一言: 次へ渡す発話"></textarea>',
     '<p class="lt-editor-note-status" data-note-status>台本形式を確認中</p>',
     '<p class="lt-editor-muted">Storyの台本と同じ四区画を保ちます。</p>',
     '</section>',
-    '<section class="lt-editor-section">',
+    '<section class="lt-editor-section lt-editor-output-section">',
     '<h2>Output</h2>',
     '<div class="lt-editor-actions">',
     '<button type="button" data-action="save" data-primary="true">Save HTML</button>',
     '<button type="button" data-action="exportPdf">Export PDF</button>',
     '</div>',
-    '<p class="lt-editor-muted">Server mode overwrites files directly. File mode uses a save picker and print dialog.</p>',
+    '<p class="lt-editor-muted">serve_editor.js ではHTMLとPDFを同名で上書きします。</p>',
     '</section>',
-    '<section class="lt-editor-section">',
-    '<h2>Mode</h2>',
-    '<div class="lt-editor-actions">',
-    '<button type="button" data-action="toggleMode" data-mode-toggle>Edit mode</button>',
-    '<button type="button" data-action="prev">Prev</button>',
-    '<button type="button" data-action="next">Next</button>',
-    '</div>',
-    '<p class="lt-editor-muted">Press <strong>E</strong> to leave edit mode. Press <strong>V</strong> to show/hide editing controls.</p>',
     '</section>'
   ].join("");
   document.body.appendChild(root);
+
+  const stageViewport = root.querySelector("[data-editor-stage-viewport]");
+  const editorDock = root.querySelector("[data-editor-dock]");
+  const editorPosition = root.querySelector("[data-editor-position]");
+  const dockToggle = root.querySelector("[data-dock-toggle]");
   restorePanelPosition();
 
   const modeBadge = document.createElement("div");
@@ -354,7 +561,7 @@ function editorRuntime() {
   document.addEventListener("pointerup", onPointerUp, true);
   document.addEventListener("keydown", onKeyDown, true);
   document.addEventListener("keyup", syncSlideContextSoon, true);
-  window.addEventListener("resize", updateSelectionBox);
+  window.addEventListener("resize", onEditorResize);
   document.addEventListener("selectionchange", updateSelectionBox);
 
   renumberSlides();
@@ -368,6 +575,28 @@ function editorRuntime() {
 
   function activeSlide() {
     return deck.querySelector(".slide.active") || deck.querySelector(".slide");
+  }
+
+  function onEditorResize() {
+    layoutEditorStage();
+    updateSelectionBox();
+  }
+
+  function layoutEditorStage() {
+    if (!editorMode) {
+      deck.style.left = "";
+      deck.style.top = "";
+      window.slideDeck?.fit?.();
+      return;
+    }
+    const rect = stageViewport.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const scale = Math.min(rect.width / 1280, rect.height / 720);
+    const renderedWidth = 1280 * scale;
+    const renderedHeight = 720 * scale;
+    deck.style.left = Math.round(rect.left + (rect.width - renderedWidth) / 2) + "px";
+    deck.style.top = Math.round(rect.top + (rect.height - renderedHeight) / 2) + "px";
+    deck.style.transform = "scale(" + scale + ")";
   }
 
   function slideScale() {
@@ -411,11 +640,10 @@ function editorRuntime() {
 
   function onPointerMove(event) {
     if (panelDrag) {
-      const nextLeft = clamp(panelDrag.startLeft + event.clientX - panelDrag.startClientX, 0, Math.max(0, innerWidth - root.offsetWidth));
-      const nextTop = clamp(panelDrag.startTop + event.clientY - panelDrag.startClientY, 0, Math.max(0, innerHeight - Math.min(root.offsetHeight, innerHeight)));
-      root.style.left = Math.round(nextLeft) + "px";
-      root.style.top = Math.round(nextTop) + "px";
-      root.style.right = "auto";
+      const nextLeft = clamp(panelDrag.startLeft + event.clientX - panelDrag.startClientX, 0, Math.max(0, innerWidth - editorDock.offsetWidth));
+      const nextTop = clamp(panelDrag.startTop + event.clientY - panelDrag.startClientY, 0, Math.max(0, innerHeight - Math.min(editorDock.offsetHeight, innerHeight)));
+      editorDock.style.left = Math.round(nextLeft) + "px";
+      editorDock.style.top = Math.round(nextTop) + "px";
       event.preventDefault();
       event.stopPropagation();
       return;
@@ -467,7 +695,8 @@ function editorRuntime() {
   function onPanelPointerDown(event) {
     if (!editorMode) return;
     if (event.target.closest("button, input, textarea, select, a")) return;
-    const rect = root.getBoundingClientRect();
+    const rect = editorDock.getBoundingClientRect();
+    if (!editorDock.classList.contains("is-floating")) setDocked(false, rect);
     panelDrag = {
       startClientX: event.clientX,
       startClientY: event.clientY,
@@ -476,6 +705,26 @@ function editorRuntime() {
     };
     event.preventDefault();
     event.stopPropagation();
+  }
+
+  function setDocked(docked, sourceRect = null) {
+    if (docked) {
+      editorDock.classList.remove("is-floating");
+      editorDock.style.left = "";
+      editorDock.style.top = "";
+      editorDock.style.width = "";
+      editorDock.style.height = "";
+      dockToggle.textContent = "フロート";
+      try { localStorage.removeItem("lt-slide-editor-dock-position-v2"); } catch (error) {}
+      return;
+    }
+    const rect = sourceRect || editorDock.getBoundingClientRect();
+    editorDock.classList.add("is-floating");
+    editorDock.style.left = Math.round(clamp(rect.left, 0, Math.max(0, innerWidth - rect.width))) + "px";
+    editorDock.style.top = Math.round(clamp(rect.top, 0, Math.max(0, innerHeight - rect.height))) + "px";
+    editorDock.style.width = Math.round(Math.min(rect.width || 960, innerWidth - 32)) + "px";
+    editorDock.style.height = Math.round(Math.min(Math.max(rect.height || 300, 260), innerHeight - 32)) + "px";
+    dockToggle.textContent = "ドックへ戻す";
   }
 
   function onKeyDown(event) {
@@ -548,6 +797,11 @@ function editorRuntime() {
     }
     if (action === "exportPdf") {
       exportPdf();
+      return;
+    }
+    if (action === "dock") {
+      if (editorDock.classList.contains("is-floating")) setDocked(true);
+      else setDocked(false);
       return;
     }
     if (action === "toggleMode") setEditorMode(!editorMode);
@@ -684,7 +938,10 @@ function editorRuntime() {
       disableTextEditing();
       if (announce) setStatus("View mode. Press V for editor mode, or E for normal URL.");
     }
-    updateSelectionBox();
+    requestAnimationFrame(() => {
+      layoutEditorStage();
+      updateSelectionBox();
+    });
     syncSlideContextSoon();
   }
 
@@ -781,6 +1038,7 @@ function editorRuntime() {
     const slide = activeSlide();
     if (!slide) return;
     const clone = cleanSlideClone(slide.cloneNode(true));
+    markSlideDraft(clone, "duplicate");
     clone.classList.remove("active");
     slide.after(clone);
     refreshDeckSlides();
@@ -794,7 +1052,7 @@ function editorRuntime() {
     const slide = document.createElement("section");
     slide.className = "slide";
     slide.dataset.role = "editor-added";
-    slide.dataset.spokenNote = "";
+    markSlideDraft(slide, "blank");
     const badge = source?.querySelector(".brand-badge")?.cloneNode(true);
     if (badge) slide.appendChild(cleanElement(badge));
     const title = document.createElement("div");
@@ -833,6 +1091,7 @@ function editorRuntime() {
 
   function renumberSlides() {
     const slides = [...deck.querySelectorAll(".slide")];
+    const showTotal = slides.some((slide) => /\/\s*\d+\s*$/.test(slide.querySelector(".page-number")?.textContent || ""));
     slides.forEach((slide, index) => {
       let number = slide.querySelector(".page-number");
       if (!number) {
@@ -841,8 +1100,21 @@ function editorRuntime() {
         number.dataset.overlapOk = "";
         slide.appendChild(number);
       }
-      number.textContent = String(index + 1);
+      number.textContent = showTotal ? (index + 1) + " / " + slides.length : String(index + 1);
     });
+  }
+
+  function markSlideDraft(slide, kind) {
+    slide.dataset.editorDraft = kind;
+    slide.dataset.deliveryMode = "draft";
+    slide.dataset.estimatedSeconds = "0";
+    slide.dataset.contentModelType = "draft";
+    slide.dataset.evidenceArtifactIds = "draft";
+    slide.dataset.sourceUnitIds = "draft";
+    slide.dataset.flowPhase = "draft";
+    slide.dataset.phaseQuestion = "";
+    slide.dataset.speakerPurpose = "";
+    slide.dataset.spokenNote = "";
   }
 
   function cleanSlideClone(slide) {
@@ -996,6 +1268,11 @@ function editorRuntime() {
     clone.querySelectorAll("[contenteditable]").forEach((el) => el.removeAttribute("contenteditable"));
     clone.querySelectorAll("[spellcheck]").forEach((el) => el.removeAttribute("spellcheck"));
     clone.querySelector("body")?.classList.remove("lt-editor-enabled", "lt-editor-edit-mode", "lt-editor-view-mode", "lt-editor-dragging");
+    const cleanDeck = clone.querySelector(".deck");
+    cleanDeck?.style.removeProperty("left");
+    cleanDeck?.style.removeProperty("top");
+    cleanDeck?.style.removeProperty("transform");
+    cleanDeck?.style.removeProperty("transform-origin");
     const doctype = document.doctype ? "<!doctype html>\n" : "";
     return doctype + clone.outerHTML + "\n";
   }
@@ -1015,6 +1292,9 @@ function editorRuntime() {
   function syncSlideContext(force) {
     const slide = activeSlide();
     if (!slide) return;
+    const slides = [...deck.querySelectorAll(".slide")];
+    const index = slides.indexOf(slide);
+    editorPosition.textContent = (index + 1) + " / " + slides.length;
     if (!force && slide === noteSlide) return;
     if (document.activeElement === spokenNoteInput) return;
     noteSlide = slide;
@@ -1024,20 +1304,29 @@ function editorRuntime() {
 
   function restorePanelPosition() {
     try {
-      const saved = JSON.parse(localStorage.getItem("lt-slide-editor-position") || "null");
-      if (!saved) return;
-      root.style.left = clamp(Number(saved.left) || 18, 0, Math.max(0, innerWidth - root.offsetWidth)) + "px";
-      root.style.top = clamp(Number(saved.top) || 18, 0, Math.max(0, innerHeight - Math.min(root.offsetHeight, innerHeight))) + "px";
+      const saved = JSON.parse(localStorage.getItem("lt-slide-editor-dock-position-v2") || "null");
+      if (!saved?.floating) return;
+      setDocked(false, {
+        left: Number(saved.left) || 16,
+        top: Number(saved.top) || 16,
+        width: Number(saved.width) || 960,
+        height: Number(saved.height) || 320
+      });
     } catch (error) {
-      localStorage.removeItem("lt-slide-editor-position");
+      localStorage.removeItem("lt-slide-editor-dock-position-v2");
     }
   }
 
   function savePanelPosition() {
+    if (!editorDock.classList.contains("is-floating")) return;
     try {
-      localStorage.setItem("lt-slide-editor-position", JSON.stringify({
-        left: Math.round(root.getBoundingClientRect().left),
-        top: Math.round(root.getBoundingClientRect().top)
+      const rect = editorDock.getBoundingClientRect();
+      localStorage.setItem("lt-slide-editor-dock-position-v2", JSON.stringify({
+        floating: true,
+        left: Math.round(rect.left),
+        top: Math.round(rect.top),
+        width: Math.round(rect.width),
+        height: Math.round(rect.height)
       }));
     } catch (error) {
       // Position persistence is optional; keep the editor usable when storage is unavailable.

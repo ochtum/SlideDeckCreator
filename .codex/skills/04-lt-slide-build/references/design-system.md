@@ -49,7 +49,10 @@ Use system fonts only. Keep Japanese line-height between 1.3 and 1.55.
 - `icon-disc`: 64 to 80px square with inline SVG
 - `conclusion-bar`: dedicated rounded zone, never overlay the visual
 - `page-number`: bottom-right
-- `source-note`: bottom-left above or within the footer zone
+- `section-label`: bottom-left when useful
+- `source-note`: non-visual `data-source-note`; do not reserve a center footer column for it
+
+Do not render internal slide IDs such as `s01` / `sXX`. Keep them only in `data-slide-id`. The routine footer has at most a left section label and a right page number; a center system title, source filename, or document title is forbidden.
 
 ## Spatial Safety
 

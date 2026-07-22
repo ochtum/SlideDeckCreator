@@ -6,6 +6,8 @@ import html
 import json
 import re
 import sys
+from collections import defaultdict
+from html.parser import HTMLParser
 from pathlib import Path
 
 
@@ -13,6 +15,49 @@ PROFILE_RE = re.compile(
     r'<section\b(?=[^>]*\bdata-role\s*=\s*(["\'])profile\1)[^>]*>(.*?)</section>',
     re.IGNORECASE | re.DOTALL,
 )
+
+
+class ProfileMarkupAudit(HTMLParser):
+    TRACKED_CLASSES = {"profile-copy", "qr-card", "avatar-card"}
+    VOID_TAGS = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"}
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.stack: list[set[str]] = []
+        self.text_by_class: dict[str, list[str]] = defaultdict(list)
+        self.zone_names: list[str] = []
+        self.classes: set[str] = set()
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        values = {key.lower(): value or "" for key, value in attrs}
+        classes = set(values.get("class", "").split())
+        self.classes.update(classes)
+        if values.get("data-zone"):
+            self.zone_names.append(values["data-zone"])
+        if tag.lower() not in self.VOID_TAGS:
+            self.stack.append(classes)
+
+    def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        values = {key.lower(): value or "" for key, value in attrs}
+        classes = set(values.get("class", "").split())
+        self.classes.update(classes)
+        if values.get("data-zone"):
+            self.zone_names.append(values["data-zone"])
+
+    def handle_endtag(self, tag: str) -> None:
+        if self.stack:
+            self.stack.pop()
+
+    def handle_data(self, data: str) -> None:
+        if not data.strip():
+            return
+        for classes in self.stack:
+            for class_name in classes & self.TRACKED_CLASSES:
+                self.text_by_class[class_name].append(data)
+
+
+def normalized_text(value: str) -> str:
+    return re.sub(r'\s+', ' ', value).strip()
 
 
 def visible_text(markup: str) -> str:
@@ -48,6 +93,20 @@ def validate(html_path: Path, presenter_path: Path, presenter: dict) -> list[str
 
     for _, profile_html in profiles:
         text = visible_text(profile_html)
+        audit = ProfileMarkupAudit()
+        audit.feed(profile_html)
+        allowed_zones = {"title", "visual", "text", "qr", "footer"}
+        unexpected_zones = sorted(set(audit.zone_names) - allowed_zones)
+        if unexpected_zones:
+            errors.append(
+                f'{html_path}: profile に presenter.json 以外の表示領域があります: {", ".join(unexpected_zones)}'
+            )
+        forbidden_classes = {"conclusion-bar", "message-ribbon", "talk-points", "anchor-row", "profile-extra"}
+        found_forbidden = sorted(audit.classes & forbidden_classes)
+        if found_forbidden:
+            errors.append(
+                f'{html_path}: profile に追加メッセージ用の要素があります: {", ".join(found_forbidden)}'
+            )
         for label, expected in [('display_name', display_name), ('bio', bio)]:
             if expected and expected not in text:
                 errors.append(f'{html_path}: profile に presenter.json の {label} が表示されていません: {expected}')
@@ -61,6 +120,24 @@ def validate(html_path: Path, presenter_path: Path, presenter: dict) -> list[str
                 errors.append(f'presenter.json の links[{index}] には platform と account が必要です')
             elif platform not in text or account not in text:
                 errors.append(f'{html_path}: profile に links[{index}] ({platform}: {account}) が表示されていません')
+
+        expected_copy = normalized_text(
+            ' '.join(
+                [display_name, bio]
+                + [
+                    f'{link.get("platform", "")} {link.get("account", "")}'
+                    for link in links
+                    if isinstance(link, dict)
+                ]
+            )
+        )
+        actual_copy = normalized_text(' '.join(audit.text_by_class.get('profile-copy') or []))
+        if actual_copy != expected_copy:
+            errors.append(
+                f'{html_path}: profile-copy の可視テキストは presenter.json の display_name / bio / links だけにしてください'
+            )
+        if normalized_text(' '.join(audit.text_by_class.get('avatar-card') or [])):
+            errors.append(f'{html_path}: avatar-card に presenter.json 以外の可視テキストを置けません')
 
         for kind, filename in [('avatar', 'presenter-avatar'), ('qr', 'presenter-qr')]:
             asset = presenter.get(kind)
@@ -88,6 +165,11 @@ def validate(html_path: Path, presenter_path: Path, presenter: dict) -> list[str
                 errors.append('presenter.json の qr.label が必要です')
             elif label not in text:
                 errors.append(f'{html_path}: profile に presenter.json の qr.label が表示されていません: {label}')
+            actual_qr = normalized_text(' '.join(audit.text_by_class.get('qr-card') or []))
+            if isinstance(label, str) and actual_qr != normalized_text(label):
+                errors.append(f'{html_path}: qr-card の可視テキストは presenter.json の qr.label だけにしてください')
+        elif audit.text_by_class.get('qr-card'):
+            errors.append(f'{html_path}: qr.use=false のとき profile にQR表示を置けません')
     return errors
 
 

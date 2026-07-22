@@ -98,7 +98,7 @@
 4. ブラウザで通常表示を開き、全スライドの初期状態、すべての途中step、前後移動、`A` 全表示、`P` overviewを確認する。
 5. `S` で発表者ビューを開き、現在・次スライド、phaseの問い、ページの目的、四区画ノート、reader context、bridge、タイマー、ショートカット一覧、双方向同期を確認する。長い `話す内容` を途中までスクロールし、タイマーが2秒以上進んでも位置が保持されることを確認する。
 6. 各stepで投影側と発表者ビューの現在プレビューが一致することを確認する。
-7. `scripts/validate_animation_runtime.js <deck-output>/index.html` を実行し、初期状態で後続要素が隠れ、各stepで対象だけが順に表示され、タイトルが常に先に読め、結論が最後に表示されることを検証する。
+7. `scripts/validate_animation_runtime.js <deck-output>/index.html` を実行し、初期状態で後続要素が隠れ、各stepで対象だけが順に表示され、タイトルが常に先に読め、プロフィールを除くページでは結論が最後に表示されることを検証する。プロフィールは `presenter.json` にない結論を生成しない。
 8. `scripts/validate_presenter_runtime.js <deck-output>/index.html --width 1280 --height 720` と `--height 860` を実行し、主台本・問いの可読領域とスクロール保持を検証する。
 9. 印刷プレビューで用紙サイズ、余白0、全step表示を確認し、`<deck-output>/index.pdf` を生成する。
 10. `scripts/validate_pdf.py <deck-output>/index.pdf <deck-output>/index.html` を実行する。

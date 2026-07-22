@@ -2,6 +2,7 @@
 import re
 import sys
 from pathlib import Path
+from urllib.parse import urlsplit
 
 
 def main():
@@ -55,10 +56,20 @@ def main():
         if not re.search(pattern, html, flags=re.I | re.S):
             errors.append(f"missing {label}")
 
-    if re.search(r"https?://", html, flags=re.I):
-        errors.append("external URL dependency found")
+    urls = re.findall(r"https?://[^\s\"'<>`]+", html, flags=re.I)
+    external_urls = [
+        url
+        for url in urls
+        if (urlsplit(url).hostname or "").lower() not in {"127.0.0.1", "localhost", "::1"}
+    ]
+    if external_urls:
+        errors.append(f"external URL dependency found: {external_urls[0]}")
     if re.search(r"setInterval\s*\(\s*\(\)\s*=>\s*this\.renderPresenter\(\)\s*,\s*1000\s*\)", html):
         errors.append("presenter timer must not rebuild notes every second")
+    if re.search(r'class=["\'][^"\']*\bslide-id\b', html, flags=re.I):
+        errors.append("visible slide-id is forbidden; keep the identifier only in data-slide-id")
+    if re.search(r'class=["\'][^"\']*\bfooter-source\b', html, flags=re.I):
+        errors.append("center footer source/system title is forbidden; keep provenance in data attributes")
 
     slide_count = len(re.findall(r"<section\b[^>]*class=[\"'][^\"']*\bslide\b", html, re.I))
     if slide_count < 3:

@@ -10,7 +10,8 @@ The editor augments a finished HTML deck. It is not a replacement for the story,
 - Do not start in presenter mode.
 - Do not alter normal presentation behavior when `edit=1` is absent.
 - Keep all editor UI outside `.deck` so it cannot be printed or captured as slide content.
-- Make the editor panel draggable from its header so it can be moved away from slide content.
+- Use a presenter-style workspace in edit mode: the real editable slide in the upper-left stage, the element editor docked below it, and spoken notes/output in the right column.
+- Keep the lower-left editor dock separate from the slide. Allow its header to undock and drag the panel, and provide an explicit action to return it to the default dock.
 - Support `E` as a keyboard shortcut that toggles between the normal URL and the `?edit=1` editor URL.
 - Support `V` as a keyboard shortcut for switching between editor mode and view mode while `edit=1` is active.
 
@@ -27,10 +28,12 @@ The editor augments a finished HTML deck. It is not a replacement for the story,
 - Add a blank slide.
 - Duplicate the current slide.
 - Recalculate page numbers after page changes.
+- Preserve the deck's existing page-number format. A deck using `1 / 28` must remain in the `current / total` format after editing, duplication, or page insertion.
 - Save a clean edited HTML file without editor selection state.
 - Overwrite the source HTML through the bundled local save server. Do not make download-only save the standard behavior.
 - Export a PDF through the bundled local save server after first writing the clean edited HTML.
 - Move the editor panel without moving selected slide elements.
+- Keep the editable `.deck` inside the upper-left stage bounds at both 1280x720 and a large desktop viewport; do not edit a presenter-preview clone.
 - Toggle normal/editor URLs with `E` when focus is not inside editable text or a form control.
 - Toggle editor/view mode with `V` when focus is not inside editable text or a form control.
 
@@ -47,6 +50,7 @@ The editor augments a finished HTML deck. It is not a replacement for the story,
 - Preserve local `output/assets/` references.
 - Avoid rewriting unrelated deck markup.
 - Treat duplicated and blank slides as content drafts until their timing, visible anchors, evidence traceability, and spoken notes are made page-specific.
+- Mark duplicated and blank slides with `data-editor-draft`, and clear inherited timing, evidence, source-unit, question, speaker-purpose, and spoken-note values instead of presenting them as reviewed content.
 - Keep save-server writes scoped to the explicit HTML file passed to `serve_editor.js`.
 - Keep PDF export scoped to the same directory and basename as the explicit HTML file passed to `serve_editor.js`.
 
@@ -58,6 +62,8 @@ Before delivery, verify:
 - Pressing `E` on `output/index.html` navigates to `output/index.html?edit=1`.
 - Pressing `E` on `output/index.html?edit=1` navigates back to the normal URL without `edit=1`.
 - The editor panel can be dragged from its header and remains within the viewport.
+- The editor starts docked below the real editable slide, does not overlap it, and can return to that dock after floating.
+- The spoken-note field and Save/PDF actions appear in the right column and remain readable at 1280x720.
 - Pressing `V` switches from editor mode to view mode, hiding edit controls and allowing normal slide navigation.
 - Pressing `V` again returns to editor mode.
 - A selected zone can be dragged and the inline `left` and `top` values update.

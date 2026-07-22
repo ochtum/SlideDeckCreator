@@ -9,6 +9,18 @@ design_system:
   id: trustworthy-blue
   version: 1.0.0
   registry: "../config/design-systems/registry.yaml"
+roadmap: # Storyから変更せず引き継ぐ
+  source: generated-from-slides
+  slide_id: s04
+  items:
+    - phase: why
+      label: "判断できない理由"
+      summary: "コード外の知識と人・AIの境界"
+      slide_ids: [s05, s06, s07, s08]
+      page_start: 5
+      page_end: 8
+      start_title: "コードだけでは変更可否が分からない"
+      end_title: "人とAIの担当境界を決める"
 canvas:
   width: 1280
   height: 720
@@ -141,6 +153,8 @@ visual_assets:
     required: true
     output: "visuals/visual-s03.png"
 ```
+
+`role: profile` は `zones` に `conclusion_zone` を持たず、`text.conclusion`、`text.bullets`、`text.details`、`text.anchor_labels` を空にする。可視本文は `config/presenter.json` をビルド時に直接描画し、Blueprintでテーマ固有メッセージを補わない。アニメーション対象も `title`、`avatar`、`profile`、`qr` の実在要素だけとし、`conclusion` を含めない。
 
 `visual.kind` は `none`, `css-component`, `inline-svg`, `generated-image`, `provided-image` から選ぶ。`generated-image` と `provided-image` は必ず `visual_assets` に列挙する。
 

@@ -55,6 +55,18 @@ visual_plan:
     implementation: inline-svg # provided-image, inline-svg, html-table, html-code, generated-image, none
     decision_reason: "文字と矢印の正確さを保つため"
     status: planned # planned, resolved, blocked
+roadmap: # 30分以上または本編20枚超で必須。slides確定後に生成する
+  source: generated-from-slides
+  slide_id: s04
+  items:
+    - phase: why # 内部分類。これだけを可視ラベルにしない
+      label: "判断できない理由"
+      summary: "コード外の知識と人・AIの境界"
+      slide_ids: [s05, s06, s07, s08]
+      page_start: 5
+      page_end: 8
+      start_title: "コードだけでは変更可否が分からない"
+      end_title: "人とAIの担当境界を決める"
 content_inventory:
   evidence_artifacts:
     - id: artifact-1
@@ -243,8 +255,8 @@ slides:
     role: profile
     flow_phase: ""
     title: "自己紹介"
-    message: "誰がなぜ話すのか"
-    support: []
+    message: "presenter.jsonのbioと同じ文字列"
+    support: ["presenter.jsonのdisplay_name", "presenter.jsonのbio", "presenter.jsonのlinks"]
     evidence_refs: []
     spoken_note: ""
   - id: s03
@@ -285,9 +297,13 @@ slides:
 open_questions: []
 ```
 
+`roadmap.items` は後続のphase付きスライドを順序どおり、重複も欠落もなく覆う。各項目の `slide_ids` は連続していなければならず、`page_start` / `page_end` は `slides` の物理位置、`start_title` / `end_title` は範囲の実タイトルと一致させる。道筋スライド自身の `content_model.data.steps` には同じitemsをそのまま置く。ページ追加・削除・並べ替え後は手修正ではなく `slides` から再生成する。
+
 `narrative` の直後に `demo_runbook` と `tomorrow_action` を置く。形式と記述基準は `talkability.md` を正本とする。20分以上では両方必須である。
 
 `role` は `cover`, `profile`, `goal`, `conclusion`, `problem`, `comparison`, `list`, `flow`, `matrix`, `evidence`, `action`, `demo`, `recap`, `thanks` から選ぶ。自己紹介なしの場合は `profile` を省く。
+
+`role: profile` の投影面は `presenter.data_file` の `display_name`、`bio`、全 `links`、QRラベル、使用を許可された画像だけを表示する。発表テーマに合わせた結論帯、補足コピー、実績、意気込みをStoryから追加しない。テーマへの橋渡しは `speaker_cue.script` と `spoken_note` にだけ置く。
 
 `project.target_slide_count` は本編だけを数える。`cover`、`profile`、`thanks` は除き、`recap` は含める。安全下限は5分: 6枚、10分: 8枚、15分: 10枚、16〜29分: 14枚、30分以上: 16枚である。30分は18〜24枚を標準範囲とするが、問い・例・実演・完了条件から見積もり、枚数自体を目標にしない。`scripts/validate_duration_floor.py --story <01-story.yaml>` が成功するまで、この正本を後工程へ渡してはならない。
 

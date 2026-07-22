@@ -39,7 +39,7 @@
 - ページ番号は `.page-number` で入れる
 - 画像は `output/assets/` へコピーし、HTMLから相対参照する
 - 発表者ノートは投影面へ表示しない
-- `presenter.include: true` の自己紹介では、JSONの `display_name`、`bio`、全 `links[].platform` / `links[].account`、`qr.use: true` の `qr.label` を投影面に表示する。画像は `avatar.use` / `qr.use` がtrueのときだけJSONの `path` からコピーする。
+- `presenter.include: true` の自己紹介では、JSONの `display_name`、`bio`、全 `links[].platform` / `links[].account`、`qr.use: true` の `qr.label` だけを投影面の本文として表示する。画像は `avatar.use` / `qr.use` がtrueのときだけJSONの `path` からコピーする。構造ラベル・フッター・ページ番号を除き、JSONにない可視メッセージを加えず、`conclusion_zone` / `.conclusion-bar` を生成しない。
 
 ## Workflow
 
@@ -55,7 +55,9 @@
 7. 本文、図版、結論帯を同じグリッドセルや同じ視覚領域へ重ねない。
 8. 文字量が多い場合は文章を削るかレイアウトを変える。`overflow: hidden`、自動縮小、過小フォントで隠さない。
 9. 最後に全スライドを静的状態で見て、情報階層、余白、画像切れ、読み順を確認する。
-10. 自己紹介スライドでは、JSONの値を画面と `assets/` へ反映できていることを確認する。設計図の一般的なメッセージ、以前の作業用画像、固定のQR文言をJSONより優先してはならない。
+10. 自己紹介スライドでは、JSONの値を画面と `assets/` へ反映できていることを確認する。設計図の一般的なメッセージ、テーマ固有の結論帯、以前の作業用画像、固定のQR文言を追加またはJSONより優先してはならない。
+11. 右上などへ `s01` / `sXX` を可視表示しない。識別子は `.slide[data-slide-id]` だけに保持する。フッター中央へシステムタイトル、原稿名、source noteを表示せず、必要な出典は非表示の `data-source-note` / `data-source-unit-ids` に保持する。
+12. `roadmap-flow` はBlueprintの `roadmap.items` と同じ具体ラベル・要約・ページ範囲を表示し、各ノードへ `data-roadmap-slide-ids` を埋め込む。
 
 ## Layout Rules
 

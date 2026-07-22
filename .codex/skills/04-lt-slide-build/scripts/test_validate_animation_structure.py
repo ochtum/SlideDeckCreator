@@ -19,6 +19,27 @@ def deck(body: str) -> str:
 
 
 class AnimationStructureTests(unittest.TestCase):
+    def test_profile_without_topic_conclusion_passes(self) -> None:
+        html = (
+            '<div class="deck"><section class="slide" data-slide-id="s02" data-role="profile">'
+            '<h1 class="slide-title" data-static-intentional="true">自己紹介</h1>'
+            '<div class="avatar-card" data-static-intentional="true"><img alt="avatar"></div>'
+            '<div class="profile-copy" data-static-intentional="true">Presenter data</div>'
+            '<div class="qr-card" data-static-intentional="true"><img alt="qr"></div>'
+            '</section></div>'
+        )
+        errors, _ = validate(html)
+        self.assertEqual([], errors)
+
+    def test_non_profile_without_conclusion_fails(self) -> None:
+        html = (
+            '<div class="deck"><section class="slide" data-slide-id="s03" data-role="explanation">'
+            '<h1 class="slide-title" data-static-intentional="true">Title</h1>'
+            '</section></div>'
+        )
+        errors, _ = validate(html)
+        self.assertTrue(any("conclusion element is missing" in error for error in errors))
+
     def test_complete_numbered_sequence_passes(self) -> None:
         html = deck(
             '<div class="flow-node" data-anim="rise" data-step="1" '

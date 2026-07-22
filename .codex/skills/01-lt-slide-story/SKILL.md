@@ -52,8 +52,9 @@ LTの素材整理、話の流れ、スライドへの割り付けを決める。
 10. `Series Analysis And Split` に従い、単発かシリーズか、必要なら話数と各回の境界を判定する。
 11. 単発なら一つ、シリーズなら各パートごとに、一つの `central_example` と `question_spine` を先に作る。Why / What / How / Demo / Takeawayごとに、聴衆の問い、一文の答え、次の問いへ渡す実際の一言、時間を決める。phaseラベルだけを骨格の代わりにしない。
 11a. `demo_runbook` に開始状態、3つ以上の操作と観測結果、終了状態、失敗時のfallbackを置く。`tomorrow_action` に時間枠、最初の操作、残る成果物、完了条件を置く。
+11b. 30分以上または本編20枚超では、全スライドの順序と `flow_phase` を確定した後に `roadmap` を生成する。可視ラベルは Why / What / How / Demo / Takeaway ではなく、実際のページ群が答える具体的な節目にする。各項目へ連続した `slide_ids`、物理 `page_start` / `page_end`、`start_title` / `end_title` を保存し、道筋スライドの `content_model.data.steps` と一致させる。
 12. `question_spine` と `narrative.flow` をスライドへ割り付ける。各ページに `speaker_cue` を置き、表示前後の聴衆状態、実際に話す台本、指差す表示要素、次ページへ渡す一言を決める。表紙、自己紹介、Thanksを除く各スライドに `reader_context` と `connection_from_previous` を置き、前ページの理解から次の必要性へ橋を架ける。
-13. `scripts/validate_talkability.py --story <01-story.yaml>`、`scripts/validate_spoken_notes.py --story <01-story.yaml>`、`scripts/validate_duration_floor.py --story <01-story.yaml>`、`scripts/validate_explanation_depth.py --story <01-story.yaml>` を実行する。`full-equivalence` ではさらに `scripts/audit_content_equivalence.py --inventory .lt-slide-work/source-inventory.yaml --story .lt-slide-work/01-story.yaml --require-full-equivalence` を実行する。失敗時は成果物を次工程へ渡さず、問いへの答え、ページ間の接続、実際の台本、観測できるDemo、明日の完了条件、未割当の入力unitを修正する。枚数だけを増やして解決しない。
+13. `scripts/validate_talkability.py --story <01-story.yaml>`、`scripts/validate_spoken_notes.py --story <01-story.yaml>`、`scripts/validate_duration_floor.py --story <01-story.yaml>`、`scripts/validate_explanation_depth.py --story <01-story.yaml>`、`scripts/validate_roadmap.py --story <01-story.yaml>` を実行する。`full-equivalence` ではさらに `scripts/audit_content_equivalence.py --inventory .lt-slide-work/source-inventory.yaml --story .lt-slide-work/01-story.yaml --require-full-equivalence` を実行する。失敗時は成果物を次工程へ渡さず、問いへの答え、ページ間の接続、実際の台本、観測できるDemo、明日の完了条件、道筋と後続ページの不一致、未割当の入力unitを修正する。枚数だけを増やして解決しない。
 14. 単発は `references/story-schema.md`、シリーズは `references/series-schema.md` に従って成果物を出力する。
 15. 構成と、シリーズなら分割理由・各回のゴール・話数をユーザーに提示し、明示的な修正依頼がなければ次工程へ渡せる状態にする。
 
@@ -110,7 +111,7 @@ LTの素材整理、話の流れ、スライドへの割り付けを決める。
 
 必須情報は表示名と自己紹介だけだが、SNSまたはWebサイト、顔写真またはアバター、QR画像についても、使用有無をそれぞれ必ず確認する。ユーザーが初回回答で一部だけを提示した場合、未回答項目を「未指定」として処理せず、最大3件の質問にまとめて追加確認する。
 
-ユーザーが「使わない」と回答した項目だけを不使用として確定する。画像を使わない場合は代替レイアウトを許可する。情報は永続設定として `config/presenter.json` に保存し、`.lt-slide-work/01-story.yaml` から `../config/presenter.json` で参照する。`.lt-slide-work/` や `output/` には保存しない。秘密情報は保存しない。
+ユーザーが「使わない」と回答した項目だけを不使用として確定する。画像を使わない場合は代替レイアウトを許可する。情報は永続設定として `config/presenter.json` に保存し、`.lt-slide-work/01-story.yaml` から `../config/presenter.json` で参照する。`.lt-slide-work/` や `output/` には保存しない。秘密情報は保存しない。自己紹介スライドの可視本文は `display_name`、`bio`、`links`、QRラベルと有効画像だけに限定し、登壇テーマの補足、意気込み、実績、結論を推測して追加しない。テーマへ戻す一言は `speaker_cue` / `spoken_note` に置き、投影面へ常設しない。
 
 ## Presenter Style Profile
 
@@ -134,7 +135,7 @@ LTの素材整理、話の流れ、スライドへの割り付けを決める。
 - 提供画像は、その画像が伝える関係・変化・実例が当該スライドの主張と一致する場合に再利用候補として優先する。採用しない場合は、`source_asset_inventory` に理由（重複、低解像度、比率不適合、正確なSVG/CSSへの置換など）を残す。
 - `narrative.question_spine` を話の背骨、`narrative.flow` を素材の割当として使い分ける。各phaseは聴衆の問い、一文の答え、次phaseへの接続、時間、根拠を持つ。省略したphaseは `narrative.omitted_phases` に理由を残す。20分以上では省略しない。
 - 標準の流れは、タイトル、自己紹介、今日のゴール、Why、What、How、Demo、Takeaway、まとめ、Thanks とする。
-- 発表時間が30分以上、または本編が20枚を超える場合は、「今日のゴール」の直後に話の地図（Why / What / How / Demo / Takeawayの順序と現在位置）を必ず1枚置く。agendaの読み上げではなく、長い発表で聴衆が現在地を見失わないための道標として設計する。
+- 発表時間が30分以上、または本編が20枚を超える場合は、「今日のゴール」の直後に話の地図を必ず1枚置く。Why / What / How / Demo / Takeawayは内部の `phase` として使えるが、可視ラベルは「判断できない理由」「変更地図を作る」のように実際の後続ページを要約する。各項目は後続ページの連続範囲へ一対一で対応させ、ページ追加・削除・並べ替えのたびに再生成する。
 - 今日のゴールは agenda ではなく、聴衆への約束として書く。「何を理解し、何を試せる状態になるか」を明示する。
 - 実務手順、設定、設計資料、運用を扱う発表では、聴衆が翌営業日に開始できる最小単位（作るファイル、実行するコマンド、確認する条件、承認を求める判断）を必ず決める。
 - 複数の部品・手順・概念を扱う発表では、個別説明の前に一つの代表例を開始から結果まで通す。各工程には入力、操作、成果物、完了条件を少なくとも一つずつ示し、途中で例を無断で切り替えない。
@@ -183,11 +184,12 @@ LTの素材整理、話の流れ、スライドへの割り付けを決める。
 - 各 `spoken_note` が画面の単純な復唱や説明方法の説明ではなく、実際に口にする理由・具体例・判断を含み、画面上の指差し対象と次の一言を特定している。
 - 全スライドに `flow_phase` がある。phaseに属さないスライドは空文字でよい。
 - 自己紹介の採否が確定している。
+- 自己紹介の可視本文が `config/presenter.json` の値だけで構成され、テーマ固有の結論や補足が混入していない。
 - SNSまたはWebサイト、顔写真またはアバター、QR画像の使用有無がすべて明示回答で確定している。
 - まとめが今日のゴールとTakeawayを回収し、新情報を持ち込んでいない。
 - Takeawayが「明日何を作成・実行・確認するか」を具体的に言えており、必要な代表サンプルの採否が追跡できる。
 - 複数の構成要素を扱う発表では、部品一覧ではなく、最初の一件を開始から改善まで通す実装プレイブックが存在し、各工程の成果物と完了条件が読める。
-- 30分以上または本編20枚超の発表では、ゴール直後に話の地図があり、実際の本編枚数と `target_slide_count` が一致している。
+- 30分以上または本編20枚超の発表では、ゴール直後に話の地図があり、`scripts/validate_roadmap.py --story <01-story.yaml>` が成功する。可視ラベルがphase名だけでなく、全 `slide_ids`・ページ範囲・先頭／末尾タイトルが実際のスライド列と一致している。
 - `scripts/validate_duration_floor.py --story <01-story.yaml>` が成功する。シリーズは各パートが個別に成功する。
 - 20分以上では `scripts/validate_explanation_depth.py --story <01-story.yaml>` が成功し、時間配分、ページ固有のtalking points、投影面のvisible anchors、低密度ページ比率が妥当である。
 - シリーズ判定では、分割理由、分割数、各パートの独立した学習ゴール、入力素材のカバレッジがマニフェストにある。

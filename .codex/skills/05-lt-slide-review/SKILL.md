@@ -20,7 +20,7 @@ PlaywrightでHTMLスライドを実ブラウザ表示し、各ページをアニ
 
 1. 対象HTMLと対応する `01-story.yaml`、`02-blueprint.yaml`、元入力を確認する。指定がなければ `output/index.html` を対象にする。シリーズでは各パートを独立して確認する。
 2. Playwright実行環境を確認する。通常は同梱Node.jsと `NODE_PATH` を使う。
-3. 対応するストーリーの `visual_plan` と設計図を読み、`review_deck.js` に `--story <01-story.yaml> --blueprint <02-blueprint.yaml>` を渡す。スクリプトは `validate_spoken_notes.py`、`validate_talkability.py`、`validate_visual_plan.py`、`validate_explanation_depth.py` を実行し、いずれかが失敗したら視覚findingがなくても不合格としてレポートに残す。シリーズの標準的な出力パスでは対応するファイルを自動検出できるが、明示指定を優先する。
+3. 対応するストーリーの `visual_plan` と設計図を読み、`review_deck.js` に `--story <01-story.yaml> --blueprint <02-blueprint.yaml>` を渡す。スクリプトは `validate_spoken_notes.py`、`validate_talkability.py`、`validate_visual_plan.py`、`validate_explanation_depth.py`、`validate_roadmap.py`、自己紹介ありでは `validate_presenter_binding.py` を実行し、いずれかが失敗したら視覚findingがなくても不合格としてレポートに残す。シリーズの標準的な出力パスでは対応するファイルを自動検出できるが、明示指定を優先する。
 4. `references/content-coverage.md` と `presentation-quality.md` に従って、全スライドについて次を確認する。talkability v2の `spoken_note` は `橋渡し`、`話す内容`、`指差し`、`次の一言` の四区画を持つ。ノートだけを上から読んで、冒頭の問題、各phaseの問いと答え、次への接続、Demoの操作と観測、明日の一手を再現できるか確認する。ストーリーとHTMLの文字列一致だけで合格にしてはならない。初見者に必要な定義・具体例、前ページからの接続、後読時の主語と結論も照合する。入力から採用した表、コード、設定例、図、フローは、要約の過程で消さず、HTMLのtable/pre/code/SVGまたは提供画像に追跡可能に解決する。スタイルプロファイルが適用されている場合は、入力にある検証過程や失敗が成功結果だけへ圧縮されていないこと、発表者の疑問・判断・気づきが残ること、具体物が口調だけで置換されていないことを確認する。
 4a. `full-equivalence` ではルートStoryに対して `audit_content_equivalence.py --inventory <source-inventory.yaml> --story <root-story.yaml> --html <all-part-index.html> --require-full-equivalence --report <review>/content-equivalence.md` を実行する。シリーズ概要のtopic coverageや文字列一致だけで合格にしない。design-system選択時はStory、Blueprint、HTMLのID/versionとregistryを `manage_design_system.py validate-binding` で照合する。
 5. `scripts/review_deck.js` を実行し、通常表示と発表者ビューの両方を全スライドのアニメーション完了状態で撮影・検査する。発表者ビューでは `話す内容` の主領域、phaseの問いの独立領域、タイマー更新中のスクロール保持も検査する。同スクリプトから `validate_animation_choreography.py` を実行し、BlueprintからHTMLへのpreset消失、同じsignatureの3ページ連続、step数の均一化、一種類への偏りも不合格にする。代表的な定義、比較、フロー、Demo、Takeawayは初期状態と各stepも実ブラウザで確認する。
@@ -73,6 +73,8 @@ findingを確認しながら途中で止めずにレポートだけ作りたい�
 - スタイルプロファイルが適用されている場合、適用ルールとApplication Limitsを照合する。実験・検証資料で成功だけに圧縮された場合は `style-under-applied`、記号・顔文字・感情ページが上限を超える、または無関係なページへ機械的に追加された場合は `style-over-applied`、入力にない体験が追加された場合は `style-fabricated-experience` として不合格にする。
 - spoken-noteは、そのページの主張、表示している具体物（表・コード・設定・図・フロー）の読み方、聴衆が取る判断または次の一手のうち必要なものを説明しているか、ページ単位で人間またはレビュー担当エージェントが意味を確認する。機械的な文字列一致だけで合格にしてはならない。
 - `question_spine` の各phaseで、聴衆の問いに対する答えがページ群と台本から実際に得られ、最後のページの `次の一言` が次phaseの問いを必要にしているか確認する。phase名だけの章区切りは `narrative-discontinuity` とする。
+- 自己紹介ページの可視本文は `presenter.json` の表示名、bio、links、QRラベルだけに限定する。構造ラベル・フッター・ページ番号を除き、JSONにない補足や結論帯があれば `contract-presenter-binding-failed` とする。
+- 30分以上または本編20枚超の道筋は、Why / What / How / Demo / Takeawayというphase名だけでなく、実際の後続ページ群を要約したラベル・要約・ページ範囲を表示する。全項目の `data-roadmap-slide-ids` がStory/Blueprintのスライド列を順序どおり過不足なく覆わなければ `contract-roadmap-failed` とする。
 - Demoは3つ以上の具体操作と画面で観測できる結果を持ち、fallbackを含む。構成図の説明だけ、または「確認する」だけなら `demo-not-observable` とする。
 - Takeawayは時間枠、最初の操作、残る成果物、完了条件を持つ。「試す」「検討する」だけなら `takeaway-not-actionable` とする。
 - 全本編ページの説明時間が同じ値へ均一化されていないか確認する。定義・比較・手順・Demoの役割差があるのに同一秒数なら `uniform-pacing` とする。

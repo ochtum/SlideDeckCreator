@@ -112,6 +112,15 @@ def main():
                     if compact(point) != "none" and not matches_anchor(point, visible):
                         errors.append(f"{sid}: speaker_cue.point_at '{point}' is not implemented")
         zones = slide.get("zones") or {}
+        if slide.get("role") == "profile":
+            if "conclusion_zone" in zones:
+                errors.append(f"{sid}: profile must not define conclusion_zone")
+            profile_text = slide.get("text") or {}
+            if str(profile_text.get("conclusion") or "").strip():
+                errors.append(f"{sid}: profile text.conclusion must be empty")
+            for key in ("bullets", "details", "anchor_labels"):
+                if profile_text.get(key):
+                    errors.append(f"{sid}: profile text.{key} must be empty; render presenter.json directly")
         for name in REQUIRED_ZONES:
             if name not in zones:
                 errors.append(f"{sid}: missing {name}")
@@ -188,7 +197,10 @@ def main():
         if "title" not in initial_targets:
             errors.append(f"{sid}: animation.sequence.initial_targets must include title")
         ordered_targets = sequence.get("ordered_targets") or []
-        if not ordered_targets or ordered_targets[-1] != "conclusion":
+        if slide.get("role") == "profile":
+            if "conclusion" in ordered_targets:
+                errors.append(f"{sid}: profile animation must not target a conclusion")
+        elif not ordered_targets or ordered_targets[-1] != "conclusion":
             errors.append(f"{sid}: animation.sequence.ordered_targets must end with conclusion")
         if sequence.get("coverage") != "all-meaningful-siblings":
             errors.append(f"{sid}: animation.sequence.coverage must be all-meaningful-siblings")

@@ -22,6 +22,7 @@ Recommended `.gitignore` entry:
 - `qr.use: true` なら、JSONと完全一致する `qr.label` と、`qr.path` からコピーしたQR画像を持つ。
 - `avatar.use: true` なら、`avatar.path` からコピーした画像を持つ。
 - `use: false` の画像を出力しない。作業用の `visuals/` や `visuals-manifest.yaml` に残った古いコピーを使わない。
+- 構造ラベルの「自己紹介」「PROFILE」、章フッター、ページ番号を除き、JSONにない可視テキストを持たない。テーマ固有の結論帯、補足コピー、実績、意気込みを追加せず、`conclusion_zone` / `.conclusion-bar` を持たない。
 
 ビルド後、`scripts/validate_presenter_binding.py --presenter config/presenter.json <part-output>/index.html` を実行する。値の欠落、固定文言、asset不一致はビルド失敗とする。
 
@@ -41,13 +42,20 @@ Storyに `design_system` がある場合、`config/design-systems/registry.yaml`
 - A: reveal every animation step on the current slide without advancing
 - Hash links: `#1`, `#2`, ...
 
+## Visible metadata
+
+- Preserve each internal identifier in `.slide[data-slide-id]`, but never render `s01` / `sXX` as audience-visible text.
+- The footer may show a left section/phase label and a right page number. Do not add a center system title, deck title, source filename, or source note.
+- Preserve provenance in `data-source-note`, `data-source-unit-ids`, and evidence attributes instead of consuming slide space.
+- A long-form roadmap renders the exact Story/Blueprint `roadmap.items`: concrete label, summary, physical page range, and `data-roadmap-slide-ids` for every node.
+
 ## Animation Order
 
 - Animation steps follow semantic order first: explicit number, cause/effect, dependency, operation, and speaker explanation order. DOM order must match the visual order. Z-shaped position is only the fallback for independent elements with no semantic order.
 - Runtime preserves explicit `[data-step]` values, including `data-step="0"`. Zone positionからのZ-flow補完は属性自体がない要素だけに行い、0を未指定として扱わない。
 - Per-slide step numbers are compressed so navigation has no empty intermediate step.
 - The default maximum step count is 6. An explicit item-by-item sequence may use up to 9 steps; 10 or more must be regrouped by meaning.
-- The title and required context are visible at step 0. Ordered content starts at step 1. Output, completion criteria, and the conclusion appear after the content; the conclusion is last.
+- The title and required context are visible at step 0. Ordered content starts at step 1. Output, completion criteria, and the conclusion appear after the content; the conclusion is last. A `data-role="profile"` slide has no conclusion unless it is explicit presenter data, and the standard profile contract forbids that extra region.
 - Every meaningful sibling in a progressive table, card group, checklist, or numbered process must be either animated or explicitly marked `data-static-intentional`. Partial coverage is a build error.
 - Current and presenter previews use the same normalized DOM state.
 

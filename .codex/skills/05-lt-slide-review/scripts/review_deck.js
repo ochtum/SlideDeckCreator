@@ -93,6 +93,27 @@ function runPythonCheck(python, script, args) {
   };
 }
 
+function readTopLevelYamlSection(filePath, sectionName) {
+  const values = {};
+  const lines = fs.readFileSync(filePath, "utf8").split(/\r?\n/);
+  let inSection = false;
+  for (const line of lines) {
+    if (!inSection) {
+      if (line === `${sectionName}:`) inSection = true;
+      continue;
+    }
+    if (/^[^\s#]/.test(line)) break;
+    const match = line.match(/^\s{2}([A-Za-z0-9_-]+):\s*(.*?)\s*$/);
+    if (!match) continue;
+    let value = match[2].replace(/\s+#.*$/, "").trim();
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+    values[match[1]] = value;
+  }
+  return values;
+}
+
 function validateContracts(args) {
   const paths = resolveContractPaths(args);
   const checks = [];
@@ -130,16 +151,51 @@ function validateContracts(args) {
     path.join(paths.root, ".codex", "skills", "01-lt-slide-story", "scripts", "validate_explanation_depth.py"),
     ["--story", paths.story, "--blueprint", paths.blueprint, "--html", path.resolve(args.html)],
   );
+  const roadmap = runPythonCheck(
+    python,
+    path.join(paths.root, ".codex", "skills", "01-lt-slide-story", "scripts", "validate_roadmap.py"),
+    ["--story", paths.story, "--blueprint", paths.blueprint, "--html", path.resolve(args.html)],
+  );
   const motion = runPythonCheck(
     python,
     path.join(paths.root, ".codex", "skills", "04-lt-slide-build", "scripts", "validate_animation_choreography.py"),
     ["--blueprint", paths.blueprint, "--html", path.resolve(args.html)],
   );
-  const designSystem = runPythonCheck(
-    python,
-    path.join(paths.root, ".codex", "skills", "07-lt-design-system-manager", "scripts", "manage_design_system.py"),
-    ["validate-binding", "--root", path.join(paths.root, "config", "design-systems"), "--story", paths.story, "--blueprint", paths.blueprint, "--html", path.resolve(args.html)],
-  );
+  const presenterSelection = readTopLevelYamlSection(paths.story, "presenter");
+  const presenterIncluded = /^(true|yes|1)$/i.test(presenterSelection.include || "");
+  const presenterBinding = presenterIncluded
+    ? runPythonCheck(
+        python,
+        path.join(paths.root, ".codex", "skills", "04-lt-slide-build", "scripts", "validate_presenter_binding.py"),
+        [
+          "--presenter",
+          path.resolve(path.dirname(paths.story), presenterSelection.data_file || "../config/presenter.json"),
+          path.resolve(args.html),
+        ],
+      )
+    : {
+        script: null,
+        args: [],
+        exitCode: 0,
+        output: "SKIPPED: Storyで自己紹介スライドを使用していません",
+      };
+  const designSystemSelection = readTopLevelYamlSection(paths.story, "design_system");
+  let designSystem;
+  if (designSystemSelection.registry) {
+    const registryPath = path.resolve(path.dirname(paths.story), designSystemSelection.registry);
+    designSystem = runPythonCheck(
+      python,
+      path.join(paths.root, ".codex", "skills", "07-lt-design-system-manager", "scripts", "manage_design_system.py"),
+      ["validate-binding", "--root", path.dirname(registryPath), "--story", paths.story, "--blueprint", paths.blueprint, "--html", path.resolve(args.html)],
+    );
+  } else {
+    designSystem = {
+      script: null,
+      args: [],
+      exitCode: 0,
+      output: `SKIPPED: Storyは内蔵デザインシステムを使用しています (${designSystemSelection.id || "未選択"})`,
+    };
+  }
   const rootStory = path.join(paths.root, ".lt-slide-work", "01-story.yaml");
   const sourceInventory = path.join(paths.root, ".lt-slide-work", "source-inventory.yaml");
   let contentEquivalence = null;
@@ -167,7 +223,9 @@ function validateContracts(args) {
     { name: "talkability", ...talkability },
     { name: "visual-plan", ...visual },
     { name: "explanation-depth", ...depth },
+    { name: "roadmap", ...roadmap },
     { name: "animation-choreography", ...motion },
+    { name: "presenter-binding", ...presenterBinding },
     { name: "design-system-binding", ...designSystem },
   );
   if (contentEquivalence) checks.push({ name: "content-equivalence", ...contentEquivalence });
@@ -326,18 +384,43 @@ async function inspectSlide(page, index, options) {
     }
 
     const textCandidates = allVisible.filter((el) => {
+      if (ignored(el)) return false;
       const tag = el.tagName.toLowerCase();
-      return ["h1", "h2", "h3", "p", "li", "blockquote"].includes(tag) ||
+      return ["h1", "h2", "h3", "p", "li", "blockquote", "span", "td", "th", "pre", "code"].includes(tag) ||
         el.matches(".card, .conclusion-bar, .statement, [data-zone='title'], [data-zone='text'], [data-zone='conclusion']");
     });
+    const clippedByAncestor = (el) => {
+      let ancestor = el.parentElement;
+      while (ancestor && ancestor !== slide) {
+        if (ignored(ancestor)) return null;
+        const style = getComputedStyle(ancestor);
+        if (/(hidden|clip)/.test(`${style.overflow} ${style.overflowX} ${style.overflowY}`)) {
+          const outer = ancestor.getBoundingClientRect();
+          const inner = el.getBoundingClientRect();
+          const clipped = inner.left < outer.left - 1 || inner.top < outer.top - 1 ||
+            inner.right > outer.right + 1 || inner.bottom > outer.bottom + 1;
+          if (clipped) return ancestor;
+        }
+        ancestor = ancestor.parentElement;
+      }
+      return null;
+    };
     for (const el of textCandidates) {
       const style = getComputedStyle(el);
       const clipsX = style.overflowX !== "visible";
       const clipsY = style.overflowY !== "visible";
       const clippedX = clipsX && el.scrollWidth > el.clientWidth + 2;
       const clippedY = clipsY && el.scrollHeight > el.clientHeight + 4;
-      if (clippedX || clippedY) {
-        findings.push({ type: "text-clipped", element: label(el), rect: relativeRect(el), message: "テキストまたは内容が要素内で切れています" });
+      const clippingAncestor = clippedByAncestor(el);
+      if (clippedX || clippedY || clippingAncestor) {
+        findings.push({
+          type: "text-clipped",
+          element: label(el),
+          rect: relativeRect(el),
+          message: clippingAncestor
+            ? `テキストが祖先要素 ${label(clippingAncestor)} の境界で切れています`
+            : "テキストまたは内容が要素内で切れています",
+        });
       }
     }
 

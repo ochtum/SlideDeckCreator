@@ -65,6 +65,7 @@ class Element:
 @dataclass
 class Slide:
     sid: str
+    role: str = ""
     elements: list[Element] = field(default_factory=list)
     title: Element | None = None
     conclusions: list[Element] = field(default_factory=list)
@@ -85,7 +86,10 @@ class Parser(HTMLParser):
         classes = set(values.get("class", "").split())
         tag_name = tag.casefold()
         if tag_name == "section" and "slide" in classes:
-            self.current = Slide(values.get("data-slide-id") or f"slide-{len(self.slides) + 1}")
+            self.current = Slide(
+                values.get("data-slide-id") or f"slide-{len(self.slides) + 1}",
+                values.get("data-role", ""),
+            )
             self.slides.append(self.current)
             self.section_depth = 1
             self.tbody_depth = 0
@@ -201,7 +205,7 @@ def validate(html_text: str) -> tuple[list[str], dict[str, int]]:
             elif any(right < left for left, right in zip(steps, steps[1:])):
                 errors.append(f"{slide.sid}: group {group_name} steps move backwards: {steps}")
 
-        if not slide.conclusions:
+        if slide.role != "profile" and not slide.conclusions:
             errors.append(f"{slide.sid}: conclusion element is missing")
         for conclusion in slide.conclusions:
             if conclusion.step != max_step:

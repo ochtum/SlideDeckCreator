@@ -18,10 +18,10 @@ description: 04-lt-slide-build によって生成された HTML ライトニン�
 2. 対象が `04-lt-slide-build` 系の構造を持つことを確認する。最低限 `.deck` と `.slide` が必要。
 3. `scripts/inject_editor.js` を実行して編集ランタイムを注入する。
 4. `scripts/serve_editor.js` で対象HTMLをローカル配信し、表示された `http://127.0.0.1:<port>/?edit=1` を開く。
-5. 要素選択、ドラッグ移動、テキスト編集、spoken_note編集、テキスト追加、画像追加、フォントサイズを含むスタイル変更、ページ追加、ページ複製、`E` キーによる通常URL/編集URLの切り替え、`V` キーによる編集UI表示/非表示切り替え、`Save HTML` による対象HTMLの上書き保存を確認する。Spoken Note欄では `橋渡し`、`話す内容`、`指差し`、`次の一言` の不足がその場で分かることを確認する。
+5. 編集画面が発表者ビュー風の固定ワークスペースになり、左上に保存対象の実スライド、左下に編集パネル、右側にSpoken Noteと出力操作が表示されることを確認する。要素選択、ドラッグ移動、テキスト編集、spoken_note編集、テキスト追加、画像追加、フォントサイズを含むスタイル変更、ページ追加、ページ複製、`E` キーによる通常URL/編集URLの切り替え、`V` キーによる編集UI表示/非表示切り替え、`Save HTML` による対象HTMLの上書き保存を確認する。Spoken Note欄では `橋渡し`、`話す内容`、`指差し`、`次の一言` の不足がその場で分かることを確認する。
 6. `Export PDF` で対象HTMLを先に上書きし、同じディレクトリに同名PDF（既定は `output/index.pdf`）が生成されることを確認する。
 7. `file://` で開いた場合、`Save HTML` はブラウザのファイル保存ピッカーまたはダウンロードへフォールバックし、`Export PDF` は印刷ダイアログを開くことを確認する。
-8. `?edit=1` なしの通常表示で、キーボード操作、発表者ビュー、印刷表示が壊れていないことを確認する。
+8. `scripts/validate_editor_workspace.js <index.html> --width 1280 --height 720` と1920x980相当を実行し、実スライドが左上のstage内に収まること、編集パネルがその下へドックされること、右側の台本欄が十分な高さを持つこと、フロート／再ドック、`V` 切替を確認する。その後、`?edit=1` なしの通常表示で、キーボード操作、発表者ビュー、印刷表示が壊れていないことを確認する。
 9. 20分以上のデッキでページ追加、複製、本文・図表・ノート変更を行った場合は、`data-delivery-mode`、`data-estimated-seconds`、`data-content-model-type`、`data-evidence-artifact-ids`、`data-source-unit-ids`、`data-flow-phase`、`data-phase-question`、`data-speaker-purpose` を保持または更新する。deck rootの `data-design-system-id` / `data-design-system-version` も保持する。空白ページと複製ページは説明契約未完了のdraftとして扱う。
 10. 内容を変更した場合は必ず `05-lt-slide-review` を実行し、`validate_explanation_depth.py` と `validate_talkability.py` を含む契約検証が成功することを確認する。位置・色だけの変更でも、長時間LTのtraceability属性を削除していないことを確認する。
 
@@ -50,7 +50,8 @@ if (!(Test-Path $node)) { $node=(Get-Command node -ErrorAction Stop).Source }
 - `E` キーで通常URLと `?edit=1` 付き編集URLを切り替える。`?edit=1` がない通常表示では、編集UIを起動せずにこのショートカットだけを登録する。テキスト編集中、フォーム入力中、修飾キー付き入力では切り替えない。
 - `V` キーで `?edit=1` 内の編集UI表示/非表示を切り替える。テキスト編集中、フォーム入力中、修飾キー付き入力では切り替えない。
 - 閲覧モードでは編集パネル、選択枠、`contenteditable`、要素ドラッグ、編集用キー操作を無効化し、既存のスライド閲覧ショートカットを優先する。
-- 編集パネルはヘッダーをドラッグして移動でき、位置は同じブラウザの `localStorage` に保存する。
+- 編集画面は発表者ビュー風の2列構成を標準とする。左上に保存対象の実スライド、左下に要素・追加・移動パネル、右側にSpoken Note・保存・PDF操作を置き、スライドへ編集UIを重ねない。
+- 左下の編集パネルは既定でドックする。ヘッダーのドラッグまたは「フロート」で切り離せ、「ドックへ戻す」で元の領域へ戻せる。フロート位置は同じブラウザの `localStorage` に保存する。
 - 対象要素は主に `.zone`。絶対配置の `left`, `top`, `width`, `height` を編集する。
 - テキスト編集は選択要素内の文字要素を `contenteditable` にする。
 - Spoken Note 欄は現在スライドの `data-spoken-note` を編集する。`橋渡し`、`話す内容`、`指差し`、`次の一言` の四区画を案内し、不足区画をdraft警告として表示する。スライド移動時は現在スライドのノートを読み直し、保存時はHTML属性として残す。
@@ -70,14 +71,17 @@ if (!(Test-Path $node)) { $node=(Get-Command node -ErrorAction Stop).Source }
 - 発表者ビュー `?presenter=1` では編集UIを起動しない。
 - 印刷CSSに編集UIを出さない。
 - 編集URLの切り替えはURLクエリを更新してページ遷移する。閲覧モードの切り替えは `?edit=1` 内だけで完結させる。通常表示URLや発表者ビューへ編集UIを出さない。
-- 編集パネルの移動はスライド要素のドラッグ移動と独立させる。ヘッダー内のボタンやフォーム操作ではパネル移動を開始しない。
+- 編集パネルのフロート移動はスライド要素のドラッグ移動と独立させる。ヘッダー内のボタンやフォーム操作ではパネル移動を開始しない。ドック時は発表者ビューの「次のスライド＋ショートカット」に相当する左下領域を使用する。
+- 編集対象には発表者ビュー用のcloneを使わず、保存対象の `.deck` 内にある実スライドを縮小配置する。保存時は編集ワークスペース用の `left`、`top`、`transform` をHTMLから除去する。
 - スライド本体は1280x720固定を維持する。
 - 追加する `.slide` は既存スライドと同じ構造に寄せ、`.page-number` を再採番する。
+- `.page-number` は既存デッキの表記を維持する。`1 / 28` 形式なら、追加・複製後も `1 / 30` のように総ページ数まで再計算し、単なる `1` へ変換しない。
 - 追加する要素は `.zone` とし、`data-zone` を設定する。
 - 既存の `data-spoken-note` を保持し、Spoken Note 欄で編集できるようにする。
 - 既存の `data-delivery-mode`、`data-estimated-seconds`、`data-content-model-type`、`data-evidence-artifact-ids`、`data-source-unit-ids`、`data-flow-phase`、`data-phase-question`、`data-speaker-purpose`、deck rootの `data-design-system-id` / `data-design-system-version` を保持する。ページ複製時に同じ時間・証拠・source unit・話者目的をそのまま確定扱いにせず、ユーザーが内容を更新するまでdraft表示またはレビューfindingとして残す。
 - エディタの色変更でregistryのdesign-system specを暗黙に上書きしない。デザインシステム自体の追加・変更・削除は `07-lt-design-system-manager` へ戻し、個別ページの局所調整と区別する。
 - 空白スライドや複製スライドを追加した後は、タイトル、具体的な投影アンカー、説明時間、spoken noteを埋めないまま完成品として保存・配布しない。
+- 空白・複製スライドには `data-editor-draft` を付け、時間・証拠・source unit・問い・話者目的・spoken noteを元ページから確定値として引き継がない。
 - 保存前後で対象HTMLの更新時刻が変わること、`Export PDF` 後に同名PDFの更新時刻が変わること、通常表示の初期スライド、次へ/前へ、`A` reveal、`S` presenterを確認する。
 
 ## Output

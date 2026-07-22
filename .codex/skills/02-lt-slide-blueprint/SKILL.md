@@ -45,16 +45,17 @@ config/
 
 ## Workflow
 
-1. `.lt-slide-work/01-story.yaml` が単発ストーリーかシリーズマニフェストかを確認する。シリーズなら `Series Mode` に従って各パートを処理する。各スライドの `speaker_cue`、`spoken_note`、`reader_context`、`connection_from_previous`、`delivery` を同じIDの設計図へそのまま引き継ぐ。phaseに属するページには `question_spine` の問い・答え・接続を `phase_context` として引き継ぐ。`source_asset_inventory` があれば、対象パートに割り当てられた提供画像・表・コードを先に確認する。Storyの `style_profile.status` が `applied` の場合だけプロファイルを読み、`applied_rule_ids` に対応する表現を設計する。入力に根拠のない感情、失敗、記号、短文スライドを追加してはならない。
+1. `.lt-slide-work/01-story.yaml` が単発ストーリーかシリーズマニフェストかを確認する。シリーズなら `Series Mode` に従って各パートを処理する。各スライドの `speaker_cue`、`spoken_note`、`reader_context`、`connection_from_previous`、`delivery` を同じIDの設計図へそのまま引き継ぐ。phaseに属するページには `question_spine` の問い・答え・接続を `phase_context` として引き継ぐ。Storyの `roadmap` はトップレベルと道筋スライドの `content_model.data.steps` へ変更せず引き継ぐ。`source_asset_inventory` があれば、対象パートに割り当てられた提供画像・表・コードを先に確認する。Storyの `style_profile.status` が `applied` の場合だけプロファイルを読み、`applied_rule_ids` に対応する表現を設計する。入力に根拠のない感情、失敗、記号、短文スライドを追加してはならない。
 1a. Storyに `design_system` があればregistryから同じID/versionのspecを読み、`design_system` を設計図へ変更せず引き継ぐ。theme、component、motionはspec tokenから解決し、別の色へ即興で置換しない。選択済みIDが見つからなければfallbackせず停止する。`full-equivalence` では各スライドの `source_unit_ids` も変更せず引き継ぐ。
 2. 各スライドに1つの `layout` と、実際に描画する1つの `visual_anchor` を割り当てる。表・フロー・設定・コード・プレイブックを表示する場合だけ、後工程がそのまま描画できる非空の `content_model` を置く。`content_model` には表の列と行、フローのノードと矢印、設定・コマンド・チェックリストの実データを置く。
+2a. `role: profile` は `profile-three-zone` とし、`presenter.json` の表示名、bio、links、有効画像、QRラベル以外の可視本文を設計しない。`conclusion_zone` を作らず、`text.conclusion`、`bullets`、`details`、`anchor_labels` は空にする。テーマへの接続は変更せず引き継いだ `spoken_note` に残す。
 3. 1280x720座標で `title_zone`, `text_zone`, `visual_zone`, `conclusion_zone`, `footer_zone` を定義する。
 4. テキスト量、文字サイズ、行数を確定する。
 5. 図版をコンポーネント、インラインSVG、提供画像、生成画像、なしから選ぶ。意味が一致する提供画像は `provided-image` として優先し、`visual_assets` に必ず列挙する。表・コード・設定例は、読める最小データを `content_model` としてHTMLへ再構成する。正確さが必要なフロー・表・コードを、生成画像や汎用カードに置き換えない。
 6. `references/motion-choreography.md` に従い、各ページへ `animation.intent`、`animation.family`、`animation.selection`、`animation.sequence` を置く。presetをスライド番号やページ位置へ固定せず、`role -> content_model.type -> targetの意味 -> phase境界` の順で選ぶ。各entrance/stepには選択理由を置き、同一stepで線とノードなど対象の役割が違う場合は `target_presets` と `target_reasons` で分ける。通常はページ内stepを最大6段階にまとめるが、番号付き工程・表の代表行など、話者が一項目ずつ説明する順序列は最大9段階まで許可する。`sequence` には初期表示、全対象、意味上の順序、完了要素を明記し、同じグループの一部だけを段階表示にして残りを初期表示へ漏らさない。全ページへ同じstep数とpreset列を複製しない。本編20枚以上では5preset・4family以上、3種類以上のstep数をデッキ全体で使い分ける。
 6a. 初見者向けの初出用語は、画面上で平易な定義と具体例を読めるようにする。各スライドについて、`speaker_cue.point_at` の全項目を実在する文字、表セル、コード行、図のHTML/SVGラベルとして配置する。直前からの橋渡しと次の一言は発表者ノートに残し、後読時に必要な `reader_context` を表示用・発表者ビュー用のどちらに置くか決める。
 7. 単発は `.lt-slide-work/02-blueprint.yaml`、シリーズは各パートの `blueprint_file` を出力する。
-8. 出力した各設計図に `scripts/validate_blueprint.py`、`scripts/validate_visual_plan.py --story <part-01-story.yaml> --blueprint <blueprint_file>`、`../01-lt-slide-story/scripts/validate_duration_floor.py --story <part-01-story.yaml> --blueprint <blueprint_file>`、`../01-lt-slide-story/scripts/validate_explanation_depth.py --story <part-01-story.yaml> --blueprint <blueprint_file>`、`../01-lt-slide-story/scripts/validate_talkability.py --story <part-01-story.yaml> --blueprint <blueprint_file>` を実行し、エラーをゼロにする。
+8. 出力した各設計図に `scripts/validate_blueprint.py`、`scripts/validate_visual_plan.py --story <part-01-story.yaml> --blueprint <blueprint_file>`、`../01-lt-slide-story/scripts/validate_duration_floor.py --story <part-01-story.yaml> --blueprint <blueprint_file>`、`../01-lt-slide-story/scripts/validate_explanation_depth.py --story <part-01-story.yaml> --blueprint <blueprint_file>`、`../01-lt-slide-story/scripts/validate_talkability.py --story <part-01-story.yaml> --blueprint <blueprint_file>`、`../01-lt-slide-story/scripts/validate_roadmap.py --story <part-01-story.yaml> --blueprint <blueprint_file>` を実行し、エラーをゼロにする。
 
 ## Non-Overlap Contract
 
@@ -84,13 +85,13 @@ lt-html-slide-skillの見栄えを維持しつつ、slide-builderの小さな文
 ## Layout Selection
 
 - `hero-split`: 表紙や強い結論。左テキスト、右ビジュアル。
-- `profile-three-zone`: 左画像、中央プロフィール、右QR。欠損時は2列へ変更。
+- `profile-three-zone`: 左画像、中央プロフィール、右QR。欠損時は2列へ変更。可視情報はpresenter.jsonだけとし、結論帯やテーマ固有コピーを追加しない。
 - `statement`: 1つの主張を大きく見せる。
 - `split-compare`: 左右比較と独立コネクタ。
 - `cards-3`: 3つの選択肢や理由。
 - `cards-4`: 短い項目だけ。各カード本文2行以内。
 - `flow-3` / `flow-4`: 手順と矢印。
-- `roadmap-flow`: 長い発表用の話の地図。Why / What / How / Demo / Takeawayを横並びにし、現在地を強調する。
+- `roadmap-flow`: 長い発表用の話の地図。Storyの `roadmap.items` にある具体的な節目、要約、ページ範囲を並べる。Why / What / How / Demo / Takeawayだけを可視ノードにせず、各ノードへ対応 `slide_ids` を保持する。
 - `implementation-playbook`: 最初の一件を実行するための手順。各工程に「作るもの」「AIまたは人間が行うこと」「完了条件」を並べる。
 - `annotated-example`: 画面、コード、設定、表の主役を大きく置き、2〜4個の注釈で読み方を示す。
 - `code-walkthrough`: ファイル名、読めるコード断片、注目行、入出力または副作用を分ける。
