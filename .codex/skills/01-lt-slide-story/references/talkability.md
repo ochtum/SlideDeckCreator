@@ -4,7 +4,7 @@
 
 ## 1. 発表全体の問いの背骨
 
-20分以上では `project.talkability_version: 2` を置き、`narrative` に次を必須とする。
+20分以上では `project.talkability_version: 2` を置き、`narrative.phase_order` と同じ順序の `question_spine` を必須とする。以下はfallbackの一例であり、記事入力では `knowledge-structure.md` のarchetypeを優先する。
 
 ```yaml
 narrative:
@@ -45,11 +45,11 @@ narrative:
       source_items: [caution-1]
 ```
 
-- 20分以上は Why / What / How / Demo / Takeaway をすべて持つ。phase名を表示するだけでは不可。
+- `phase_order` がない旧Storyだけ Why / What / How / Demo / Takeaway を使う。記事種別に存在しないDemoや手順を捏造しない。
 - `audience_question` は聴衆がその時点で抱く問い、`answer` はそのphaseを聞いた後に言える答えにする。
 - `transition_to_next` は、前の答えから次の問いが必要になる理由を実際に口にできる文にする。
 - `central_example` は可能な限り全phaseで同じ対象を追う。例を切り替える場合は、切り替える理由をページの橋渡しで明示する。
-- `framing_seconds + question_spine.time_seconds` は、`project.time_budget` のbuffer以外と一致させる。各phaseの秒数は、そのphaseに属する本編スライドの `delivery.estimated_seconds` 合計と一致させる。
+- `framing_seconds + question_spine.time_seconds` は、`project.time_budget` のQ&Aとbuffer以外と一致させる。各phaseの秒数は、そのphaseに属するlive本編スライドの `delivery.estimated_seconds` 合計と一致させる。
 - すべてを均等な60秒ページにしない。定義は短く、比較・手順・実演は長くするなど、説明上の役割で配分する。
 
 ## 2. Demoは操作と観測で設計する
@@ -68,7 +68,7 @@ demo_runbook:
   source_items: [demo-1]
 ```
 
-20分以上では3手順以上を原則とする。`visible_result` が「確認する」「理解する」だけの手順は不可。ファイル名、表示値、状態変化、出力、差分などを観測できるようにする。
+Demo phaseを採用した20分以上の発表では3手順以上を原則とする。`visible_result` が「確認する」「理解する」だけの手順は不可。ファイル名、表示値、状態変化、出力、差分などを観測できるようにする。
 
 ## 3. Takeawayは明日の一手まで縮める
 
@@ -85,7 +85,7 @@ tomorrow_action:
 
 ## 4. ページ単位の話者キュー
 
-全スライドに `speaker_cue` を置く。これは説明の設計図であり、投影面にそのまま載せる文章ではない。
+全スライドに `speaker_cue` を置く。これは説明の設計図であり、投影面にそのまま載せる文章ではない。appendix/referenceの台本は短くてよいが、そのページを開く条件と読み方を固有に書く。
 
 ```yaml
 speaker_cue:
@@ -113,7 +113,7 @@ spoken_note: |-
 
 `scripts/validate_talkability.py` は少なくとも次を機械判定する。
 
-- 20分以上に問いの背骨、Demo runbook、明日の一手がある。
+- 20分以上にarchetypeと問いの背骨がある。Demo phaseを採用した場合はDemo runbook、Takeaway phaseを採用した場合は明日の一手がある。
 - phase時間、framing時間、ページ時間がtime budgetと一致する。
 - 全ページに具体的で固有の話者キューと4行ノートがある。
 - 指差し対象がStory、Blueprint、HTMLで失われていない。

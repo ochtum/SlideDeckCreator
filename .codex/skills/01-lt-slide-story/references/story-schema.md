@@ -11,23 +11,37 @@ project:
   subtitle: "任意"
   language: ja
   duration_minutes: 30
+  delivery_profile: dual-use # live-only, dual-use
+  publication_channels: [youtube, speakerdeck]
   content_fidelity: full-equivalence # overview, representative, full-equivalence
+  knowledge_contract_version: 1 # 記事・URL入力では必須
   talkability_version: 2 # 20分以上で必須
-  target_slide_count: 20
+  target_slide_count: 3
+  appendix_slide_count: 1
   time_budget: # 20分以上で必須
     content_seconds: 1260
     demo_seconds: 300
     interaction_seconds: 120
+    q_and_a_seconds: 0
     buffer_seconds: 120
   work_dir: "../.lt-slide-work"
   output_dir: "../output"
 source:
   mode: markdown
   title: "元資料タイトル"
+  document_types: [design, comparison]
   refs:
     - url: "https://example.com"
       checked_at: "YYYY-MM-DD"
       purpose: "数値の根拠"
+request:
+  must_keep: ["記事の主要な判断基準"]
+  out_of_scope: []
+  fact_check_policy: primary-sources # primary-sources, source-only, none
+  assumptions:
+    - field: prior_knowledge
+      value: "一般的なWeb開発の基礎"
+      reason: "対象読者の記述から補完"
 source_inventory: "./source-inventory.yaml"
 coverage_matrix:
   - unit_id: "implementation-section-001"
@@ -38,6 +52,54 @@ coverage_matrix:
     artifact_ids: []
     status: covered
 approved_omissions: [] # ユーザーが範囲縮小を明示承認した場合だけ使用する
+knowledge_units:
+  - id: ku-001
+    source_unit_ids: ["implementation-section-001"]
+    type: claim # claim, definition, evidence, causal, comparison, procedure, example, caution, decision, reference
+    statement: "入力から抽出した主張"
+    importance: essential # essential, supporting, reference
+    prerequisites: []
+    artifact_ids: [artifact-1]
+    citation_ids: [ref-01]
+    slide_ids: [s01, s04, a01]
+comprehension_checks:
+  - id: check-01
+    kind: explain # explain, distinguish, choose, apply, qualify
+    prompt: "この主張が必要な理由を説明できるか"
+    knowledge_unit_ids: [ku-001]
+    slide_ids: [s01, s04, a01]
+  - id: check-02
+    kind: distinguish
+    prompt: "似た概念との違いを説明できるか"
+    knowledge_unit_ids: [ku-001]
+    slide_ids: [s01, s04]
+  - id: check-03
+    kind: choose
+    prompt: "この判断基準を使う場面を選べるか"
+    knowledge_unit_ids: [ku-001]
+    slide_ids: [s01, s04]
+  - id: check-04
+    kind: apply
+    prompt: "自分の題材へ当てはめられるか"
+    knowledge_unit_ids: [ku-001]
+    slide_ids: [s01, s04]
+  - id: check-05
+    kind: qualify
+    prompt: "適用条件と例外を言えるか"
+    knowledge_unit_ids: [ku-001]
+    slide_ids: [s01, s04]
+citations:
+  - id: ref-01
+    label: "[1]"
+    title: "一次資料名"
+    publisher: "発行元"
+    url: "https://example.com"
+    checked_at: "YYYY-MM-DD"
+fact_ledger:
+  - knowledge_unit_id: ku-001
+    status: verified # source-stated, verified, updated, unverified
+    citation_ids: [ref-01]
+    note: "記事の主張を一次資料で確認"
 source_asset_inventory:
   - asset_id: source-fig-01
     kind: provided-image # provided-image, table, code, config, flow
@@ -116,6 +178,8 @@ story:
   tone: business-tech
 narrative:
   goal: "聴衆が何を理解し、何を試せる状態になるか"
+  archetype: problem-explanation-application
+  phase_order: [why, what, how, demo, takeaway]
   central_example: "最初から最後まで追う一つの具体例"
   opening_problem: "冒頭で聴衆が自分事として認識する困りごと"
   final_change: "終了時に聴衆ができるようになる変化"
@@ -218,6 +282,7 @@ style_profile:
 slides:
   - id: s01
     role: cover
+    delivery_scope: live # live, appendix, reference
     flow_phase: ""
     title: "短いタイトル"
     message: "この1枚で伝える唯一のこと"
@@ -226,6 +291,13 @@ slides:
     evidence_refs: []
     evidence_artifact_ids: [artifact-1]
     source_unit_ids: ["implementation-section-001"]
+    knowledge_unit_ids: [ku-001]
+    comprehension_check_ids: [check-01, check-02, check-03, check-04, check-05]
+    citation_ids: [ref-01]
+    information_layers:
+      glance: "登壇中に短時間で把握する主張"
+      explanation: ["主張を理解するための理由または具体例"]
+      reader_support: ["適用条件と出典 [1]"]
     reader_context: "このページだけを読む人のための前提"
     connection_from_previous:
       prior_state: "直前までに分かっていること"
@@ -253,6 +325,7 @@ slides:
       次の一言: このページの最後に言って次へ渡す一文
   - id: s02
     role: profile
+    delivery_scope: live
     flow_phase: ""
     title: "自己紹介"
     message: "presenter.jsonのbioと同じ文字列"
@@ -261,6 +334,7 @@ slides:
     spoken_note: ""
   - id: s03
     role: goal
+    delivery_scope: live
     flow_phase: ""
     title: "今日のゴール"
     message: "聴衆への約束"
@@ -269,14 +343,24 @@ slides:
     spoken_note: ""
   - id: s04
     role: problem
+    delivery_scope: live
     flow_phase: why
     title: "なぜ必要か"
     message: "Whyの中心メッセージ"
-    support: []
+    support: ["判断条件を一次資料で確認する [1]"]
     evidence_refs: []
+    source_unit_ids: ["implementation-section-001"]
+    knowledge_unit_ids: [ku-001]
+    comprehension_check_ids: [check-01, check-02, check-03, check-04, check-05]
+    citation_ids: [ref-01]
+    information_layers:
+      glance: "このページの中心主張"
+      explanation: ["理由と具体例"]
+      reader_support: ["適用条件と出典 [1]"]
     spoken_note: ""
   - id: s99
     role: recap
+    delivery_scope: live
     flow_phase: takeaway
     title: "まとめ"
     message: "今日のゴールとTakeawayを回収する"
@@ -288,30 +372,58 @@ slides:
     spoken_note: ""
   - id: s100
     role: thanks
+    delivery_scope: live
     flow_phase: ""
     title: "Thank you"
     message: "終了"
     support: []
     evidence_refs: []
     spoken_note: ""
+  - id: a01
+    role: evidence
+    delivery_scope: appendix
+    flow_phase: ""
+    title: "補足: 完全な比較条件"
+    message: "後読に必要な詳細"
+    support: ["完全条件の出典 [1]"]
+    evidence_refs: []
+    knowledge_unit_ids: [ku-001]
+    comprehension_check_ids: [check-01]
+    citation_ids: [ref-01]
+    reader_context: "本編の主張を詳しく確認する補足"
+    connection_from_previous:
+      prior_state: "本編は終了している"
+      bridge: "後読用の詳細へ進む"
+    speaker_cue:
+      purpose: "質疑または後読時に比較条件を確認できるようにする"
+      audience_state_before: "本編の主張は分かるが詳細条件は見えていない"
+      audience_state_after: "必要な条件と出典を自分で確認できる"
+      script: "本編で省略した条件を、この比較表から確認できます。必要な項目だけ参照してください。"
+      point_at: ["完全な比較条件"]
+      transition: "必要な項目だけ参照してください。"
+    spoken_note: |-
+      橋渡し: 質疑または後読時だけ開く補足です。
+      話す内容: 本編で省略した条件を、この比較表から確認できます。
+      指差し: 完全な比較条件
+      次の一言: 必要な項目だけ参照してください。
 open_questions: []
 ```
 
 `roadmap.items` は後続のphase付きスライドを順序どおり、重複も欠落もなく覆う。各項目の `slide_ids` は連続していなければならず、`page_start` / `page_end` は `slides` の物理位置、`start_title` / `end_title` は範囲の実タイトルと一致させる。道筋スライド自身の `content_model.data.steps` には同じitemsをそのまま置く。ページ追加・削除・並べ替え後は手修正ではなく `slides` から再生成する。
 
-`narrative` の直後に `demo_runbook` と `tomorrow_action` を置く。形式と記述基準は `talkability.md` を正本とする。20分以上では両方必須である。
+`demo_runbook` と `tomorrow_action` を使う場合は `narrative` の直後に置く。形式と記述基準は `talkability.md` を正本とする。`phase_order` にDemoがある場合だけ `demo_runbook`、Takeawayがある場合だけ `tomorrow_action` を必須にする。
 
 `role` は `cover`, `profile`, `goal`, `conclusion`, `problem`, `comparison`, `list`, `flow`, `matrix`, `evidence`, `action`, `demo`, `recap`, `thanks` から選ぶ。自己紹介なしの場合は `profile` を省く。
 
 `role: profile` の投影面は `presenter.data_file` の `display_name`、`bio`、全 `links`、QRラベル、使用を許可された画像だけを表示する。発表テーマに合わせた結論帯、補足コピー、実績、意気込みをStoryから追加しない。テーマへの橋渡しは `speaker_cue.script` と `spoken_note` にだけ置く。
 
-`project.target_slide_count` は本編だけを数える。`cover`、`profile`、`thanks` は除き、`recap` は含める。安全下限は5分: 6枚、10分: 8枚、15分: 10枚、16〜29分: 14枚、30分以上: 16枚である。30分は18〜24枚を標準範囲とするが、問い・例・実演・完了条件から見積もり、枚数自体を目標にしない。`scripts/validate_duration_floor.py --story <01-story.yaml>` が成功するまで、この正本を後工程へ渡してはならない。
+`project.target_slide_count` は `delivery_scope: live` の本編だけを数える。`cover`、`profile`、`thanks` は除き、`recap` は含める。`appendix_slide_count` はappendixとreferenceの物理枚数を表す。時間別枚数は警告用の安全目安であり、秒数、説明密度、具体例、実演、完了条件から必要枚数を決める。`scripts/validate_duration_floor.py --story <01-story.yaml>` はtargetとの一致を検証し、目安未満だけを理由に内容のないページを足さない。
 
-20分以上では `project.time_budget` と各本編スライドの `delivery` を必須とする。time budgetは発表時間と一致し、スライドの `estimated_seconds` 合計はbufferを除いた秒数と一致させる。通常ページは具体的な `talking_points` と、最終HTMLで読める `visible_anchors` を各2件以上持つ。詳細は `explanation-depth.md` に従い、`scripts/validate_explanation_depth.py --story <01-story.yaml>` が成功するまで次工程へ渡さない。
+20分以上では `project.time_budget` と各live本編スライドの `delivery` を必須とする。time budgetはQ&Aとbufferを含めて発表枠と一致し、liveスライドの `estimated_seconds` 合計はQ&Aとbufferを除いた秒数と一致させる。appendix/referenceは時間合計から除外する。通常ページは具体的な `talking_points` と、最終HTMLで読める `visible_anchors` を各2件以上持つ。詳細は `explanation-depth.md` に従い、`scripts/validate_explanation_depth.py --story <01-story.yaml>` が成功するまで次工程へ渡さない。
 
-20分以上では `project.talkability_version: 2`、`narrative.question_spine`、`demo_runbook`、`tomorrow_action`、全スライドの `speaker_cue` と四行 `spoken_note` を必須とする。詳細は `talkability.md` に従い、`scripts/validate_talkability.py --story <01-story.yaml>` が成功するまで次工程へ渡さない。
+20分以上では `project.talkability_version: 2`、`narrative.question_spine`、全スライドの `speaker_cue` と四行 `spoken_note` を必須とする。`question_spine` は `narrative.phase_order` と一致させる。Demo phaseを含む場合だけ `demo_runbook`、Takeaway phaseを含む場合だけ `tomorrow_action` を必須にし、記事種別にない実演を捏造しない。詳細は `talkability.md` に従い、`scripts/validate_talkability.py --story <01-story.yaml>` が成功するまで次工程へ渡さない。
 
-`flow_phase` は `why`, `what`, `how`, `demo`, `takeaway` から選ぶ。表紙、自己紹介、今日のゴール、サンクスなど話法上のphaseに属さないスライドは空文字にする。`recap` は新情報を持たず、原則として `takeaway` を回収する。
+`flow_phase` は `narrative.phase_order` の値から選ぶ。`phase_order` がない旧Storyだけ `why`, `what`, `how`, `demo`, `takeaway` を使う。表紙、自己紹介、今日のゴール、サンクス、appendix、referenceは空文字にできる。`recap` は新情報を持ち込まない。
 
 `reader_context` は後から一枚だけを読む人に必要な前提または現在地を短く記録する。`connection_from_previous.prior_state` と `bridge` は前ページからの論理的接続を記録する。表紙、自己紹介、Thanksは空文字または省略してよいが、その他のスライドでは両方を必須とする。
 
@@ -320,3 +432,5 @@ open_questions: []
 `style_profile` は `config/slide-style-profile.md` がある場合だけそのルールを参照したことを記録する。スタイルを理由に入力にない体験を追加しない。ファイルがない場合は `data_file` を残して `status: absent`、`applied_rule_ids: []` とする。
 
 `full-equivalence` では `source_inventory`、`coverage_matrix`、`approved_omissions`、各スライドの `source_unit_ids` が必須である。正本は `content-equivalence.md` とし、表・コード・設定・図などの構造化unitには `artifact_ids` と構造保存方法を必ず指定する。
+
+`knowledge_contract_version: 1` では `knowledge-structure.md` に従い、`knowledge_units`、`comprehension_checks`、各スライドの意味IDを必須とする。`delivery_profile: dual-use` ではさらに `dual-use-publication.md` に従い、live末尾のrecap/thanks後へappendix/referenceを置ける。可視出典ラベルを `spoken_note` や `data-*` 属性だけへ退避しない。

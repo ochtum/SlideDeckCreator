@@ -23,6 +23,13 @@ REQUIRED_HEADINGS = (
     "Evidence Sources",
 )
 ALLOWED_STRENGTHS = {"MUST", "SHOULD", "MAY", "MUST NOT"}
+ABSOLUTE_SLIDE_COUNT_FIELDS = (
+    "target_slide_count",
+    "minimum_slide_count",
+    "minimum_body_slides",
+    "min_body_slides",
+    "slide_count_floor",
+)
 
 
 def section(text: str, heading: str) -> str:
@@ -34,6 +41,21 @@ def section(text: str, heading: str) -> str:
 
 def field_values(text: str, field: str) -> list[str]:
     return re.findall(rf"^\s*(?:-\s+)?{re.escape(field)}:\s*(.+?)\s*$", text, re.MULTILINE)
+
+
+def absolute_slide_count_rules(limits: str) -> list[str]:
+    """Return total/body slide-count rules that do not belong in a style profile."""
+    findings: list[str] = []
+    field_pattern = "|".join(re.escape(field) for field in ABSOLUTE_SLIDE_COUNT_FIELDS)
+    if re.search(rf"^\s*(?:-\s+)?(?:{field_pattern})\s*:", limits, re.MULTILINE | re.IGNORECASE):
+        findings.append("absolute slide-count field")
+    prose_patterns = (
+        r"(?:本文|本編|各回|各パート|デッキ全体|スライド総数|総ページ数)[^\n]{0,40}\d+\s*枚\s*(?:以上|以下|を下限|を上限|を目標|に固定)",
+        r"\d+\s*枚\s*(?:以上|以下|を下限|を上限|を目標|に固定)[^\n]{0,40}(?:本文|本編|各回|各パート|デッキ全体|スライド総数|総ページ数)",
+    )
+    if any(re.search(pattern, limits) for pattern in prose_patterns):
+        findings.append("absolute total/body slide-count prose")
+    return findings
 
 
 def main() -> int:
@@ -97,6 +119,11 @@ def main() -> int:
         errors.append("Application Limits must include duration_evidence")
     if not re.search(r"^\s+long_form_density_source:\s*(quality-default|observed-long-form)\s*$", limits, re.MULTILINE):
         errors.append("duration_evidence must declare long_form_density_source")
+    if absolute_slide_count_rules(limits):
+        errors.append(
+            "Application Limits must not set an absolute total/body slide-count floor, target, or fixed value; "
+            "record observed counts in Evidence Sources and let 01 derive target_slide_count from content"
+        )
 
     if errors:
         for error in errors:

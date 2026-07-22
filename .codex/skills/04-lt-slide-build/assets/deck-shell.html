@@ -287,6 +287,9 @@
     class SlideDeck {
       constructor() {
         this.slides=[...document.querySelectorAll(".slide")];
+        this.liveStartIndex=this.slides.findIndex(slide=>(slide.dataset.deliveryScope||"live")==="live");
+        if(this.liveStartIndex<0) this.liveStartIndex=0;
+        this.liveEndIndex=Math.max(0,...this.slides.map((slide,index)=>(slide.dataset.deliveryScope||"live")==="live"?index:-1));
         this.index=0; this.step=0;
         this.presenterMode=new URL(location.href).searchParams.get("presenter")==="1";
         this.presenterWindow=null; this.startedAt=Date.now(); this.audienceSlideHTML="";
@@ -363,7 +366,11 @@
         if(this.step<max) {
           this.step++; this.animated().filter(el=>this.stepOf(el)===this.step).forEach(el=>el.classList.add("shown"));
           this.changed();
-        } else if(this.index<this.slides.length-1) this.show(this.index+1);
+        } else {
+          const scope=this.slides[this.index].dataset.deliveryScope||"live";
+          if(scope==="live"&&this.index<this.liveEndIndex) this.show(this.index+1);
+          else if(scope!=="live"&&this.index<this.slides.length-1) this.show(this.index+1);
+        }
       }
       previous() {
         if(this.step>0) {
@@ -378,8 +385,8 @@
       key(event) {
         if(["ArrowRight"," ","PageDown"].includes(event.key)) { event.preventDefault(); this.next(); }
         if(["ArrowLeft","PageUp"].includes(event.key)) { event.preventDefault(); this.previous(); }
-        if(event.key==="Home") this.show(0);
-        if(event.key==="End") this.show(this.slides.length-1,true);
+        if(event.key==="Home") this.show(this.liveStartIndex);
+        if(event.key==="End") this.show(this.liveEndIndex,true);
         if(event.key.toLowerCase()==="r") this.show(this.index);
         if(event.key.toLowerCase()==="f") document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();
         if(event.key.toLowerCase()==="p") this.toggleOverview();
@@ -464,6 +471,7 @@
         document.getElementById("presenterNextButton").addEventListener("click",()=>this.next());
         document.getElementById("presenterReset").addEventListener("click",()=>{this.startedAt=Date.now();this.renderPresenterTimer();this.changed();});
         setInterval(()=>this.renderPresenterTimer(),1000);
+        setInterval(()=>this.renderPresenterTimer(),250);
         this.renderPresenter();
       }
       mountPreview(target,clone) {
@@ -545,8 +553,9 @@
       renderPresenter() {
         if(!this.presenterMode) return;
         this.renderCurrentPreview(document.getElementById("presenterCurrent"),this.slides[this.index]);
-        this.renderNextPreview(document.getElementById("presenterNext"),this.slides[this.index+1]);
         const slide=this.slides[this.index];
+        const nextSlide=this.slides[this.index+1];
+        this.renderNextPreview(document.getElementById("presenterNext"),nextSlide);
         this.renderPresenterNote(document.getElementById("presenterNote"),slide.dataset.spokenNote);
         this.renderPresenterContext(document.getElementById("presenterContext"),slide);
         const max=Math.max(0,...this.animated().map(el=>this.stepOf(el)));

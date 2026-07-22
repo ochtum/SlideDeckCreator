@@ -174,6 +174,67 @@ class TalkabilityTests(unittest.TestCase):
         errors = validate_story(self.path, story)
         self.assertTrue(any("vary pacing" in error for error in errors))
 
+    def test_custom_article_archetype_does_not_require_demo_or_takeaway(self) -> None:
+        story = good_story()
+        phase_map = {
+            "why": "context",
+            "what": "evidence",
+            "how": "evidence",
+            "demo": "decision",
+            "takeaway": "decision",
+        }
+        for slide in story["slides"]:
+            phase = slide.get("flow_phase") or ""
+            if phase:
+                slide["flow_phase"] = phase_map[phase]
+            if slide.get("role") == "demo":
+                slide["role"] = "evidence"
+                slide["delivery"]["mode"] = "explain"
+        story["project"]["time_budget"] = {
+            "content_seconds": 1560,
+            "demo_seconds": 0,
+            "interaction_seconds": 120,
+            "buffer_seconds": 120,
+        }
+        story["narrative"]["archetype"] = "constraints-options-tradeoffs"
+        story["narrative"]["phase_order"] = ["context", "evidence", "decision"]
+        story["narrative"]["question_spine"] = [
+            {
+                "phase": "context",
+                "audience_question": "電力ログを読む前にどの状況をそろえる必要があるか？",
+                "answer": "比較する時間帯と生活行動の前提を同じ粒度でそろえる",
+                "transition_to_next": "前提がそろったので、観測値と行動記録を結びます。",
+                "time_seconds": 240,
+                "source_items": ["fact-meter"],
+            },
+            {
+                "phase": "evidence",
+                "audience_question": "どの記録なら原因候補を絞る証拠として使えるか？",
+                "answer": "開始時刻と比較条件を固定した時間帯別ログを使う",
+                "transition_to_next": "証拠がそろったので、次に試す行動を一つ選びます。",
+                "time_seconds": 780,
+                "source_items": ["claim-log", "step-record"],
+            },
+            {
+                "phase": "decision",
+                "audience_question": "観測した差から次に試す節電策をどう選ぶか？",
+                "answer": "行動直後に増えた区間を基準に候補を一つへ絞る",
+                "transition_to_next": "選んだ候補を一時間帯の記録として残します。",
+                "time_seconds": 540,
+                "source_items": ["demo-meter", "action-note"],
+            },
+        ]
+        story.pop("demo_runbook")
+        story.pop("tomorrow_action")
+        self.assertEqual([], validate_story(self.path, story))
+
+    def test_appendix_slide_does_not_consume_live_timing(self) -> None:
+        story = good_story()
+        appendix = make_slide("appendix-1", "evidence", "", None, "完全な比較条件")
+        appendix["delivery_scope"] = "appendix"
+        story["slides"].append(appendix)
+        self.assertEqual([], validate_story(self.path, story))
+
     def test_blueprint_must_preserve_cue_and_phase_context(self) -> None:
         story = good_story()
         spine = {item["phase"]: item for item in story["narrative"]["question_spine"]}

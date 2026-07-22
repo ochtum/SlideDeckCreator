@@ -23,7 +23,7 @@ presetをスライドID、ページ番号、奇数・偶数へ固定しない。
 1. `role`: Demo、action、comparison、recapなど、ページが担う役割
 2. `content_model.type`: comparison、flow、table、code、checklistなど、情報の形
 3. `target`: connection、left-state、code-frame、validation、done、conclusionなど、動かす対象の意味
-4. `phase_entry`: Why / What / How / Demo / Takeawayの境界か
+4. `phase_entry`: `narrative.phase_order` で定義した章の境界か
 
 `animation.selection` に適用したrule、role、content type、phase境界、選択理由を残す。各entrance/stepには `reason` を置く。同じstepの中で接続線と工程カードなど対象の役割が違う場合は、stepの代表presetに加えて `target_presets` と `target_reasons` を全target分置く。
 

@@ -27,6 +27,7 @@ description: .lt-slide-work/02-blueprint.yaml から画像アセットを生成�
 - `references/visual-guidelines.md`
 - 20分以上では `../01-lt-slide-story/references/explanation-depth.md`
 - talkability v2では `../01-lt-slide-story/references/talkability.md`
+- 対応Storyの `delivery_profile` が `dual-use` なら `../01-lt-slide-story/references/dual-use-publication.md`
 
 ## Series Mode
 
@@ -59,12 +60,14 @@ description: .lt-slide-work/02-blueprint.yaml から画像アセットを生成�
 - 画像は概念、雰囲気、関係性、象徴を担当する。
 - HTMLはタイトル、本文、数値、ラベル、出典を担当する。
 - 重要な文字を画像に焼き込まない。
+- `citation_ids` の可視ラベル、適用条件、例外、完全版コードを生成画像へ焼き込まない。HTML/SVGのreader supportまたはappendix/referenceへ渡す。
 - 矢印やラベルの正確さが必要なフロー、表、マトリクス、グラフは生成画像ではなくSVG/CSSを使う。
 - 画像内の主役は中央寄りにし、端に重要要素を置かない。
 - `visual_zone` のアスペクト比に合わせ、トリミング前提にしない。
 - `speaker_cue.point_at` の実装を生成画像へ委ねない。指差し対象はHTMLテキスト、表セル、コード行、または正確なSVGラベルとして04へ渡す。
 - 長時間LTの説明ページでは、象徴画像を「具体例があるように見せる」ために使わない。コード、設定、表、画面、差分、判断フローが必要なら、それらを主役にし、生成画像は表紙・章区切り・概念導入に限定する。
 - 同じ生成画像または同じ提供画像を複数の異なる主張へ使い回さない。段階読解で再利用する場合は、HTML/SVGの注釈とfocusをページごとに変える。
+- `knowledge_unit_ids` が異なるだけのページへ装飾画像を量産しない。知識の構造を表、フロー、コード、注釈で表すべき場合は02へ戻す。
 
 ## Presenter And QR Assets
 

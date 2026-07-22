@@ -32,7 +32,7 @@
 
 - Right Arrow, Space, PageDown: 次stepまたは次スライド
 - Left Arrow, PageUp: 前stepまたは前スライド
-- Home and End: 最初と最後のスライド
+- Home: 最初のliveスライド。End: liveのThanks。appendix/referenceはoverviewまたは直リンクから開ける
 - F: fullscreen
 - R: 現在スライドをリプレイ
 - P: pager and overview mode
@@ -41,6 +41,7 @@
 - Hash links: `#1`, `#2`, ...
 - `?audit=1`: レイアウト監査を実行する
 - 発表者ビューには、これらの埋め込みショートカット一覧を常時表示する
+- dual-useでは通常の次ページ操作をliveのThanksで停止し、明示的にappendixを開いた場合だけ補足内を移動する。overviewとPDFには全ページを表示する
 
 ## Presenter View Contract
 

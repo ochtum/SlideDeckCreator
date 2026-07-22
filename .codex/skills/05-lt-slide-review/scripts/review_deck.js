@@ -10,6 +10,7 @@ function parseArgs(argv) {
     width: 1280,
     height: 720,
     minMargin: 40,
+    brandMinMargin: 16,
     overlapTolerance: 8,
     noFail: false,
     includePresenter: true,
@@ -27,6 +28,7 @@ function parseArgs(argv) {
     else if (key === "--width") { args.width = Number(value); i++; }
     else if (key === "--height") { args.height = Number(value); i++; }
     else if (key === "--min-margin") { args.minMargin = Number(value); i++; }
+    else if (key === "--brand-min-margin") { args.brandMinMargin = Number(value); i++; }
     else if (key === "--overlap-tolerance") { args.overlapTolerance = Number(value); i++; }
     else if (key === "--no-fail") args.noFail = true;
     else if (key === "--skip-presenter") args.includePresenter = false;
@@ -35,7 +37,7 @@ function parseArgs(argv) {
     else if (key === "--blueprint") { args.blueprint = value; i++; }
     else if (key === "--python") { args.python = value; i++; }
     else if (key === "--help" || key === "-h") {
-      console.log("Usage: review_deck.js [html] [--story story.yaml] [--blueprint blueprint.yaml] [--out dir] [--min-margin px] [--skip-presenter] [--presenter] [--no-fail]");
+      console.log("Usage: review_deck.js [html] [--story story.yaml] [--blueprint blueprint.yaml] [--out dir] [--min-margin px] [--brand-min-margin px] [--skip-presenter] [--presenter] [--no-fail]");
       process.exit(0);
     } else {
       throw new Error(`Unknown argument: ${key}`);
@@ -131,6 +133,11 @@ function validateContracts(args) {
   if (failures.length) return { paths, checks, failures };
 
   const python = args.python || (process.platform === "win32" ? "python" : "python3");
+  const knowledge = runPythonCheck(
+    python,
+    path.join(paths.root, ".codex", "skills", "01-lt-slide-story", "scripts", "validate_knowledge_contract.py"),
+    ["--story", paths.story, "--blueprint", paths.blueprint, "--html", path.resolve(args.html)],
+  );
   const spoken = runPythonCheck(
     python,
     path.join(paths.root, ".codex", "skills", "01-lt-slide-story", "scripts", "validate_spoken_notes.py"),
@@ -219,6 +226,7 @@ function validateContracts(args) {
     );
   }
   checks.push(
+    { name: "knowledge-contract", ...knowledge },
     { name: "spoken-notes", ...spoken },
     { name: "talkability", ...talkability },
     { name: "visual-plan", ...visual },
@@ -339,7 +347,7 @@ async function disableMotion(page) {
 }
 
 async function inspectSlide(page, index, options) {
-  return await page.evaluate(({ slideIndex, minMargin, overlapTolerance }) => {
+  return await page.evaluate(({ slideIndex, minMargin, brandMinMargin, overlapTolerance }) => {
     const findings = [];
     const slides = [...document.querySelectorAll(".slide")];
     const slide = slides[slideIndex];
@@ -373,6 +381,24 @@ async function inspectSlide(page, index, options) {
     const marginIgnored = (el) => Boolean(el.closest(".bg, .background, .decor, .footer-zone, .page-number, .page-num, .source-note, .brand-badge"));
 
     const allVisible = [...slide.querySelectorAll("*")].filter(isVisible);
+
+    for (const badge of [...slide.querySelectorAll(".brand-badge")].filter(isVisible)) {
+      const r = relativeRect(badge);
+      const near = [];
+      if (r.x < brandMinMargin) near.push("left");
+      if (r.y < brandMinMargin) near.push("top");
+      if (slideRect.width - r.right < brandMinMargin) near.push("right");
+      if (slideRect.height - r.bottom < brandMinMargin) near.push("bottom");
+      if (near.length) {
+        findings.push({
+          type: "brand-safe-area",
+          element: label(badge),
+          rect: r,
+          edge: near,
+          message: `ブランドバッジがsafe areaを侵しています: ${near.join(", ")} / ${brandMinMargin}px`,
+        });
+      }
+    }
 
     for (const el of allVisible) {
       const r = relativeRect(el);
@@ -461,6 +487,45 @@ async function inspectSlide(page, index, options) {
       }
     }
 
+    const surfaceSelector = [
+      ".playbook-card", ".flow-node", ".roadmap-node", ".compare-card", ".criteria-strip",
+      ".case-block", ".table-wrap", ".table-evidence-foot", ".code-frame", ".code-highlight",
+      ".code-validation", ".file-card", ".check-row", ".done-rule", ".anchor-bank", ".io-strip",
+      ".avatar-card", ".qr-card", ".profile-copy", ".conclusion-bar", ".thanks-anchor",
+    ].join(",");
+    const surfaces = [...slide.querySelectorAll(surfaceSelector)].filter((el) => isVisible(el) && !ignored(el));
+    for (const surface of surfaces) {
+      const overflowX = surface.scrollWidth > surface.clientWidth + 2;
+      const overflowY = surface.scrollHeight > surface.clientHeight + 4;
+      if (overflowX || overflowY) {
+        findings.push({
+          type: "surface-content-overflow",
+          element: label(surface),
+          rect: relativeRect(surface),
+          message: "カードまたは本文surfaceの内容が枠外へはみ出しています",
+        });
+      }
+    }
+    for (let i = 0; i < surfaces.length; i++) {
+      for (let j = i + 1; j < surfaces.length; j++) {
+        const a = surfaces[i];
+        const b = surfaces[j];
+        if (a.contains(b) || b.contains(a)) continue;
+        const ar = a.getBoundingClientRect();
+        const br = b.getBoundingClientRect();
+        const ix = Math.min(ar.right, br.right) - Math.max(ar.left, br.left);
+        const iy = Math.min(ar.bottom, br.bottom) - Math.max(ar.top, br.top);
+        if (ix > overlapTolerance && iy > overlapTolerance) {
+          findings.push({
+            type: "content-surface-overlap",
+            element: `${label(a)} / ${label(b)}`,
+            rect: { a: relativeRect(a), b: relativeRect(b), intersection: { width: Math.round(ix), height: Math.round(iy) } },
+            message: "カード、根拠ラベル、結論帯などの本文surfaceが重なっています",
+          });
+        }
+      }
+    }
+
     for (const img of [...slide.querySelectorAll("img")].filter(isVisible)) {
       if (!img.naturalWidth || !img.naturalHeight) {
         findings.push({ type: "broken-image", element: label(img), rect: relativeRect(img), message: "画像が読み込めていません" });
@@ -494,7 +559,7 @@ async function inspectSlide(page, index, options) {
     }
 
     return { findings };
-  }, { slideIndex: index, minMargin: options.minMargin, overlapTolerance: options.overlapTolerance });
+  }, { slideIndex: index, minMargin: options.minMargin, brandMinMargin: options.brandMinMargin, overlapTolerance: options.overlapTolerance });
 }
 
 async function collectActiveSlideStyles(page) {
@@ -748,6 +813,7 @@ function buildMarkdown(report) {
   lines.push(`- 契約検証finding数: ${report.contractFindingCount}`);
   lines.push(`- viewport: ${report.viewport.width}x${report.viewport.height}`);
   lines.push(`- 最小余白: ${report.minMargin}px`);
+  lines.push(`- ブランド最小余白: ${report.brandMinMargin}px`);
   lines.push("");
   lines.push("## 契約検証");
   lines.push("");
@@ -825,6 +891,7 @@ async function main() {
     slideCount,
     viewport: { width: args.width, height: args.height },
     minMargin: args.minMargin,
+    brandMinMargin: args.brandMinMargin,
     overlapTolerance: args.overlapTolerance,
     slides: [],
     presenterSlides: [],

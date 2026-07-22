@@ -16,7 +16,7 @@
 
 ## 通しで話せるかのレビュー
 
-- `opening_problem` から始まり、Why / What / How / Demo / Takeawayの各 `audience_question` にページ群が答えている。
+- `opening_problem` から始まり、`narrative.phase_order` に対応する各 `audience_question` にページ群が答えている。旧Storyだけ既定のphase列を使う。
 - 各phase末尾の `次の一言` が次phaseの問いへ自然に接続し、話者がその場で接続を発明しなくてよい。
 - `central_example` が途中で別の例へすり替わっていない。切り替える場合は理由が橋渡しにある。
 - Demoは操作と `visible_result` を交互に追え、失敗時もfallbackで同じ学びを示せる。
@@ -34,6 +34,8 @@
 3. `source_asset_inventory` の画像、表、コード、config、Mermaid、フローを、設計図の `content_model`、`visual_plan_id`、最終HTMLの table/pre/code/svg/img へ照合する。
 4. 最終HTMLでは、各対応物が実際に表示され、見切れず読めることをスクリーンショットで確認する。
 5. `full-equivalence` ではsource inventoryの全unitを `coverage_matrix`、part、slide、`data-source-unit-ids` まで逆引きする。各unitについて、入力を開かずに目的、仕組み、手順または読み方、制約、完了条件を説明できるか確認する。
+6. `knowledge_contract_version: 1` では全 `knowledge_units` を `data-knowledge-unit-ids` まで逆引きし、`comprehension_checks` ごとに指定スライド本文だけで回答できるか確認する。
+7. dual-useではessential知識がliveまたはappendixへ可視化され、補足がlive時間へ混入せず、可視出典labelとreference一覧が静的PDFに残ることを確認する。
 
 次の場合は不合格にする。
 
@@ -41,6 +43,8 @@
 - 採用した表・コード・設定・図が、根拠を失う抽象カードだけに置き換えられている。
 - 表の列と代表行、コードの最小断片、設定のキーと変更条件、フローの工程と判断ゲートが読めない。
 - 元入力の内容を省略したが、ユーザー承認済みの縮小範囲と理由が残っていない。
+- essential知識または理解確認の答えがspoken-noteにしか存在しない。
+- `citation_ids` はあるがlabelまたはreference一覧が投影面・PDFに見えない。
 - シリーズ概要でテーマ名に一度触れただけ、または同じ汎用カードへ複数unitを割り当てただけで、入力のテンプレート・設定値・判断条件を再構成できない。
 
 ## 長時間LTの説明量照合
@@ -59,7 +63,7 @@
 
 `content-coverage.md` には次を残す。
 
-| 入力単位またはasset | 対応ストーリーID | スライドID | 時間・説明量 | HTML実装 | 初見者理解 | 接続・後読性 | spoken-note判定 | 判定 |
+| 入力／知識単位／理解問題／asset | 対応ストーリーID | スライドID | live／補足・時間 | HTML実装・可視出典 | 初見者理解 | 接続・後読性 | spoken-note判定 | 判定 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 
 未解決項目には、入力のパスまたは行範囲、削除された具体物、修正に必要なHTML表・コード・SVG・ノートを明記する。

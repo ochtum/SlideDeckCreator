@@ -1,4 +1,4 @@
 interface:
   display_name: "01_ストーリー生成"
-  short_description: "LTの構成、主張、話の流れをYAMLに整理します"
-  default_prompt: "Use $01-lt-slide-story to save a concise LT story at .lt-slide-work/01-story.yaml."
+  short_description: "記事の知識構造、本編・補足、時間設計をYAMLに整理します"
+  default_prompt: "Use $01-lt-slide-story to extract the source knowledge structure and save a timed live/appendix story at .lt-slide-work/01-story.yaml."

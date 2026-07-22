@@ -23,17 +23,18 @@ project:
     content_seconds: 1320
     demo_seconds: 240
     interaction_seconds: 120
+    q_and_a_seconds: 0
     buffer_seconds: 120
 ```
 
-- 4項目の合計は `duration_minutes * 60` と一致させる。
-- 各スライドの `delivery.estimated_seconds` 合計は、bufferを除いた秒数と一致させる。
+- 5項目の合計は `duration_minutes * 60` と一致させる。旧Storyで `q_and_a_seconds` がなければ0として扱う。
+- `delivery_scope: live` の各スライドの `delivery.estimated_seconds` 合計は、Q&Aとbufferを除いた秒数と一致させる。appendix/referenceを加算しない。
 - ページ数から秒数を均等配分しない。定義は45〜75秒、表・コードの読解は60〜120秒、デモは120〜300秒を起点に内容から見積もる。
 - 30分LTで口頭説明とデモの合計が20分未満になる場合は、時間を短縮するか、比較、反例、デモ、判断演習を追加する。
 
 ## Per-slide delivery contract
 
-20分以上では、各スライドに `delivery` を置く。
+20分以上では、各liveスライドに `delivery` を置く。appendix/referenceは登壇時間を持たなくてよい。
 
 ```yaml
 delivery:
@@ -69,6 +70,8 @@ delivery:
 
 すべてを毎回6枚にする必要はない。ただし、30分LT全体が「問いと短い結論」だけで進み、仕組み・代表例・判断が欠ける構成は不合格にする。
 
+記事またはURL入力では `knowledge-structure.md` のdocument typeとarchetypeを優先する。上記は説明ブロックの役割であり、Why / What / How / Demo / Takeawayの固定章立てを要求しない。
+
 ## Projected explanation sufficiency
 
 表紙、自己紹介、章区切り、Thanks以外の各ページで、次のうち少なくとも2つを投影面に残す。
@@ -96,7 +99,7 @@ How、Demo、比較、手順、実務判断のページでは `evidence` また�
 - 低密度: 表紙、章区切り、重要な問い、最終結論。
 - 中密度: 定義、比較、判断基準、短いチェックリスト。
 - 高密度: 注釈付きスクリーンショット、コード、設定、表、システム図。
-- 20分以上では、中〜高密度の説明ページを本編の70%以上にする。
+- 20分以上では、中〜高密度の説明ページをlive本編の70%以上にする。appendix/referenceは比率計算から除く。
 - 低密度ページを連続させない。同じレイアウト、同じ図、同じチェック項目の連続も避ける。
 - 高密度は小さい文字を意味しない。情報を1つの具体物へ集約し、タイトル領域を抑え、本文領域を広げる。
 

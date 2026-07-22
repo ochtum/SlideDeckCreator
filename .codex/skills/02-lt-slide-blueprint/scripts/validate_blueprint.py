@@ -218,9 +218,20 @@ def main():
         if len(bullets) > int(budget.get("bullets_max", 4)):
             errors.append(f"{sid}: bullet count exceeds text budget")
 
-    roles = [slide.get("role") for slide in slides]
-    if len(roles) < 2 or roles[-2:] != ["recap", "thanks"]:
-        errors.append("last two slides must be recap and thanks")
+    live_roles = [
+        slide.get("role")
+        for slide in slides
+        if (slide.get("delivery_scope") or "live") == "live"
+    ]
+    if len(live_roles) < 2 or live_roles[-2:] != ["recap", "thanks"]:
+        errors.append("last two live slides must be recap and thanks")
+    seen_supplement = False
+    for slide in slides:
+        scope = slide.get("delivery_scope") or "live"
+        if scope in {"appendix", "reference"}:
+            seen_supplement = True
+        elif seen_supplement:
+            errors.append(f"{slide.get('id', '<missing-id>')}: live slide must not follow appendix/reference")
 
     if errors:
         for error in errors:

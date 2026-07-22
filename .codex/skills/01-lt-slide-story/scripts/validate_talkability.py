@@ -58,9 +58,13 @@ def validate_question_spine(path: Path, story: dict, errors: list[str]) -> dict[
         errors.append(f"{path}: narrative.question_spine must be a list")
         return {}
     by_phase = {text(item.get("phase")): item for item in spine if isinstance(item, dict)}
-    required = PHASES if duration >= 20 else tuple(phase for phase in PHASES if phase not in {
-        text(item.get("phase")) for item in (narrative.get("omitted_phases") or []) if isinstance(item, dict)
-    })
+    declared_order = tuple(string_list(narrative.get("phase_order")))
+    if declared_order:
+        required = declared_order
+    else:
+        required = PHASES if duration >= 20 else tuple(phase for phase in PHASES if phase not in {
+            text(item.get("phase")) for item in (narrative.get("omitted_phases") or []) if isinstance(item, dict)
+        })
     actual_order = [text(item.get("phase")) for item in spine if isinstance(item, dict)]
     if actual_order != list(required):
         errors.append(f"{path}: question_spine phase order must be {', '.join(required)}")
@@ -148,6 +152,7 @@ def validate_page_cues(path: Path, story: dict, spine: dict[str, dict], errors: 
         sid = text(slide.get("id")) or f"slide-{index}"
         role = text(slide.get("role"))
         phase = text(slide.get("flow_phase"))
+        scope = text(slide.get("delivery_scope") or "live")
         cue = slide.get("speaker_cue")
         if not isinstance(cue, dict):
             continue
@@ -165,6 +170,11 @@ def validate_page_cues(path: Path, story: dict, spine: dict[str, dict], errors: 
             script_signatures[signature] = sid
         if any(compact(phrase) in signature for phrase in GENERIC_SCRIPT):
             errors.append(f"{path}:{sid}: speaker_cue.script is a meta-explanation template")
+
+        if scope != "live":
+            if phase:
+                errors.append(f"{path}:{sid}: appendix/reference slide must not consume a live flow_phase")
+            continue
 
         delivery = slide.get("delivery") or {}
         seconds = delivery.get("estimated_seconds")
@@ -215,8 +225,10 @@ def validate_story(path: Path, story: dict) -> list[str]:
     if version != 2:
         return errors
     spine = validate_question_spine(path, story, errors)
-    validate_demo(path, story, errors)
-    validate_takeaway(path, story, errors)
+    if "demo" in spine:
+        validate_demo(path, story, errors)
+    if "takeaway" in spine:
+        validate_takeaway(path, story, errors)
     validate_page_cues(path, story, spine, errors)
     return errors
 

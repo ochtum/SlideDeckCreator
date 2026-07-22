@@ -23,7 +23,8 @@ GENERIC_CHECK_ITEMS = {
     "影響を確認する",
     "次の判断を確認する",
 }
-TIME_KEYS = ("content_seconds", "demo_seconds", "interaction_seconds", "buffer_seconds")
+LEGACY_TIME_KEYS = ("content_seconds", "demo_seconds", "interaction_seconds", "buffer_seconds")
+TIME_KEYS = ("content_seconds", "demo_seconds", "interaction_seconds", "q_and_a_seconds", "buffer_seconds")
 
 
 def compact(value: Any) -> str:
@@ -38,6 +39,10 @@ def string_list(value: Any) -> list[str]:
 
 def is_long_form(story: dict) -> bool:
     return int((story.get("project") or {}).get("duration_minutes", 0)) >= 20
+
+
+def is_live(slide: dict) -> bool:
+    return str(slide.get("delivery_scope") or "live") == "live"
 
 
 def substantive(slide: dict) -> bool:
@@ -55,12 +60,14 @@ def validate_time_budget(path: Path, story: dict, errors: list[str]) -> None:
     if not isinstance(budget, dict):
         errors.append(f"{path}: 20+ minute deck requires project.time_budget")
         return
-    missing = [key for key in TIME_KEYS if not isinstance(budget.get(key), int)]
+    knowledge_version = int(project.get("knowledge_contract_version") or 0)
+    keys = TIME_KEYS if knowledge_version >= 1 or "q_and_a_seconds" in budget else LEGACY_TIME_KEYS
+    missing = [key for key in keys if not isinstance(budget.get(key), int)]
     if missing:
         errors.append(f"{path}: time_budget missing integer fields: {', '.join(missing)}")
         return
     expected = duration * 60
-    actual = sum(int(budget[key]) for key in TIME_KEYS)
+    actual = sum(int(budget[key]) for key in keys)
     if actual != expected:
         errors.append(f"{path}: time_budget total={actual}s, expected {expected}s")
 
@@ -81,6 +88,9 @@ def validate_story(path: Path, story: dict) -> list[str]:
     for slide in slides:
         sid = str(slide.get("id", "<missing-id>"))
         role = str(slide.get("role", ""))
+        if not is_live(slide):
+            previous_transition = False
+            continue
         if role in NON_BODY_ROLES:
             continue
         delivery = slide.get("delivery")
@@ -139,7 +149,7 @@ def validate_story(path: Path, story: dict) -> list[str]:
             if visible_dimensions < 1:
                 errors.append(f"{path}:{sid}: substantive slide lacks a visible explanation anchor")
 
-    body_count = sum(slide.get("role") not in NON_BODY_ROLES for slide in slides)
+    body_count = sum(is_live(slide) and slide.get("role") not in NON_BODY_ROLES for slide in slides)
     if body_count and len(transition_ids) / body_count > 0.15:
         errors.append(
             f"{path}: transition slides={len(transition_ids)} exceed 15% of {body_count} body slides"
@@ -150,8 +160,8 @@ def validate_story(path: Path, story: dict) -> list[str]:
         )
 
     budget = (story.get("project") or {}).get("time_budget") or {}
-    if all(isinstance(budget.get(key), int) for key in TIME_KEYS):
-        expected_timed = sum(int(budget[key]) for key in TIME_KEYS[:-1])
+    if all(isinstance(budget.get(key), int) for key in ("content_seconds", "demo_seconds", "interaction_seconds")):
+        expected_timed = sum(int(budget[key]) for key in ("content_seconds", "demo_seconds", "interaction_seconds"))
         if timed_total != expected_timed:
             errors.append(f"{path}: slide delivery total={timed_total}s, expected {expected_timed}s excluding buffer")
 
@@ -220,6 +230,22 @@ def validate_content_model(path: Path, slide: dict, errors: list[str]) -> None:
                 errors.append(f"{path}:{sid}: playbook step {index} requires artifact, owner, done_when")
     elif kind == "file-map" and len(items) < 3:
         errors.append(f"{path}:{sid}: file-map requires at least 3 concrete entries")
+    elif kind == "hierarchy":
+        if len(items) < 3:
+            errors.append(f"{path}:{sid}: hierarchy requires at least 3 nodes or layers")
+    elif kind == "timeline":
+        milestones = data.get("milestones") or items
+        if not isinstance(milestones, list) or len(milestones) < 3:
+            errors.append(f"{path}:{sid}: timeline requires at least 3 milestones")
+    elif kind == "chart":
+        points = data.get("points") or data.get("values") or items
+        if not isinstance(points, list) or len(points) < 2:
+            errors.append(f"{path}:{sid}: chart requires at least 2 data points")
+        if not (data.get("x_label") and data.get("y_label")):
+            errors.append(f"{path}:{sid}: chart requires x_label and y_label")
+    elif kind == "case-study":
+        if not all(data.get(key) for key in ("situation", "action", "observation", "decision")):
+            errors.append(f"{path}:{sid}: case-study requires situation, action, observation, and decision")
 
 
 def validate_blueprint(path: Path, blueprint: dict, story: dict) -> list[str]:
@@ -232,7 +258,7 @@ def validate_blueprint(path: Path, blueprint: dict, story: dict) -> list[str]:
     for slide in blueprint.get("slides") or []:
         sid = str(slide.get("id", "<missing-id>"))
         expected = story_by_id.get(slide.get("id")) or {}
-        if expected.get("role") not in NON_BODY_ROLES:
+        if is_live(expected) and expected.get("role") not in NON_BODY_ROLES:
             if slide.get("delivery") != expected.get("delivery"):
                 errors.append(f"{path}:{sid}: delivery must be copied unchanged from story")
         validate_content_model(path, slide, errors)

@@ -33,10 +33,12 @@
 - 各 `.slide` に `data-reader-context` と `data-story-bridge` を埋め込む
 - 20分以上では各 `.slide` に `data-delivery-mode` と `data-estimated-seconds` を埋め込む
 - `content_model` を持つ `.slide` に `data-content-model-type` と `data-evidence-artifact-ids` を埋め込む
+- 各 `.slide` に `data-delivery-scope`、`data-knowledge-unit-ids`、`data-comprehension-check-ids`、`data-citation-ids` をStory/Blueprintから変更せず埋め込む
 - `full-equivalence` では各 `.slide` にStory/Blueprintから変更せず引き継いだ空白区切りの `data-source-unit-ids` を埋め込む
 - design-system選択時はdeck rootへ `data-design-system-id` と `data-design-system-version` を埋め込み、registry specのCSS tokenを解決する
-- 最後の2枚は `data-role="recap"`、`data-role="thanks"` とする
+- 最後のlive 2枚は `data-role="recap"`、`data-role="thanks"` とする。dual-useでは、その後にappendix/referenceを置いてよい
 - ページ番号は `.page-number` で入れる
+- ブランドバッジは `<span class="zone brand-badge" ...>` のように絶対配置zoneとして生成し、上下左右16px以上の専用safe areaへ完全に収める。`left` / `top` だけを指定した非position要素にしない
 - 画像は `output/assets/` へコピーし、HTMLから相対参照する
 - 発表者ノートは投影面へ表示しない
 - `presenter.include: true` の自己紹介では、JSONの `display_name`、`bio`、全 `links[].platform` / `links[].account`、`qr.use: true` の `qr.label` だけを投影面の本文として表示する。画像は `avatar.use` / `qr.use` がtrueのときだけJSONの `path` からコピーする。構造ラベル・フッター・ページ番号を除き、JSONにない可視メッセージを加えず、`conclusion_zone` / `.conclusion-bar` を生成しない。
@@ -52,7 +54,8 @@
 6. `visual_plan` がある場合は、各 `.slide` に `data-visual-plan-id` と `data-source-asset-ids` を埋め込む。`implementation` が `provided-image` ならマニフェストの画像を使い、`html-table` / `html-code` / `inline-svg` なら対応する実要素を置く。計画を汎用カードだけで満たしてはならない。
 7. `source_unit_ids` がある場合は同じIDを `data-source-unit-ids` へ置く。表・コード・設定・図などのstructured unitは、対応するtable/pre/code/svg/imgと `data-evidence-artifact-ids` の両方を残す。
 6a. 20分以上では `delivery.visible_anchors` が最終DOMの可視テキストに存在することをページごとに確認する。`content_model` は `type` だけでなく `data` の列、行、項目、コードを描画し、`focus` と `highlight` を注釈・強調へ反映する。
-7. 本文、図版、結論帯を同じグリッドセルや同じ視覚領域へ重ねない。
+6b. dual-useでは `citation_ids` の各labelを可視テキストとして描画し、referenceスライドへ資料名、発行元、URL、確認日を置く。`data-citation-ids` だけで出典表示済みとみなさない。
+7. 本文、図版、結論帯を同じグリッドセルや同じ視覚領域へ重ねない。`.zone` だけでなく、card、flow node、code frame、根拠ラベル、結論帯などの本文surface同士について、兄弟要素の矩形が8pxを超えて交差しないことを確認する。枠線が別surfaceのテキストを横切る状態を許可しない。
 8. 文字量が多い場合は文章を削るかレイアウトを変える。`overflow: hidden`、自動縮小、過小フォントで隠さない。
 9. 最後に全スライドを静的状態で見て、情報階層、余白、画像切れ、読み順を確認する。
 10. 自己紹介スライドでは、JSONの値を画面と `assets/` へ反映できていることを確認する。設計図の一般的なメッセージ、テーマ固有の結論帯、以前の作業用画像、固定のQR文言を追加またはJSONより優先してはならない。
@@ -63,13 +66,13 @@
 
 - `.slide` は1280x720固定。
 - 可読テキストは原則 `x >= 64`, `y >= 88`, `x + w <= 1216`, `y + h <= 636` の内側に置く。
-- 例外は `brand-badge`、ページ番号、フッター、背景装飾だけ。
+- 例外はページ番号、フッター、背景装飾だけ。`brand-badge` は本文の64px safe area外へ置いてよいが、上下左右16px以上の専用safe areaへ収める。
 - 5〜15分は本文28px、補足22pxを原則下限とする。20分以上は本文24px、表・コード・注釈18pxを下限とし、タイトルを44〜56pxへ抑えて説明領域を確保する。
 - `clamp()` やJavaScriptによる自動文字縮小は禁止する。
 - 通常ページはレイアウトに変化を付け、同型を3枚続けない。
 - ページ数は初回ビルド時の数を保持しない。ストーリー／設計図の現在のスライド列を正として、追加・削除・分割後は物理ページ、ページ番号、発表者ビューの総数を同期して更新する。
 - シリーズでは、ページ番号と発表者ビュー総数を各パート内だけで数える。別パートのページを加算しない。
-- まとめとサンクスを最後に連続配置する。
+- liveのまとめとサンクスを連続配置する。appendix/referenceはその後へ置き、以降にliveを置かない。
 
 ## Visual Direction
 
@@ -95,5 +98,5 @@
 - すべての本文と画像が配置済み
 - すべての `data-spoken-note` が埋め込み済み
 - アニメーション対象候補に意味のあるまとまりがある
-- 明らかなテキスト溢れ、ゾーン重なり、画像切れがない
+- 明らかなテキスト溢れ、ゾーン重なり、本文surface同士の重なり、画像切れがない
 - 空のvisual zone、空のcard、枠線だけの予約領域がない

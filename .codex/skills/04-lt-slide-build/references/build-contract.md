@@ -34,7 +34,7 @@ Storyに `design_system` がある場合、`config/design-systems/registry.yaml`
 
 - Right Arrow, Space, PageDown: next step or next slide
 - Left Arrow, PageUp: previous step or previous slide
-- Home and End: first and last slide
+- Home: first live slide. End: live thanks slide; overview or direct links may open appendix/reference.
 - F: fullscreen
 - R: replay current slide
 - P: pager and overview mode
@@ -47,6 +47,8 @@ Storyに `design_system` がある場合、`config/design-systems/registry.yaml`
 - Preserve each internal identifier in `.slide[data-slide-id]`, but never render `s01` / `sXX` as audience-visible text.
 - The footer may show a left section/phase label and a right page number. Do not add a center system title, deck title, source filename, or source note.
 - Preserve provenance in `data-source-note`, `data-source-unit-ids`, and evidence attributes instead of consuming slide space.
+- Preserve semantic traceability in `data-delivery-scope`, `data-knowledge-unit-ids`, `data-comprehension-check-ids`, and `data-citation-ids`.
+- In dual-use decks, render each cited slide's short citation label visibly and provide reference slides with title, publisher, URL, and checked date. Hidden `data-*` provenance is not a visible citation.
 - A long-form roadmap renders the exact Story/Blueprint `roadmap.items`: concrete label, summary, physical page range, and `data-roadmap-slide-ids` for every node.
 
 ## Animation Order
@@ -103,6 +105,15 @@ For decks of 20 minutes or longer:
 - When the same artifact is shown again, render the blueprint's page-specific focus and highlight so the new reading is visible.
 - Copy `flow_phase`, the matching phase question, and `speaker_cue.purpose` to `data-flow-phase`, `data-phase-question`, and `data-speaker-purpose`.
 - Preserve `speaker_cue.point_at` as visible HTML/SVG anchors. A generated image with approximate text does not satisfy this requirement.
+- Exclude appendix/reference slides from live timing totals. They may omit `data-estimated-seconds`, but must keep their semantic and citation attributes.
+
+## Dual-use sequence
+
+- The last two `delivery_scope: live` slides are recap and thanks.
+- Appendix/reference slides may follow thanks in the same HTML and PDF.
+- No live slide may follow an appendix/reference slide.
+- Normal presentation navigation stops at live thanks unless the presenter explicitly opens an appendix from overview or a direct link.
+- PDF and overview include every physical slide.
 
 ## PDF print
 

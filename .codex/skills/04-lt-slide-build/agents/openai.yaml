@@ -1,4 +1,4 @@
 interface:
   display_name: "04_スライド構築"
-  short_description: "ページ作成、アニメーション、ランタイムを分けてスライドを制作します"
-  default_prompt: "Use $04-lt-slide-build to orchestrate 04a pages, 04b animation, and 04c runtime from the artifacts in .lt-slide-work/."
+  short_description: "本編・補足と可視出典を保ってHTMLスライドを制作します"
+  default_prompt: "Use $04-lt-slide-build to build the live deck plus appendix/reference pages while preserving semantic IDs and visible citations."

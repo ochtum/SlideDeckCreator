@@ -51,15 +51,22 @@ def main():
         "viewport gutter fit": r"innerWidth\s*-\s*gutter\s*\*\s*2[\s\S]*innerHeight\s*-\s*gutter\s*\*\s*2",
         "Z-flow animation normalizer": r"applyZFlow\s*\(",
         "Z-flow bucket function": r"zFlowBucket\s*\(",
+        "dual-use live start": r"liveStartIndex",
+        "dual-use live end": r"liveEndIndex",
     }
     for label, pattern in required.items():
         if not re.search(pattern, html, flags=re.I | re.S):
             errors.append(f"missing {label}")
 
-    urls = re.findall(r"https?://[^\s\"'<>`]+", html, flags=re.I)
+    dependency_urls = re.findall(
+        r"(?:\bsrc\s*=|<link\b[^>]*\bhref\s*=|@import\s+|url\()\s*[\"'(]*"
+        r"(https?://[^\s\"'<>`)]+)",
+        html,
+        flags=re.I,
+    )
     external_urls = [
         url
-        for url in urls
+        for url in dependency_urls
         if (urlsplit(url).hostname or "").lower() not in {"127.0.0.1", "localhost", "::1"}
     ]
     if external_urls:
@@ -75,9 +82,24 @@ def main():
     if slide_count < 3:
         errors.append("deck must contain at least 3 slides")
 
-    roles = re.findall(r"<section\b[^>]*data-role=[\"']([^\"']+)", html, re.I)
-    if len(roles) < 2 or roles[-2:] != ["recap", "thanks"]:
-        errors.append("last two data-role values must be recap and thanks")
+    sections = re.findall(r"<section\b[^>]*class=[\"'][^\"']*\bslide\b[^>]*>", html, re.I)
+    live_roles = []
+    seen_supplement = False
+    for section in sections:
+        role_match = re.search(r"data-role=[\"']([^\"']+)", section, re.I)
+        scope_match = re.search(r"data-delivery-scope=[\"']([^\"']+)", section, re.I)
+        role = role_match.group(1) if role_match else ""
+        scope = scope_match.group(1) if scope_match else "live"
+        if scope in {"appendix", "reference"}:
+            seen_supplement = True
+        elif scope == "live":
+            if seen_supplement:
+                errors.append("live slide found after appendix/reference")
+            live_roles.append(role)
+        else:
+            errors.append(f"invalid data-delivery-scope: {scope}")
+    if len(live_roles) < 2 or live_roles[-2:] != ["recap", "thanks"]:
+        errors.append("last two live data-role values must be recap and thanks")
 
     for value in re.findall(r"font-size:\s*(\d+)px", html, re.I):
         size = int(value)

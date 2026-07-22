@@ -7,6 +7,7 @@
 - Badge: x=48..220, y=24..64
 - Footer: x=48..1232, y=660..704
 - Page number: x=1160..1232, y=660..704
+- Optional visible citation: x=64..1120, y=620..648. Use only when the slide cites an external claim.
 
 ## Zone gaps
 

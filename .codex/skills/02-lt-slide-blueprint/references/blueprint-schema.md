@@ -40,6 +40,10 @@ theme:
 slides:
   - id: s03
     source_unit_ids: ["implementation-section-001"]
+    knowledge_unit_ids: [ku-001]
+    comprehension_check_ids: [check-01]
+    citation_ids: [ref-01]
+    delivery_scope: live # live, appendix, reference
     role: conclusion
     reader_context: "このページだけを読む人のための前提"
     narrative_continuity:
@@ -70,6 +74,8 @@ slides:
     layout: visual-right
     title: "今日の結論"
     message: "短い主張"
+    representation_reason: "因果関係を文章より短時間で正確に読めるため"
+    accuracy_constraints: ["矢印の向き", "ラベル", "出典 [1]"]
     text:
       bullets: []
       source_note: ""
@@ -77,7 +83,8 @@ slides:
       title_zone: {x: 64, y: 78, w: 1152, h: 96}
       text_zone: {x: 64, y: 202, w: 500, h: 340}
       visual_zone: {x: 620, y: 190, w: 560, h: 350}
-      conclusion_zone: {x: 160, y: 568, w: 960, h: 70}
+      conclusion_zone: {x: 160, y: 558, w: 960, h: 54}
+      citation_zone: {x: 64, y: 624, w: 900, h: 24}
       footer_zone: {x: 48, y: 660, w: 1184, h: 44}
     typography:
       title_px: 66
@@ -135,9 +142,14 @@ slides:
       message_max_chars: 42
       bullets_max: 3
       bullet_max_chars: 24
+    information_layers:
+      glance: "短い主張"
+      explanation: ["設定値の読み取り経路", "変更前に確認する条件"]
+      reader_support: ["適用条件", "[1]"]
     notes: "実装上の注意"
     content_model:
-      type: implementation-playbook # table, flow, implementation-playbook, checklist, code, config, comparison, file-map
+      type: implementation-playbook # table, flow, implementation-playbook, checklist, code, config, comparison, file-map, hierarchy, timeline, chart, case-study
+      variant: process # flow: process/causal/sequence/decision, comparison: split/table/matrix
       source_artifacts: [artifact-1]
       focus: "App.DefaultPageSize がどこで読まれるか"
       highlight: ["App.DefaultPageSize", "ProductService"]
@@ -161,6 +173,8 @@ visual_assets:
 全スライドに `speaker_cue` と `spoken_note` を置き、`01-story.yaml` の同じIDから内容を変更せず引き継ぐ。talkability v2では空文字を許可しない。
 
 `flow_phase` を持つページは、`narrative.question_spine` の同じphaseから `audience_question`、`answer`、`transition_to_next` を `phase_context` へ変更せず引き継ぐ。
+
+`delivery_scope`、`knowledge_unit_ids`、`comprehension_check_ids`、`citation_ids` はStoryから変更せず引き継ぐ。最終HTMLでは同じ値を `data-delivery-scope`、`data-knowledge-unit-ids`、`data-comprehension-check-ids`、`data-citation-ids` へ置く。dual-useの各 `citation_ids` は対応する可視ラベルを `text`、`content_model`、`visual.annotations`、`citation_zone` のいずれかへ持つ。
 
 20分以上では `delivery` も同じIDのStoryから変更せず引き継ぐ。`visible_anchors` は `text`、`content_model`、`visual.annotations` のいずれかへ実際に配置する。同一の `content_model.data` を再利用するときは、ページごとに異なる `focus` と `highlight` を持たせる。
 

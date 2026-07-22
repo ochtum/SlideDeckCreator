@@ -10,7 +10,7 @@
 - `representative`: 各主要テーマに一つ以上の具体例を残す。類似例の省略を許す。
 - `full-equivalence`: 全ての規範的な要件、再利用可能なテンプレート、表、コード、設定、図、フロー、注意点、完了条件を追跡可能にする。
 
-ユーザーが「全内容」「入力と同等」「シリーズですべて」と指定した場合は `project.content_fidelity: full-equivalence` とする。時間不足を理由に暗黙に `overview` へ下げてはならない。必要時間が指定枠を超える場合は、シリーズ回数を増やすか、ユーザー承認済みの `approved_omissions` を残す。
+ユーザーが「全内容」「入力と同等」「シリーズですべて」と指定した場合は `project.content_fidelity: full-equivalence` とする。時間不足を理由に暗黙に `overview` へ下げてはならない。`delivery_profile: dual-use` ではsupporting/reference単位をappendix/referenceへ移してよい。essentialなlive説明が指定枠を超える場合はシリーズ回数を増やすか、ユーザー承認済みの `approved_omissions` を残す。
 
 ## Source Inventory
 
@@ -50,7 +50,7 @@ coverage_matrix:
 approved_omissions: []
 ```
 
-各パートStoryとBlueprintの各ページにも `source_unit_ids` を引き継ぎ、最終HTMLの `.slide` へ空白区切りの `data-source-unit-ids` として保持する。
+各パートStoryとBlueprintの各ページにも `source_unit_ids` を引き継ぎ、最終HTMLの `.slide` へ空白区切りの `data-source-unit-ids` として保持する。意味上の理解は `knowledge-structure.md` の `knowledge_units` と `comprehension_checks` で別に検証し、構造unitへの言及だけで同等理解とみなさない。
 
 ## 判定基準
 
@@ -65,4 +65,4 @@ approved_omissions: []
 
 ## 時間見積り
 
-台帳から説明時間を積み上げる。目安は節45〜90秒、表・設定・コード60〜120秒、フロー・Mermaid90〜150秒、Demo操作90秒以上である。同じページで自然に統合できるunitは重複分を削減できるが、具体物を表示・読み解く時間をゼロにしない。1回の指定時間へ収まらなければ、全体を薄めずシリーズ回数を増やす。
+台帳からliveで説明する単位だけの時間を積み上げる。目安は節45〜90秒、表・設定・コード60〜120秒、フロー・Mermaid90〜150秒、Demo操作90秒以上である。同じページで自然に統合できるunitは重複分を削減できるが、具体物を表示・読み解く時間をゼロにしない。supporting/referenceをappendixへ移してもessentialが1回の指定時間へ収まらなければ、全体を薄めずシリーズ回数を増やす。

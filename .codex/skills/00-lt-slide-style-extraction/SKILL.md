@@ -139,12 +139,13 @@ application:
 
 ## Application Limits
 
-適用上限は固定枚数だけでなく、本編枚数と発表時間に応じて定義する。
+適用上限は本文総数の固定枚数ではなく、本編枚数と発表時間に応じた比率・連続数・最低間隔で定義する。
 
 - 5分LTでは、感情や転換だけを担う独立スライドは原則0〜1枚とする。
 - 10〜15分では1〜2枚を目安とする。
 - 30分以上では、章の切替、重要な失敗、重要な発見に限定して使用する。
-- 固定枚数に加えて、必要に応じて `max_ratio_of_main_slides`、`max_consecutive_usage`、`min_distance_between_uses` を設定する。
+- 本文・本編・各回・デッキ全体の最低枚数、目標枚数、固定枚数をstyle profileへ置かない。観測した過去資料の物理枚数は `Evidence Sources` に事実として残せるが、今後の `target_slide_count` へ変換しない。
+- 必要に応じて `max_ratio_of_main_slides`、`max_consecutive_usage`、`min_distance_between_uses` を設定する。
 - ページ数を増やす目的でスタイル表現を追加しない。
 - 同じ感情表現、問いかけ、記号、statementを連続させない。
 - 発表時間が短いほど、雰囲気だけのページより、具体例、結果、判断基準を優先する。
@@ -159,6 +160,8 @@ application:
 - 20分以上の密度・ペーシングを発表者固有ルールにするには、原則として20分以上の資料を1件以上含める。なければ `01-lt-slide-story/references/explanation-depth.md` の長時間LT既定値を優先する。
 - 長時間LTでは、低密度の問い・statement・章区切りを本編の15%以下とし、中〜高密度の説明ページを70%以上にする。過去の短時間LTがこれと矛盾する場合は、発表時間を品質基準として優先する。
 - `Application Limits` に `duration_evidence` を残し、どの時間帯の資料に基づく密度ルールかを明記する。
+- `long_form_decks` が空、または `long_form_density_source: quality-default` の場合、20分以上の本文枚数、ページ送り、phase別枚数を発表者固有ルールとして記録しない。
+- 長時間資料の根拠がある場合も、style profileが決めるのは密度・反復・低密度ページ比率までとし、各回の本文総数は01が学習ゴール、代表例、実演、判断ゲート、完了条件から個別に算出する。
 
 ## Title And Surface Separation
 
@@ -219,6 +222,7 @@ negative_patterns:
 - 01は発表者の姿勢、ストーリー、失敗・成功、具体性、話者ノートのルールを使う。スタイルを理由に事実を作らない。
 - 01は `talkability.md` を構成の正本とし、プロファイルに根拠がある場合だけ語尾、間、問いかけ方、遷移文の傾向を上書きする。プロファイルから問いの答えやDemo操作を捏造しない。
 - 01は `stable` を優先し、`emerging` は内容に合う場合だけ使う。`contextual` は条件が一致するときだけ使う。
+- 01はstyle profileに残った本文総数の下限・目標・固定値を採用しない。見つけた場合はプロファイル検証へ戻し、`target_slide_count` を内容から独立に決める。
 - 02は見出し、感情の転換、視覚構成、適用上限を設計図へ反映する。
 - 02は発表時間と本編枚数に応じて、感情スライド、statement、会話的見出しの上限を決める。
 - 04は02の設計図だけを忠実に実装する。プロファイルから新しい表現を追加しない。
@@ -240,6 +244,7 @@ negative_patterns:
 - 共通特徴と資料固有の特徴を区別している。
 - 発表時間と本編枚数に応じたApplication Limitsがある。
 - 密度・ペーシングの根拠となる発表時間が明示され、短時間LTのスタイルを20分以上へ無条件転用していない。
+- Application Limitsが本文・本編・各回・デッキ全体の絶対スライド枚数を下限・目標・固定値として指定していない。
 - 過剰な記号・感情表現・模倣を防ぐ `MUST NOT` または `negative_patterns` がある。
 - 既存プロファイル更新時は `config/slide-style-profile-change-report.md` が作成されている。
 - `MUST` または `MUST NOT` の変更に、変更理由と追加根拠がある。

@@ -1,4 +1,4 @@
 interface:
   display_name: "05_スライド視覚レビュー"
-  short_description: "PlaywrightでLTスライドの視覚崩れを検査します"
-  default_prompt: "Use $05-lt-slide-review to visually review output/index.html with Playwright."
+  short_description: "視覚崩れ、知識カバレッジ、可視出典を検査します"
+  default_prompt: "Use $05-lt-slide-review to review output/index.html for visual quality, knowledge coverage, comprehension checks, and visible citations."
