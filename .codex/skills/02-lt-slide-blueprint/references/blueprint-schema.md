@@ -66,6 +66,13 @@ slides:
       話す内容: Storyから変更せず引き継ぐ
       指差し: App.DefaultPageSize / ProductService
       次の一言: Storyから変更せず引き継ぐ
+    source_section_ids: ["article-a1b2c3-section-001"] # section-faithfulではStoryから変更せず一つだけ引き継ぐ
+    talk_track: # section-faithfulではStoryから変更せず引き継ぐ
+      source_section_id: "article-a1b2c3-section-001"
+      beats:
+        - point_id: "section-001-p01"
+          spoken_text: "記事の節から作った、実際に話す一文です。"
+          visible_text: "投影面へ残す同じ節の要点"
     delivery:
       mode: explain
       estimated_seconds: 75
@@ -166,7 +173,7 @@ visual_assets:
     output: "visuals/visual-s03.png"
 ```
 
-`role: profile` は `zones` に `conclusion_zone` を持たず、`text.conclusion`、`text.bullets`、`text.details`、`text.anchor_labels` を空にする。可視本文は `config/presenter.json` をビルド時に直接描画し、Blueprintでテーマ固有メッセージを補わない。アニメーション対象も `title`、`avatar`、`profile`、`qr` の実在要素だけとし、`conclusion` を含めない。
+`role: profile` は `zones` に `conclusion_zone` を持たず、`text.conclusion`、`text.bullets`、`text.details`、`text.anchor_labels` を空にする。可視本文は `config/presenter.json` をビルド時に直接描画し、Blueprintでテーマ固有メッセージを補わない。アニメーション対象は `title`、`avatar`、`profile`、`qr` と、JSONに任意の `name_note` がある場合の `name-note` だけとし、`conclusion` を含めない。
 
 `visual.kind` は `none`, `css-component`, `inline-svg`, `generated-image`, `provided-image` から選ぶ。`generated-image` と `provided-image` は必ず `visual_assets` に列挙する。
 
@@ -181,5 +188,7 @@ visual_assets:
 `reader_context` と `narrative_continuity` は `01-story.yaml` の同じIDから引き継ぐ。初見者に必要な定義・具体例は、`text` または非空の `content_model` に置く。`bridge` は投影面に常設する必要はないが、発表者ノートと発表者ビューで失われないようにする。
 
 `speaker_cue.point_at` は `delivery.visible_anchors`、`text`、`content_model`、`visual.annotations` のいずれかに読める文字列として存在させる。生成画像内の不確かな文字、座標だけの「ここ」、実装されていないラベルは不可。
+
+`project.authoring_mode: section-faithful` のStoryでは、各節スライドの `source_section_ids` と `talk_track` を同じIDのBlueprintへ変更せず引き継ぐ。`talk_track.beats[].visible_text` はtitle、message、`text`、`visual.annotations`、またはrendererが実際に描画する `content_model.data` / `focus` / `highlight` に存在させる。未知の補助キー、metadata、data属性だけに存在する文字列は投影面へ実装したものとみなさない。
 
 `animation` の正本は `motion-choreography.md` とする。最終HTMLへ `preset` を同名の `data-anim` として引き継ぎ、一律 `rise` へ正規化しない。本編20枚以上ではデッキ全体のpreset、family、step数、連続signatureの分布を検査する。

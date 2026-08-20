@@ -35,13 +35,14 @@
 - `content_model` を持つ `.slide` に `data-content-model-type` と `data-evidence-artifact-ids` を埋め込む
 - 各 `.slide` に `data-delivery-scope`、`data-knowledge-unit-ids`、`data-comprehension-check-ids`、`data-citation-ids` をStory/Blueprintから変更せず埋め込む
 - `full-equivalence` では各 `.slide` にStory/Blueprintから変更せず引き継いだ空白区切りの `data-source-unit-ids` を埋め込む
+- `section-faithful` では各節スライドにStory/Blueprintから変更せず引き継いだ単一の `data-source-section-ids` を埋め込む。`talk_track.beats[].visible_text` はdata属性へ置くだけでなく、実際のtitle、本文、表、コード、図ラベルへ描画する
 - design-system選択時はdeck rootへ `data-design-system-id` と `data-design-system-version` を埋め込み、registry specのCSS tokenを解決する
 - 最後のlive 2枚は `data-role="recap"`、`data-role="thanks"` とする。dual-useでは、その後にappendix/referenceを置いてよい
 - ページ番号は `.page-number` で入れる
 - ブランドバッジは `<span class="zone brand-badge" ...>` のように絶対配置zoneとして生成し、上下左右16px以上の専用safe areaへ完全に収める。`left` / `top` だけを指定した非position要素にしない
 - 画像は `output/assets/` へコピーし、HTMLから相対参照する
 - 発表者ノートは投影面へ表示しない
-- `presenter.include: true` の自己紹介では、JSONの `display_name`、`bio`、全 `links[].platform` / `links[].account`、`qr.use: true` の `qr.label` だけを投影面の本文として表示する。画像は `avatar.use` / `qr.use` がtrueのときだけJSONの `path` からコピーする。構造ラベル・フッター・ページ番号を除き、JSONにない可視メッセージを加えず、`conclusion_zone` / `.conclusion-bar` を生成しない。
+- `presenter.include: true` の自己紹介では、JSONの `display_name`、指定時の `name_note`、`bio`、全 `links[].platform` / `links[].account`、`qr.use: true` の `qr.label` だけを投影面の本文として表示する。画像は `avatar.use` / `qr.use` がtrueのときだけJSONの `path` からコピーする。構造ラベル・フッター・ページ番号を除き、JSONにない可視メッセージを加えず、`conclusion_zone` / `.conclusion-bar` を生成しない。
 
 ## Workflow
 
@@ -53,6 +54,7 @@
 5a. `reader_context` が初見者の理解に必要な場合は、タイトル近くの短い文脈ラベルまたは本文の一文として表示する。`connection_from_previous.bridge` は発表者ビューで常に読めるようにし、投影面では章の切替や新用語の導入時だけ短く表示する。
 6. `visual_plan` がある場合は、各 `.slide` に `data-visual-plan-id` と `data-source-asset-ids` を埋め込む。`implementation` が `provided-image` ならマニフェストの画像を使い、`html-table` / `html-code` / `inline-svg` なら対応する実要素を置く。計画を汎用カードだけで満たしてはならない。
 7. `source_unit_ids` がある場合は同じIDを `data-source-unit-ids` へ置く。表・コード・設定・図などのstructured unitは、対応するtable/pre/code/svg/imgと `data-evidence-artifact-ids` の両方を残す。
+7a. `source_section_ids` がある場合は同じ単一IDを `data-source-section-ids` へ置く。Blueprintの `talk_track` を書き換えず、全 `visible_text` が通常表示のDOM textとして読めることを確認する。
 6a. 20分以上では `delivery.visible_anchors` が最終DOMの可視テキストに存在することをページごとに確認する。`content_model` は `type` だけでなく `data` の列、行、項目、コードを描画し、`focus` と `highlight` を注釈・強調へ反映する。
 6b. dual-useでは `citation_ids` の各labelを可視テキストとして描画し、referenceスライドへ資料名、発行元、URL、確認日を置く。`data-citation-ids` だけで出典表示済みとみなさない。
 7. 本文、図版、結論帯を同じグリッドセルや同じ視覚領域へ重ねない。`.zone` だけでなく、card、flow node、code frame、根拠ラベル、結論帯などの本文surface同士について、兄弟要素の矩形が8pxを超えて交差しないことを確認する。枠線が別surfaceのテキストを横切る状態を許可しない。

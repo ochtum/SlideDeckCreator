@@ -18,7 +18,7 @@ PROFILE_RE = re.compile(
 
 
 class ProfileMarkupAudit(HTMLParser):
-    TRACKED_CLASSES = {"profile-copy", "qr-card", "avatar-card"}
+    TRACKED_CLASSES = {"profile-copy", "profile-name-note", "qr-card", "avatar-card"}
     VOID_TAGS = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"}
 
     def __init__(self) -> None:
@@ -85,6 +85,14 @@ def validate(html_path: Path, presenter_path: Path, presenter: dict) -> list[str
         return [f'{html_path}: data-role="profile" の section がありません']
 
     display_name = require_string(presenter, 'display_name', errors)
+    name_note_value = presenter.get('name_note')
+    if name_note_value is None:
+        name_note = ''
+    elif not isinstance(name_note_value, str) or not name_note_value.strip():
+        errors.append('presenter.json の name_note は指定する場合、空でない文字列である必要があります')
+        name_note = ''
+    else:
+        name_note = name_note_value
     bio = require_string(presenter, 'bio', errors)
     links = presenter.get('links')
     if not isinstance(links, list) or not links:
@@ -107,7 +115,7 @@ def validate(html_path: Path, presenter_path: Path, presenter: dict) -> list[str
             errors.append(
                 f'{html_path}: profile に追加メッセージ用の要素があります: {", ".join(found_forbidden)}'
             )
-        for label, expected in [('display_name', display_name), ('bio', bio)]:
+        for label, expected in [('display_name', display_name), ('name_note', name_note), ('bio', bio)]:
             if expected and expected not in text:
                 errors.append(f'{html_path}: profile に presenter.json の {label} が表示されていません: {expected}')
         for index, link in enumerate(links, start=1):
@@ -136,6 +144,11 @@ def validate(html_path: Path, presenter_path: Path, presenter: dict) -> list[str
             errors.append(
                 f'{html_path}: profile-copy の可視テキストは presenter.json の display_name / bio / links だけにしてください'
             )
+        actual_name_note = normalized_text(' '.join(audit.text_by_class.get('profile-name-note') or []))
+        if name_note and actual_name_note != normalized_text(name_note):
+            errors.append(f'{html_path}: profile-name-note は presenter.json の name_note と一致させてください')
+        elif not name_note and actual_name_note:
+            errors.append(f'{html_path}: name_note 未指定時は profile-name-note を表示できません')
         if normalized_text(' '.join(audit.text_by_class.get('avatar-card') or [])):
             errors.append(f'{html_path}: avatar-card に presenter.json 以外の可視テキストを置けません')
 

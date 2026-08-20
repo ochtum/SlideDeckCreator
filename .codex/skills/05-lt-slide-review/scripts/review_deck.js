@@ -138,6 +138,11 @@ function validateContracts(args) {
     path.join(paths.root, ".codex", "skills", "01-lt-slide-story", "scripts", "validate_knowledge_contract.py"),
     ["--story", paths.story, "--blueprint", paths.blueprint, "--html", path.resolve(args.html)],
   );
+  const semanticClarity = runPythonCheck(
+    python,
+    path.join(paths.root, ".codex", "skills", "01-lt-slide-story", "scripts", "validate_semantic_clarity.py"),
+    ["--story", paths.story, "--blueprint", paths.blueprint, "--html", path.resolve(args.html)],
+  );
   const spoken = runPythonCheck(
     python,
     path.join(paths.root, ".codex", "skills", "01-lt-slide-story", "scripts", "validate_spoken_notes.py"),
@@ -163,6 +168,27 @@ function validateContracts(args) {
     path.join(paths.root, ".codex", "skills", "01-lt-slide-story", "scripts", "validate_roadmap.py"),
     ["--story", paths.story, "--blueprint", paths.blueprint, "--html", path.resolve(args.html)],
   );
+  const projectSelection = readTopLevelYamlSection(paths.story, "project");
+  const sectionManifest = path.join(paths.root, ".lt-slide-work", "source-sections.yaml");
+  const sectionFidelity = projectSelection.authoring_mode === "section-faithful"
+    ? (fs.existsSync(sectionManifest)
+      ? runPythonCheck(
+          python,
+          path.join(paths.root, ".codex", "skills", "01-lt-slide-story", "scripts", "validate_section_fidelity.py"),
+          ["--manifest", sectionManifest, "--story", paths.story, "--blueprint", paths.blueprint, "--html", path.resolve(args.html)],
+        )
+      : {
+          script: null,
+          args: [],
+          exitCode: 2,
+          output: `source-sections.yamlがありません: ${sectionManifest}`,
+        })
+    : {
+        script: null,
+        args: [],
+        exitCode: 0,
+        output: "SKIPPED: Storyはsection-faithfulではありません",
+      };
   const motion = runPythonCheck(
     python,
     path.join(paths.root, ".codex", "skills", "04-lt-slide-build", "scripts", "validate_animation_choreography.py"),
@@ -227,11 +253,13 @@ function validateContracts(args) {
   }
   checks.push(
     { name: "knowledge-contract", ...knowledge },
+    { name: "semantic-clarity", ...semanticClarity },
     { name: "spoken-notes", ...spoken },
     { name: "talkability", ...talkability },
     { name: "visual-plan", ...visual },
     { name: "explanation-depth", ...depth },
     { name: "roadmap", ...roadmap },
+    { name: "section-fidelity", ...sectionFidelity },
     { name: "animation-choreography", ...motion },
     { name: "presenter-binding", ...presenterBinding },
     { name: "design-system-binding", ...designSystem },

@@ -12,6 +12,7 @@ PlaywrightでHTMLスライドを実ブラウザ表示し、各ページをアニ
 - 必要に応じて `references/review-criteria.md`
 - 内容・ノート・入力カバレッジを確認する場合は必ず `references/content-coverage.md`
 - 初見者理解、ページ間接続、後読性を確認する場合は `../01-lt-slide-story/references/presentation-quality.md`
+- 常に `../01-lt-slide-story/references/semantic-clarity.md`
 - Storyの `knowledge_contract_version` が1以上なら `../01-lt-slide-story/references/knowledge-structure.md`
 - Storyの `delivery_profile` が `dual-use` なら `../01-lt-slide-story/references/dual-use-publication.md`
 - 20分以上では `../01-lt-slide-story/references/explanation-depth.md`
@@ -22,8 +23,8 @@ PlaywrightでHTMLスライドを実ブラウザ表示し、各ページをアニ
 
 1. 対象HTMLと対応する `01-story.yaml`、`02-blueprint.yaml`、元入力を確認する。指定がなければ `output/index.html` を対象にする。シリーズでは各パートを独立して確認する。
 2. Playwright実行環境を確認する。通常は同梱Node.jsと `NODE_PATH` を使う。
-3. 対応するストーリーの `visual_plan` と設計図を読み、`review_deck.js` に `--story <01-story.yaml> --blueprint <02-blueprint.yaml>` を渡す。スクリプトは `validate_knowledge_contract.py`、`validate_spoken_notes.py`、`validate_talkability.py`、`validate_visual_plan.py`、`validate_explanation_depth.py`、`validate_roadmap.py`、自己紹介ありでは `validate_presenter_binding.py` を実行し、いずれかが失敗したら視覚findingがなくても不合格としてレポートに残す。シリーズの標準的な出力パスでは対応するファイルを自動検出できるが、明示指定を優先する。
-4. `references/content-coverage.md` と `presentation-quality.md` に従って、全スライドについて次を確認する。talkability v2の `spoken_note` は `橋渡し`、`話す内容`、`指差し`、`次の一言` の四区画を持つ。ノートだけを上から読んで、冒頭の問題、`narrative.phase_order` の各問いと答え、次への接続、採用したDemoまたは根拠、最後の判断を再現できるか確認する。ストーリーとHTMLの文字列一致だけで合格にしてはならない。初見者に必要な定義・具体例、前ページからの接続、後読時の主語と結論も照合する。入力から採用した表、コード、設定例、図、フローは、要約の過程で消さず、HTMLのtable/pre/code/SVGまたは提供画像に追跡可能に解決する。スタイルプロファイルが適用されている場合は、入力にある検証過程や失敗が成功結果だけへ圧縮されていないこと、発表者の疑問・判断・気づきが残ること、具体物が口調だけで置換されていないことを確認する。
+3. 対応するストーリーの `visual_plan` と設計図を読み、`review_deck.js` に `--story <01-story.yaml> --blueprint <02-blueprint.yaml>` を渡す。スクリプトは `validate_knowledge_contract.py`、`validate_semantic_clarity.py`、`validate_spoken_notes.py`、`validate_talkability.py`、`validate_visual_plan.py`、`validate_explanation_depth.py`、`validate_roadmap.py`、`section-faithful` では `validate_section_fidelity.py`、自己紹介ありでは `validate_presenter_binding.py` を実行し、いずれかが失敗したら視覚findingがなくても不合格としてレポートに残す。シリーズの標準的な出力パスでは対応するファイルを自動検出できるが、明示指定を優先する。
+4. `references/content-coverage.md`、`presentation-quality.md`、`semantic-clarity.md` に従って、全スライドについて次を確認する。talkability v2の `spoken_note` は `橋渡し`、`話す内容`、`指差し`、`次の一言` の四区画を持つ。ノートだけを上から読んで、冒頭の問題、`narrative.phase_order` の各問いと答え、次への接続、採用したDemoまたは根拠、最後の判断を再現できるか確認する。ストーリーとHTMLの文字列一致だけで合格にしてはならない。`section-faithful` では各source sectionが順序どおり一枚以上へ対応し、複数節が一枚へ統合されていないこと、`talk_track.spoken_text` がSpoken Noteへ、`visible_text` が実DOMへ現れることを照合する。初見者に必要な定義・具体例、前ページからの接続、後読時の主語と結論も確認する。各タイトル、message、動作を述べる本文では、文法上の主語、実際の行為者、変更・確認・判断対象、述語を投影面だけから指せるかを確認する。入力から採用した表、コード、設定例、図、フローは、要約の過程で消さず、HTMLのtable/pre/code/SVGまたは提供画像に追跡可能に解決する。スタイルプロファイルが適用されている場合は、入力にある検証過程や失敗が成功結果だけへ圧縮されていないこと、発表者の疑問・判断・気づきが残ること、具体物が口調だけで置換されていないことを確認する。
 4b. `knowledge_contract_version: 1` では、各 `knowledge_units` を最終HTMLから逆引きし、5〜10件の `comprehension_checks` へスライド本文だけで回答できるか確認する。dual-useではessential知識がspoken-noteだけにないこと、live末尾がrecap/thanksであること、appendix/referenceがその後にまとまり、各 `citation_ids` のlabelとreference一覧がPDF上で可視であることを確認する。
 4a. `full-equivalence` ではルートStoryに対して `audit_content_equivalence.py --inventory <source-inventory.yaml> --story <root-story.yaml> --html <all-part-index.html> --require-full-equivalence --report <review>/content-equivalence.md` を実行する。シリーズ概要のtopic coverageや文字列一致だけで合格にしない。design-system選択時はStory、Blueprint、HTMLのID/versionとregistryを `manage_design_system.py validate-binding` で照合する。
 5. `scripts/review_deck.js` を実行し、通常表示と発表者ビューの両方を全スライドのアニメーション完了状態で撮影・検査する。通常表示では `.zone` だけでなく、card、flow node、code frame、根拠ラベル、結論帯などの本文surface同士の交差と、各surfaceの `scrollWidth` / `scrollHeight` を検査する。ブランドバッジは余白検査から全面除外せず、既定16pxの専用safe areaで上下左右を検査する。発表者ビューでは `話す内容` の主領域、phaseの問いの独立領域、タイマー更新中のスクロール保持も検査する。同スクリプトから `validate_animation_choreography.py` を実行し、BlueprintからHTMLへのpreset消失、同じsignatureの3ページ連続、step数の均一化、一種類への偏りも不合格にする。代表的な定義、比較、フロー、Demo、Takeawayは初期状態と各stepも実ブラウザで確認する。
@@ -77,13 +78,14 @@ findingを確認しながら途中で止めずにレポートだけ作りたい�
 - スタイルプロファイルが適用されている場合、適用ルールとApplication Limitsを照合する。実験・検証資料で成功だけに圧縮された場合は `style-under-applied`、記号・顔文字・感情ページが上限を超える、または無関係なページへ機械的に追加された場合は `style-over-applied`、入力にない体験が追加された場合は `style-fabricated-experience` として不合格にする。
 - spoken-noteは、そのページの主張、表示している具体物（表・コード・設定・図・フロー）の読み方、聴衆が取る判断または次の一手のうち必要なものを説明しているか、ページ単位で人間またはレビュー担当エージェントが意味を確認する。機械的な文字列一致だけで合格にしてはならない。
 - `narrative.phase_order` と `question_spine` の各phaseで、聴衆の問いに対する答えがページ群と台本から実際に得られ、最後のページの `次の一言` が次phaseの問いを必要にしているか確認する。phase名だけの章区切りは `narrative-discontinuity` とする。
-- 自己紹介ページの可視本文は `presenter.json` の表示名、bio、links、QRラベルだけに限定する。構造ラベル・フッター・ページ番号を除き、JSONにない補足や結論帯があれば `contract-presenter-binding-failed` とする。
+- 自己紹介ページの可視本文は `presenter.json` の表示名、指定時の `name_note`、bio、links、QRラベルだけに限定する。構造ラベル・フッター・ページ番号を除き、JSONにない補足や結論帯があれば `contract-presenter-binding-failed` とする。
 - 30分以上または本編20枚超の道筋は、内部のphase名だけでなく、実際の後続ページ群を要約したラベル・要約・ページ範囲を表示する。全項目の `data-roadmap-slide-ids` がStory/Blueprintのスライド列を順序どおり過不足なく覆わなければ `contract-roadmap-failed` とする。
 - Demo phaseを採用した場合は3つ以上の具体操作と画面で観測できる結果を持ち、fallbackを含む。構成図の説明だけ、または「確認する」だけなら `demo-not-observable` とする。Demo phaseがなければ実演を捏造していないことを確認する。
 - Takeaway phaseを採用した場合は時間枠、最初の操作、残る成果物、完了条件を持つ。「試す」「検討する」だけなら `takeaway-not-actionable` とする。
 - 全本編ページの説明時間が同じ値へ均一化されていないか確認する。定義・比較・手順・Demoの役割差があるのに同一秒数なら `uniform-pacing` とする。
 - 初見者が知らない用語・略語・固有工程について、初出の平易な定義、必要性、具体例のいずれかが画面またはノートにあることを確認する。欠落は `first-time-audience-gap` として不合格にする。
 - 表紙、自己紹介、Thanks以外の各スライドで、`reader_context` と `connection_from_previous` またはHTMLの `data-reader-context` と `data-story-bridge` を照合する。前ページとの因果が説明できない場合は `narrative-discontinuity`、後から一枚だけを見て主語・根拠・結論を再構成できない場合は `reader-context-missing` として不合格にする。
+- `project.semantic_clarity_version: 1`、各ページの `semantic_clarity`、Blueprint、HTMLを照合する。title、message、動作を述べる本文の原子節に、主語、実際の行為者、変更・確認・判断対象、述語が同時に見えない場合は `semantic-clarity-missing` とする。変更対象や情報源へ人・AIの判断動詞を割り当てた場合は `semantic-actor-mismatch`、`これ`、`それ`、`対象` だけで変更対象を特定できない場合は `semantic-target-ambiguous` として不合格にする。spoken-noteや前ページにだけ要素が存在しても合格にしない。
 - 新しい章・用語・抽象度の切替で、前提の再導入または次の問いがあることを確認する。単なる章見出しや箇条書きの並びでは接続済みとみなさない。
 - `source_scope_audit`、`coverage_matrix`、`content_inventory`、`source_asset_inventory` を元入力と照合する。`full coverage` の学習単位、採用した画像、表、コードブロック、設定例、Mermaid／フローは、少なくとも一つのスライドとHTML実装へ対応付く必要がある。採用しない場合は、理由と同じ意味を保つ代替実装を残す。
 - 表・コード・設定例・フローを「要約したカード」だけに置換してはいけない。対応するHTML table、pre/code、config表示、インラインSVGまたは提供画像が存在し、最小の具体データを読めることを確認する。欠落は `source-asset-omitted`、内容が抽象化されすぎて再現不能な場合は `evidence-insufficient` として不合格にする。

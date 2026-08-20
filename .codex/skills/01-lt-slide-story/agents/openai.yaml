@@ -1,4 +1,4 @@
 interface:
   display_name: "01_ストーリー生成"
-  short_description: "記事の知識構造、本編・補足、時間設計をYAMLに整理します"
-  default_prompt: "Use $01-lt-slide-story to extract the source knowledge structure and save a timed live/appendix story at .lt-slide-work/01-story.yaml."
+  short_description: "記事の節と話す内容を対応づけ、時間設計したStoryを作ります"
+  default_prompt: "Use $01-lt-slide-story to preserve each source section, write its talk track before slide content, and save the timed story at .lt-slide-work/01-story.yaml."

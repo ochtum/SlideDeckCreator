@@ -18,8 +18,14 @@ PRESENTER = {
     "qr": {"use": False},
 }
 
+PRESENTER_WITH_NAME_NOTE = {
+    **PRESENTER,
+    "name_note": "ちなみにゲームのハンドルネームです",
+}
 
-def profile_html(extra: str = "") -> str:
+
+def profile_html(extra: str = "", name_note: str = "") -> str:
+    note_markup = f'<div class="profile-name-note">{name_note}</div>' if name_note else ""
     return f"""
     <section class="slide" data-role="profile">
       <div class="zone title-zone" data-zone="title"><span>PROFILE</span><h1>自己紹介</h1></div>
@@ -29,17 +35,18 @@ def profile_html(extra: str = "") -> str:
           <ul><li><strong>GitHub</strong><span>demo</span></li></ul>
         </div>
       </div>
+      {note_markup}
       {extra}
       <div class="zone footer-zone" data-zone="footer"><span>PROFILE</span><span>1 / 1</span></div>
     </section>
     """
 
 
-def validate_markup(markup: str):
+def validate_markup(markup: str, presenter: dict = PRESENTER):
     original = MODULE.Path.read_text
     MODULE.Path.read_text = lambda self, encoding="utf-8": markup
     try:
-        return MODULE.validate(Path("deck.html"), Path("presenter.json"), PRESENTER)
+        return MODULE.validate(Path("deck.html"), Path("presenter.json"), presenter)
     finally:
         MODULE.Path.read_text = original
 
@@ -47,6 +54,13 @@ def validate_markup(markup: str):
 class PresenterBindingTests(unittest.TestCase):
     def test_accepts_presenter_json_only_profile(self):
         errors = validate_markup(profile_html())
+        self.assertEqual([], errors)
+
+    def test_accepts_optional_name_note_from_presenter_json(self):
+        errors = validate_markup(
+            profile_html(name_note="ちなみにゲームのハンドルネームです"),
+            PRESENTER_WITH_NAME_NOTE,
+        )
         self.assertEqual([], errors)
 
     def test_rejects_topic_specific_conclusion(self):

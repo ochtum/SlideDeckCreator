@@ -8,6 +8,8 @@
 
 各ページについて、HTMLの `data-spoken-note`、`data-reader-context`、`data-story-bridge`、ストーリーの同一IDの `spoken_note`、`reader_context`、`connection_from_previous`、画面のタイトル・message・content_modelを並べて確認する。
 
+`project.authoring_mode: section-faithful` では、さらに `source-sections.yaml`、`section_coverage`、Story/Blueprintの `source_section_ids` と `talk_track`、HTMLの `data-source-section-ids` を並べる。各節が順序どおり一枚以上へ対応し、複数節が一枚へ統合されていないことを確認する。`spoken_text` はSpoken Noteの「話す内容」、`visible_text` はdata属性ではなく実DOMの可視文字に存在しなければならない。
+
 - ノートは同一IDのストーリーから引き継がれている。これは必要条件にすぎず、文字列一致だけで合格にしてはならない。
 - talkability v2の各ノートは `橋渡し:`、`話す内容:`、`指差し:`、`次の一言:` の四行を持つ。`話す内容` は実際に口にする理由・例・判断、`指差し` は画面に実在するラベル、`次の一言` は次ページへ渡す発話にする。全ページ共通の文、完全重複、仮文言、説明方法のメタ説明は不合格にする。
 - ノートはそのページの主張を説明している。別ページの内容、一般論、空の相づちだけではない。
@@ -26,6 +28,20 @@
 - 初見者が知らない用語・略語・固有工程は、最初の登場で平易な定義、必要性、具体例のいずれかを確認する。
 - 表紙、自己紹介、Thanks以外のページは、直前までの理解と、このページへ進む理由を説明できる。章の切替では前提の再導入がある。
 - 各ページは、数日後に単独で開いた人が主語・根拠・結論・次の一手を再構成できる。
+
+## 主語・行為者・変更対象のレビュー
+
+`semantic-clarity.md` と `project.semantic_clarity_version` を確認し、表紙、自己紹介、Thanksを除く全ページを一枚ずつ単独表示して照合する。
+
+- titleとmessageは、それぞれclaimまたは正当なlabelへ対応している。動作・変更・判断を述べる本文もclaimへ対応している。
+- 各原子節で、文法上の主語、実際の行為者、変更・確認・判断対象、述語を投影面の文字列から直接指せる。
+- 複文では行為ごとに行為者と対象が明記されている。「人が決め、Copilotが実行する」のように対象を共有・省略しない。
+- リポジトリ、ファイル、設定、仕様書が文法上の主語でも、実際に判断・操作する主体が人やAIなら同じ原子節に明記されている。
+- `これ`、`それ`、`対象`、`証拠`、`最初に` だけでは対象や行為者を特定したとみなさない。固有のファイル、成果物、条件、担当者、AIまたはツール名を使う。
+- 定義・状態で行為者や対象が存在しない場合は、不適用理由と主語・述語が整合している。行為動詞を定義・状態へ偽装していない。
+- Storyのclaim文字列がBlueprintと最終HTMLにそのまま残り、言い換えの過程で主語や対象が落ちていない。
+
+不一致は `semantic-clarity-missing`、誤った行為者は `semantic-actor-mismatch`、特定不能な対象は `semantic-target-ambiguous` としてレポートする。
 
 ## 入力カバレッジ照合
 

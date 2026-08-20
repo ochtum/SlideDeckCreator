@@ -13,8 +13,10 @@ project:
   duration_minutes: 30
   delivery_profile: dual-use # live-only, dual-use
   publication_channels: [youtube, speakerdeck]
+  authoring_mode: section-faithful # section-faithful, narrative-recompose
   content_fidelity: full-equivalence # overview, representative, full-equivalence
   knowledge_contract_version: 1 # 記事・URL入力では必須
+  semantic_clarity_version: 1 # 可視文の主語・行為者・変更対象契約
   talkability_version: 2 # 20分以上で必須
   target_slide_count: 3
   appendix_slide_count: 1
@@ -42,6 +44,18 @@ request:
     - field: prior_knowledge
       value: "一般的なWeb開発の基礎"
       reason: "対象読者の記述から補完"
+source_section_manifest: "./source-sections.yaml" # section-faithful時に必須
+section_scope: [] # シリーズの各パートでは、このパートが担当するsection idを順序どおり置く
+section_coverage:
+  - section_id: "article-a1b2c3-section-001"
+    slide_ids: ["s04"]
+    coverage: abridged # full, abridged, appendix, reference
+    abridgement_note: "30分枠のため類似例を一つにまとめるが、判断と手順は残す"
+    split_reason: "" # 一節を複数枚に分ける場合だけ具体的に書く
+    points:
+      - id: "section-001-p01"
+        text: "節から抽出した、話すべき主張・手順・注意点"
+        importance: essential # essential, supporting, reference
 source_inventory: "./source-inventory.yaml"
 coverage_matrix:
   - unit_id: "implementation-section-001"
@@ -329,7 +343,7 @@ slides:
     flow_phase: ""
     title: "自己紹介"
     message: "presenter.jsonのbioと同じ文字列"
-    support: ["presenter.jsonのdisplay_name", "presenter.jsonのbio", "presenter.jsonのlinks"]
+    support: ["presenter.jsonのdisplay_name", "presenter.jsonの任意name_note", "presenter.jsonのbio", "presenter.jsonのlinks"]
     evidence_refs: []
     spoken_note: ""
   - id: s03
@@ -337,18 +351,36 @@ slides:
     delivery_scope: live
     flow_phase: ""
     title: "今日のゴール"
-    message: "聴衆への約束"
+    message: "聴衆が最初の変更候補を説明できる"
     support: []
     evidence_refs: []
+    semantic_clarity:
+      status: required
+      claims:
+        - surface: message
+          surface_text: "聴衆が最初の変更候補を説明できる"
+          clause: "聴衆が最初の変更候補を説明できる"
+          kind: action
+          subject: "聴衆"
+          actor: "聴衆"
+          actor_kind: human
+          target: "最初の変更候補"
+          predicate: "説明できる"
+          not_applicable: []
+      labels:
+        - surface: title
+          surface_text: "今日のゴール"
+          reason: "ページの役割を示す章ラベルで、行為や状態を主張しないため"
     spoken_note: ""
   - id: s04
     role: problem
     delivery_scope: live
     flow_phase: why
-    title: "なぜ必要か"
-    message: "Whyの中心メッセージ"
-    support: ["判断条件を一次資料で確認する [1]"]
+    title: "変更担当者が判断根拠を確認する"
+    message: "変更担当者が一次資料の判断条件を確認する"
+    support: ["変更担当者が判断条件を一次資料で確認する [1]"]
     evidence_refs: []
+    source_section_ids: ["article-a1b2c3-section-001"] # section-faithfulでは一つだけ
     source_unit_ids: ["implementation-section-001"]
     knowledge_unit_ids: [ku-001]
     comprehension_check_ids: [check-01, check-02, check-03, check-04, check-05]
@@ -357,18 +389,75 @@ slides:
       glance: "このページの中心主張"
       explanation: ["理由と具体例"]
       reader_support: ["適用条件と出典 [1]"]
+    semantic_clarity:
+      status: required
+      claims:
+        - surface: title
+          surface_text: "変更担当者が判断根拠を確認する"
+          clause: "変更担当者が判断根拠を確認する"
+          kind: action # action, change, decision, definition, state
+          subject: "変更担当者"
+          actor: "変更担当者"
+          actor_kind: human # human, ai, tool, process, organization, system, not-applicable
+          target: "判断根拠"
+          predicate: "確認する"
+          not_applicable: []
+        - surface: message
+          surface_text: "変更担当者が一次資料の判断条件を確認する"
+          clause: "変更担当者が一次資料の判断条件を確認する"
+          kind: action
+          subject: "変更担当者"
+          actor: "変更担当者"
+          actor_kind: human
+          target: "一次資料の判断条件"
+          predicate: "確認する"
+          not_applicable: []
+        - surface: body
+          surface_text: "変更担当者が判断条件を一次資料で確認する [1]"
+          clause: "変更担当者が判断条件を一次資料で確認する"
+          kind: action
+          subject: "変更担当者"
+          actor: "変更担当者"
+          actor_kind: human
+          target: "判断条件"
+          predicate: "確認する"
+          not_applicable: []
+      labels: []
+    talk_track: # section-faithfulではスライド本文より先に作る
+      source_section_id: "article-a1b2c3-section-001"
+      beats:
+        - point_id: "section-001-p01"
+          spoken_text: "変更担当者は、一次資料にある判断条件を実装前に確認します。"
+          visible_text: "変更担当者が一次資料の判断条件を確認する"
     spoken_note: ""
   - id: s99
     role: recap
     delivery_scope: live
     flow_phase: takeaway
     title: "まとめ"
-    message: "今日のゴールとTakeawayを回収する"
+    message: "変更担当者が最初の変更候補を選べる"
     support:
       - "要点1"
       - "要点2"
       - "要点3"
     evidence_refs: []
+    semantic_clarity:
+      status: required
+      claims:
+        - surface: message
+          surface_text: "変更担当者が最初の変更候補を選べる"
+          clause: "変更担当者が最初の変更候補を選べる"
+          kind: decision
+          subject: "変更担当者"
+          actor: "変更担当者"
+          actor_kind: human
+          target: "最初の変更候補"
+          predicate: "選べる"
+          not_applicable: []
+      labels:
+        - surface: title
+          surface_text: "まとめ"
+          reason: "ページの役割を示す章ラベルで、行為や状態を主張しないため"
     spoken_note: ""
   - id: s100
     role: thanks
@@ -384,7 +473,7 @@ slides:
     delivery_scope: appendix
     flow_phase: ""
     title: "補足: 完全な比較条件"
-    message: "後読に必要な詳細"
+    message: "後読者が完全な比較条件を確認できる"
     support: ["完全条件の出典 [1]"]
     evidence_refs: []
     knowledge_unit_ids: [ku-001]
@@ -394,6 +483,23 @@ slides:
     connection_from_previous:
       prior_state: "本編は終了している"
       bridge: "後読用の詳細へ進む"
+    semantic_clarity:
+      status: required
+      claims:
+        - surface: message
+          surface_text: "後読者が完全な比較条件を確認できる"
+          clause: "後読者が完全な比較条件を確認できる"
+          kind: action
+          subject: "後読者"
+          actor: "後読者"
+          actor_kind: human
+          target: "完全な比較条件"
+          predicate: "確認できる"
+          not_applicable: []
+      labels:
+        - surface: title
+          surface_text: "補足: 完全な比較条件"
+          reason: "補足資料の名称を示すラベルで、行為や状態を主張しないため"
     speaker_cue:
       purpose: "質疑または後読時に比較条件を確認できるようにする"
       audience_state_before: "本編の主張は分かるが詳細条件は見えていない"
@@ -415,7 +521,7 @@ open_questions: []
 
 `role` は `cover`, `profile`, `goal`, `conclusion`, `problem`, `comparison`, `list`, `flow`, `matrix`, `evidence`, `action`, `demo`, `recap`, `thanks` から選ぶ。自己紹介なしの場合は `profile` を省く。
 
-`role: profile` の投影面は `presenter.data_file` の `display_name`、`bio`、全 `links`、QRラベル、使用を許可された画像だけを表示する。発表テーマに合わせた結論帯、補足コピー、実績、意気込みをStoryから追加しない。テーマへの橋渡しは `speaker_cue.script` と `spoken_note` にだけ置く。
+`role: profile` の投影面は `presenter.data_file` の `display_name`、ユーザーが明示した任意の `name_note`、`bio`、全 `links`、QRラベル、使用を許可された画像だけを表示する。発表テーマに合わせた結論帯、補足コピー、実績、意気込みをStoryから追加しない。テーマへの橋渡しは `speaker_cue.script` と `spoken_note` にだけ置く。
 
 `project.target_slide_count` は `delivery_scope: live` の本編だけを数える。`cover`、`profile`、`thanks` は除き、`recap` は含める。`appendix_slide_count` はappendixとreferenceの物理枚数を表す。時間別枚数は警告用の安全目安であり、秒数、説明密度、具体例、実演、完了条件から必要枚数を決める。`scripts/validate_duration_floor.py --story <01-story.yaml>` はtargetとの一致を検証し、目安未満だけを理由に内容のないページを足さない。
 
@@ -426,6 +532,10 @@ open_questions: []
 `flow_phase` は `narrative.phase_order` の値から選ぶ。`phase_order` がない旧Storyだけ `why`, `what`, `how`, `demo`, `takeaway` を使う。表紙、自己紹介、今日のゴール、サンクス、appendix、referenceは空文字にできる。`recap` は新情報を持ち込まない。
 
 `reader_context` は後から一枚だけを読む人に必要な前提または現在地を短く記録する。`connection_from_previous.prior_state` と `bridge` は前ページからの論理的接続を記録する。表紙、自己紹介、Thanksは空文字または省略してよいが、その他のスライドでは両方を必須とする。
+
+`project.authoring_mode` は、完成記事の節構造を保つ `section-faithful` と、トピック・メモ・複数資料から発表向けの新しい順序を作る `narrative-recompose` のいずれかとする。`section-faithful` では `source_section_manifest`、`section_coverage`、節スライドの `source_section_ids` と `talk_track` を必須とする。通常は一節一枚で、複数節を一枚へ統合しない。一節を複数枚へ分ける場合だけ `split_reason` を使う。`talk_track.beats[].spoken_text` は `speaker_cue.script` と `spoken_note` の「話す内容」に含め、`visible_text` はStory、Blueprint、HTMLの実際の描画面へ残す。詳細は `section-faithful.md` と `scripts/validate_section_fidelity.py` を正本とする。
+
+`semantic_clarity_version: 1` では `semantic-clarity.md` に従い、表紙、自己紹介、Thanksを除く各スライドに `semantic_clarity` を必須とする。`title` と `message` はclaimまたは正当なlabelへ一対一で対応させ、動作・変更・判断を述べる本文もclaimへ含める。`action`、`change`、`decision` は主語、行為者、対象、述語を同じ可視原子節へ明記する。`definition` と `state` で行為者または対象が存在しない場合だけ `not_applicable` を使う。reference専用ページは書誌情報だけを表示し主張を持たない場合に限り `status: exempt` と具体的な理由を使える。`scripts/validate_semantic_clarity.py --story <01-story.yaml>` が成功するまで後工程へ渡さない。
 
 `omitted_phases` は標準phaseを省略した場合だけ `{phase, reason}` で記録する。省略がなければ空配列にする。
 

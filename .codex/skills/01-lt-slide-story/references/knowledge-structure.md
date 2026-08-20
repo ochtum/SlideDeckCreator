@@ -42,7 +42,7 @@ request:
 
 ## Knowledge units
 
-各単位は、原文の一節と一対一でなくてよい。一節から複数の知識単位を抽出でき、一つの知識単位が複数節にまたがってもよい。
+各単位は、原文の一節と一対一でなくてよい。一節から複数の知識単位を抽出でき、一つの知識単位が複数節にまたがってもよい。ただし `project.authoring_mode: section-faithful` では、知識単位が複数節にまたがっても節スライドを統合しない。`source_section_ids` と `talk_track` は節単位、`knowledge_unit_ids` は意味単位として別々に保持する。
 
 ```yaml
 knowledge_units:
@@ -81,6 +81,7 @@ comprehension_checks:
 ## Coverage rules
 
 - 一つのスライドは一つの中心論点または問いを扱う。知識単位を一つに限定しない。
+- `section-faithful` の節スライドは一つの `source_section_ids` だけを持つ。複数節にまたがるknowledge unitは各節スライドへ重複参照できるが、節を一枚へ統合する根拠にしない。
 - 複雑な知識単位は複数スライドへ分けてよい。
 - 各スライドに `knowledge_unit_ids` と `comprehension_check_ids` を残す。
 - `full-equivalence` では既存の `source_inventory` / `coverage_matrix` も維持し、構造台帳と意味台帳の両方を追跡する。

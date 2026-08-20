@@ -80,7 +80,8 @@ function editorCss() {
 @media print {
   .lt-editor-root,
   .lt-editor-mode-badge,
-  .lt-editor-selection {
+  .lt-editor-selection,
+  .lt-editor-tail-handle {
     display: none !important;
   }
   body.lt-editor-enabled {
@@ -116,8 +117,18 @@ body.lt-editor-enabled .pager,
 body.lt-editor-enabled .presenter-console {
   display: none !important;
 }
+body.lt-editor-enabled.overview .pager {
+  display: block !important;
+}
+body.lt-editor-enabled.overview > .deck {
+  visibility: hidden;
+}
+body.lt-editor-enabled.overview .lt-editor-mode-badge {
+  display: none !important;
+}
 body.lt-editor-view-mode .lt-editor-root,
-body.lt-editor-view-mode .lt-editor-selection {
+body.lt-editor-view-mode .lt-editor-selection,
+body.lt-editor-view-mode .lt-editor-tail-handle {
   display: none !important;
 }
 body.lt-editor-enabled.lt-editor-view-mode {
@@ -186,7 +197,7 @@ body.lt-editor-enabled.lt-editor-view-mode > .deck {
   position: relative;
   z-index: 2147483200;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
   min-width: 0;
   min-height: 0;
   border: 1px solid rgba(255, 255, 255, .14);
@@ -202,17 +213,39 @@ body.lt-editor-enabled.lt-editor-view-mode > .deck {
   box-shadow: 0 24px 70px rgba(0, 0, 0, .42);
 }
 .lt-editor-dock-body {
-  display: grid;
-  grid-template-columns: minmax(0, 1.7fr) minmax(250px, .8fr);
+  display: block;
   min-height: 0;
   overflow: hidden;
 }
-.lt-editor-quick-stack {
+.lt-editor-tabs {
   display: grid;
-  grid-template-rows: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
   min-width: 0;
-  min-height: 0;
-  border-left: 1px solid rgba(159, 181, 216, .18);
+  padding: 6px;
+  border-bottom: 1px solid rgba(159, 181, 216, .22);
+  background: #0b1b33;
+}
+.lt-editor-tab {
+  min-width: 0;
+  min-height: 34px !important;
+  padding: 4px 10px;
+  border-color: transparent !important;
+  background: transparent !important;
+  color: #9fb5d8 !important;
+}
+.lt-editor-tab[aria-selected="true"] {
+  border-color: rgba(91, 164, 255, .5) !important;
+  background: #173b68 !important;
+  color: #fff !important;
+  box-shadow: inset 0 -3px 0 var(--lt-editor-accent);
+}
+.lt-editor-panel[hidden] {
+  display: none !important;
+}
+.lt-editor-dock-body > .lt-editor-panel {
+  height: 100%;
+  border-bottom: 0;
 }
 .lt-editor-side-shell {
   display: grid;
@@ -230,7 +263,7 @@ body.lt-editor-enabled.lt-editor-view-mode > .deck {
   border-bottom: 1px solid rgba(159, 181, 216, .22);
   background: #102644;
   color: #fff;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 900;
   cursor: grab;
   user-select: none;
@@ -248,7 +281,12 @@ body.lt-editor-enabled.lt-editor-view-mode > .deck {
   background: #fff;
   color: #001b4d;
   font: inherit;
-  font-size: 16px;
+  font-size: 18px;
+}
+.lt-editor-root input,
+.lt-editor-root select {
+  width: 100%;
+  min-width: 0;
 }
 .lt-editor-root textarea {
   width: 100%;
@@ -269,7 +307,7 @@ body.lt-editor-enabled.lt-editor-view-mode > .deck {
 .lt-editor-dock input,
 .lt-editor-dock select {
   min-height: 28px;
-  font-size: 14px;
+  font-size: 18px;
 }
 .lt-editor-section {
   min-width: 0;
@@ -281,7 +319,7 @@ body.lt-editor-enabled.lt-editor-view-mode > .deck {
 .lt-editor-section h2 {
   margin: 0 0 6px;
   color: #9fc8ff;
-  font-size: 16px;
+  font-size: 18px;
   line-height: 1.2;
   letter-spacing: 0;
 }
@@ -297,9 +335,8 @@ body.lt-editor-enabled.lt-editor-view-mode > .deck {
   display: grid;
   gap: 3px;
   color: #b8cae4;
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 800;
-  color: #385170;
 }
 .lt-editor-actions {
   display: grid;
@@ -309,13 +346,13 @@ body.lt-editor-enabled.lt-editor-view-mode > .deck {
 .lt-editor-muted {
   margin-top: 6px;
   color: #9fb5d8;
-  font-size: 14px;
+  font-size: 18px;
   line-height: 1.35;
 }
 .lt-editor-note-status {
   margin: 8px 0 0;
   color: #ffb18e;
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 800;
   line-height: 1.4;
 }
@@ -324,17 +361,20 @@ body.lt-editor-enabled.lt-editor-view-mode > .deck {
   border-bottom: 0;
 }
 .lt-editor-element-section .lt-editor-grid {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
 }
 .lt-editor-element-section .lt-editor-actions {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 .lt-editor-add-section,
 .lt-editor-mode-section {
   padding: 8px;
 }
+.lt-editor-add-section .lt-editor-actions {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
 .lt-editor-mode-section .lt-editor-actions {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 .lt-editor-note-section {
   display: grid;
@@ -372,17 +412,16 @@ body.lt-editor-enabled.lt-editor-view-mode > .deck {
   border-color: rgba(255, 255, 255, .32) !important;
   background: transparent !important;
   color: #dce8ff !important;
-  font-size: 14px !important;
+  font-size: 18px !important;
 }
 @media (max-width: 1120px) {
   .lt-editor-root { grid-template-columns: minmax(0, 1fr) minmax(360px, .72fr); }
   .lt-editor-stage-shell { grid-template-rows: auto minmax(0, 1fr) minmax(250px, 38vh); }
-  .lt-editor-dock-body { grid-template-columns: minmax(0, 1fr) 220px; }
 }
 @media (max-height: 800px) {
-  .lt-editor-stage-shell { grid-template-rows: auto minmax(0, 1fr) minmax(260px, 37vh); }
+  .lt-editor-stage-shell { grid-template-rows: auto minmax(0, 1fr) minmax(286px, 40vh); }
   .lt-editor-side-shell { padding: 14px; }
-  .lt-editor-note-section textarea { font-size: 16px; line-height: 1.42; }
+  .lt-editor-note-section textarea { font-size: 18px; line-height: 1.42; }
 }
 .lt-editor-mode-badge {
   display: none;
@@ -410,6 +449,27 @@ body.lt-editor-view-mode .lt-editor-mode-badge {
   pointer-events: none;
   box-shadow: 0 0 0 9999px rgba(29, 116, 232, .035);
 }
+.lt-editor-tail-handle {
+  position: fixed;
+  z-index: 2147483647;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  border: 2px solid #135fbf;
+  border-radius: 50%;
+  background: #ffd12e;
+  box-shadow: 0 2px 8px rgba(0, 27, 77, .28), 0 0 0 3px rgba(255, 255, 255, .92);
+  cursor: crosshair;
+  pointer-events: auto;
+  touch-action: none;
+}
+.lt-editor-tail-handle[hidden] {
+  display: none !important;
+}
+.lt-editor-tail-handle:focus-visible {
+  outline: 3px solid rgba(29, 116, 232, .5);
+  outline-offset: 4px;
+}
 .lt-editor-selected {
   outline: 2px solid var(--lt-editor-accent) !important;
   outline-offset: 2px !important;
@@ -425,6 +485,83 @@ body.lt-editor-edit-mode [contenteditable="true"] {
   cursor: text;
   outline: 2px dashed rgba(29, 116, 232, .55);
   outline-offset: 3px;
+}
+.lt-editor-speech-bubble {
+  --lt-bubble-bg: #fff;
+  --lt-bubble-border: #1d74e8;
+  --lt-bubble-tail-left: 34px;
+  --lt-bubble-tail-width: 72px;
+  --lt-bubble-tail-height: 30px;
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible !important;
+  padding: 16px 24px;
+  border: 3px solid var(--lt-bubble-border);
+  border-radius: 24px;
+  background: var(--lt-bubble-bg);
+  color: #001b4d;
+  font-size: 28px;
+  line-height: 1.3;
+  font-weight: 900;
+  text-align: center;
+  isolation: isolate;
+}
+.lt-editor-speech-text {
+  position: relative;
+  z-index: 3;
+  min-width: 0;
+}
+.lt-editor-speech-bubble::before,
+.lt-editor-speech-bubble::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+.lt-editor-speech-bubble::before {
+  z-index: 1;
+  left: var(--lt-bubble-tail-outer-box-left, var(--lt-bubble-tail-left));
+  top: var(--lt-bubble-tail-outer-box-top, calc(100% - 1px));
+  width: var(--lt-bubble-tail-outer-box-width, var(--lt-bubble-tail-width));
+  height: var(--lt-bubble-tail-outer-box-height, var(--lt-bubble-tail-height));
+  background: var(--lt-bubble-border);
+  clip-path: polygon(
+    var(--lt-bubble-tail-outer-p1-x, 0%) var(--lt-bubble-tail-outer-p1-y, 0%),
+    var(--lt-bubble-tail-outer-p2-x, 100%) var(--lt-bubble-tail-outer-p2-y, 0%),
+    var(--lt-bubble-tail-outer-tip-x, 14%) var(--lt-bubble-tail-outer-tip-y, 100%)
+  );
+}
+.lt-editor-speech-bubble::after {
+  z-index: 2;
+  left: var(--lt-bubble-tail-inner-box-left, calc(var(--lt-bubble-tail-left) + 2px));
+  top: var(--lt-bubble-tail-inner-box-top, calc(100% - 2px));
+  width: var(--lt-bubble-tail-inner-box-width, calc(var(--lt-bubble-tail-width) - 4px));
+  height: var(--lt-bubble-tail-inner-box-height, calc(var(--lt-bubble-tail-height) - 3px));
+  background: var(--lt-bubble-bg);
+  clip-path: polygon(
+    var(--lt-bubble-tail-inner-p1-x, 0%) var(--lt-bubble-tail-inner-p1-y, 0%),
+    var(--lt-bubble-tail-inner-p2-x, 100%) var(--lt-bubble-tail-inner-p2-y, 0%),
+    var(--lt-bubble-tail-inner-tip-x, 14%) var(--lt-bubble-tail-inner-tip-y, 100%)
+  );
+}
+.lt-editor-speech-bubble[data-anim],
+.lt-editor-speech-bubble[data-anim].shown {
+  clip-path: none !important;
+}
+body.lt-editor-edit-mode .lt-editor-speech-bubble[data-anim] {
+  visibility: visible !important;
+  opacity: 1 !important;
+  transform: none !important;
+  filter: none !important;
+}
+@media screen and (prefers-reduced-motion: reduce) {
+  body:not(.lt-editor-edit-mode) [data-anim]:not(.shown) {
+    opacity: 0 !important;
+  }
+  body:not(.lt-editor-edit-mode) [data-anim].shown {
+    opacity: 1 !important;
+  }
 }
 `;
 }
@@ -452,9 +589,12 @@ function editorRuntime() {
   let selected = null;
   let drag = null;
   let pendingDrag = null;
+  let tailDrag = null;
   let panelDrag = null;
   let editorMode = true;
   let noteSlide = null;
+  let overviewReturnEditorMode = null;
+  let overviewSelected = null;
 
   const root = document.createElement("aside");
   root.className = "lt-editor-root";
@@ -464,51 +604,54 @@ function editorRuntime() {
     '<div class="lt-editor-stage-viewport" data-editor-stage-viewport aria-label="編集対象スライド領域"></div>',
     '<div class="lt-editor-dock" data-editor-dock>',
     '<div class="lt-editor-head"><span>Slide Editor</span><button type="button" class="lt-editor-dock-toggle" data-action="dock" data-dock-toggle>フロート</button></div>',
+    '<div class="lt-editor-tabs" role="tablist" aria-label="編集ツール">',
+    '<button type="button" class="lt-editor-tab" role="tab" aria-selected="true" data-editor-tab="element">選択要素</button>',
+    '<button type="button" class="lt-editor-tab" role="tab" aria-selected="false" data-editor-tab="add">追加</button>',
+    '<button type="button" class="lt-editor-tab" role="tab" aria-selected="false" data-editor-tab="mode">表示・移動</button>',
+    '</div>',
     '<div class="lt-editor-dock-body">',
-    '<section class="lt-editor-section lt-editor-element-section">',
-    '<h2>選択要素</h2>',
+    '<section class="lt-editor-section lt-editor-panel lt-editor-element-section" data-editor-panel="element">',
     '<div class="lt-editor-grid">',
     field("X", "x", "number"), field("Y", "y", "number"), field("W", "w", "number"), field("H", "h", "number"),
-    field("Font", "fontSize", "number", 'min="1" step="1"'), field("Text", "color", "color"),
+    field("Font", "fontSize", "number", 'min="1" step="1"'), field("Step", "step", "number", 'min="0" step="1"'), field("Text", "color", "color"),
     field("Bg", "background", "color"),
     '<label class="lt-editor-field">Align<select data-field="textAlign"><option value="">auto</option><option value="left">left</option><option value="center">center</option><option value="right">right</option></select></label>',
     '<label class="lt-editor-field">Anim<select data-field="anim"><option value="">none</option><option value="rise">rise</option><option value="fade">fade</option><option value="pop">pop</option><option value="wipe">wipe</option><option value="draw">draw</option><option value="stamp">stamp</option><option value="marker">marker</option><option value="stomp">stomp</option></select></label>',
-    '<label class="lt-editor-field">Zone<select data-field="zone"><option value="text">text</option><option value="visual">visual</option><option value="content">content</option><option value="title">title</option><option value="conclusion">conclusion</option><option value="qr">qr</option></select></label>',
+    '<label class="lt-editor-field">Zone<select data-field="zone"><option value="text">text</option><option value="visual">visual</option><option value="content">content</option><option value="callout">callout</option><option value="title">title</option><option value="conclusion">conclusion</option><option value="qr">qr</option></select></label>',
     '</div>',
     '<div class="lt-editor-actions" style="margin-top:6px">',
     '<button type="button" data-action="bold">Bold</button>',
     '<button type="button" data-action="card">Card</button>',
     '<button type="button" data-action="front">Front</button>',
+    '<button type="button" data-action="stepLast">最後に表示</button>',
     '<button type="button" data-action="delete">Delete</button>',
     '</div>',
     '<p class="lt-editor-muted lt-editor-status-line" data-status>Select a slide element.</p>',
     '</section>',
-    '<div class="lt-editor-quick-stack">',
-    '<section class="lt-editor-section lt-editor-add-section">',
-    '<h2>追加</h2>',
+    '<section class="lt-editor-section lt-editor-panel lt-editor-add-section" data-editor-panel="add" hidden>',
     '<div class="lt-editor-actions">',
     '<button type="button" data-action="addText">Text</button>',
     '<button type="button" data-action="addImage">Image</button>',
+    '<button type="button" data-action="addSpeechBubble">吹き出し</button>',
     '<button type="button" data-action="duplicateSlide">Duplicate</button>',
     '<button type="button" data-action="addSlide">Blank page</button>',
     '</div>',
     '<input type="file" accept="image/*" data-image-picker hidden>',
     '</section>',
-    '<section class="lt-editor-section lt-editor-mode-section">',
-    '<h2>表示・移動</h2>',
+    '<section class="lt-editor-section lt-editor-panel lt-editor-mode-section" data-editor-panel="mode" hidden>',
     '<div class="lt-editor-actions">',
     '<button type="button" data-action="toggleMode" data-mode-toggle>View mode</button>',
+    '<button type="button" data-action="previewAnimation">アニメ確認</button>',
     '<button type="button" data-action="prev">Prev</button>',
     '<button type="button" data-action="next">Next</button>',
     '</div>',
-    '<p class="lt-editor-muted"><strong>E</strong>: 終了 / <strong>V</strong>: UI表示切替</p>',
+    '<p class="lt-editor-muted"><strong>P</strong>: ページ一覧 / <strong>E</strong>: 終了 / <strong>V</strong>: UI表示切替</p>',
     '</section>',
-    '</div>',
     '</div>',
     '</div>',
     '</section>',
     '<section class="lt-editor-side-shell">',
-    '<div class="lt-editor-side-head"><span>台本・出力</span><span>E: 終了 / V: 表示切替</span></div>',
+    '<div class="lt-editor-side-head"><span>台本・出力</span><span>P: ページ一覧 / E: 終了 / V: 表示切替</span></div>',
     '<section class="lt-editor-section lt-editor-note-section">',
     '<h2>Spoken Note</h2>',
     '<textarea data-spoken-note rows="8" spellcheck="false" placeholder="橋渡し: 前ページから進む理由&#10;話す内容: 実際に口にする説明&#10;指差し: 画面にあるラベル&#10;次の一言: 次へ渡す発話"></textarea>',
@@ -543,11 +686,22 @@ function editorRuntime() {
   selectionBox.hidden = true;
   document.body.appendChild(selectionBox);
 
+  const tailHandle = document.createElement("div");
+  tailHandle.className = "lt-editor-tail-handle";
+  tailHandle.hidden = true;
+  tailHandle.tabIndex = 0;
+  tailHandle.setAttribute("role", "button");
+  tailHandle.setAttribute("aria-label", "吹き出しの尻尾の頂点を移動");
+  tailHandle.title = "ドラッグして吹き出しの尻尾の頂点を移動";
+  document.body.appendChild(tailHandle);
+
   const imagePicker = root.querySelector("[data-image-picker]");
   const spokenNoteInput = root.querySelector("[data-spoken-note]");
   const noteStatus = root.querySelector("[data-note-status]");
   const status = root.querySelector("[data-status]");
   const fields = Object.fromEntries([...root.querySelectorAll("[data-field]")].map((el) => [el.dataset.field, el]));
+  const editorTabs = [...root.querySelectorAll("[data-editor-tab]")];
+  const editorPanels = [...root.querySelectorAll("[data-editor-panel]")];
 
   root.querySelector(".lt-editor-head").addEventListener("pointerdown", onPanelPointerDown);
   root.addEventListener("input", onFieldInput);
@@ -563,7 +717,9 @@ function editorRuntime() {
   document.addEventListener("keyup", syncSlideContextSoon, true);
   window.addEventListener("resize", onEditorResize);
   document.addEventListener("selectionchange", updateSelectionBox);
+  document.getElementById("pagerGrid")?.addEventListener("click", onOverviewGridClick);
 
+  setEditorPanel("element");
   renumberSlides();
   setEditorMode(true, false);
   syncSlideContext(true);
@@ -611,6 +767,16 @@ function editorRuntime() {
 
   function onPointerDown(event) {
     if (!editorMode) return;
+    if (event.target === tailHandle) {
+      if (!isSpeechBubble(selected)) return;
+      tailDrag = { el: selected, pointerId: event.pointerId };
+      document.body.classList.add("lt-editor-tail-dragging");
+      tailHandle.focus({ preventScroll: true });
+      try { tailHandle.setPointerCapture(event.pointerId); } catch (error) {}
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
     if (root.contains(event.target)) return;
     const target = event.target.closest(".zone");
     if (!target || !activeSlide() || !activeSlide().contains(target)) return;
@@ -639,6 +805,14 @@ function editorRuntime() {
   }
 
   function onPointerMove(event) {
+    if (tailDrag) {
+      setTailTipFromPointer(tailDrag.el, event.clientX, event.clientY);
+      updateSelectionBox();
+      setStatus("吹き出しの尻尾の頂点を移動中（付け根は最寄りの辺へ追従）");
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
     if (panelDrag) {
       const nextLeft = clamp(panelDrag.startLeft + event.clientX - panelDrag.startClientX, 0, Math.max(0, innerWidth - editorDock.offsetWidth));
       const nextTop = clamp(panelDrag.startTop + event.clientY - panelDrag.startClientY, 0, Math.max(0, innerHeight - Math.min(editorDock.offsetHeight, innerHeight)));
@@ -667,6 +841,15 @@ function editorRuntime() {
   }
 
   function onPointerUp(event) {
+    if (tailDrag) {
+      try { tailHandle.releasePointerCapture(tailDrag.pointerId); } catch (error) {}
+      tailDrag = null;
+      document.body.classList.remove("lt-editor-tail-dragging");
+      setStatus("尻尾の頂点位置を保存しました。黄色いハンドルで再調整できます。");
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
     if (panelDrag) {
       savePanelPosition();
       panelDrag = null;
@@ -730,6 +913,22 @@ function editorRuntime() {
   function onKeyDown(event) {
     if (!document.body.classList.contains("lt-editor-enabled")) return;
     if (event.defaultPrevented) return;
+    if (isEditorTextEntryTarget(event.target)) {
+      event.stopPropagation();
+      return;
+    }
+    if (isPageOverviewShortcut(event)) {
+      toggleEditorOverview();
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+    if (overviewReturnEditorMode !== null && event.key === "Escape") {
+      toggleEditorOverview(false);
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
     if (isViewModeShortcut(event)) {
       setEditorMode(!editorMode);
       event.preventDefault();
@@ -737,7 +936,23 @@ function editorRuntime() {
       return;
     }
     if (!editorMode) return;
-    if (root.contains(event.target)) return;
+    if (root.contains(event.target)) {
+      event.stopPropagation();
+      return;
+    }
+    if (event.target === tailHandle && isSpeechBubble(selected)) {
+      const point = tailPoint(selected);
+      const step = event.shiftKey ? 10 : 1;
+      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) {
+        const dx = event.key === "ArrowLeft" ? -step : event.key === "ArrowRight" ? step : 0;
+        const dy = event.key === "ArrowUp" ? -step : event.key === "ArrowDown" ? step : 0;
+        renderTailGeometry(selected, point.x + dx, point.y + dy, true);
+        updateSelectionBox();
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+    }
     if (event.key === "Escape") {
       select(null);
       event.preventDefault();
@@ -777,15 +992,28 @@ function editorRuntime() {
       selected.style[map[name]] = (Number(value) || 0) + "px";
     }
     if (name === "fontSize") applyFontSize(selected, value);
+    if (name === "step") setAnimationStep(animationTarget(selected), value);
     if (name === "color") selected.style.color = value || "";
-    if (name === "background") selected.style.background = value || "";
+    if (name === "background") {
+      selected.style.background = value || "";
+      if (selected.classList.contains("lt-editor-speech-bubble")) {
+        selected.style.setProperty("--lt-bubble-bg", value || "#ffffff");
+      }
+    }
     if (name === "textAlign") selected.style.textAlign = value || "";
     if (name === "zone") selected.dataset.zone = value || "text";
-    if (name === "anim") setAnimation(selected, value);
+    if (name === "anim") setAnimation(animationTarget(selected), value);
     updateSelectionBox();
   }
 
   function onToolbarClick(event) {
+    const tab = event.target.closest("[data-editor-tab]");
+    if (tab) {
+      event.preventDefault();
+      event.stopPropagation();
+      setEditorPanel(tab.dataset.editorTab);
+      return;
+    }
     const action = event.target.closest("[data-action]")?.dataset.action;
     if (!action) return;
     event.preventDefault();
@@ -805,15 +1033,23 @@ function editorRuntime() {
       return;
     }
     if (action === "toggleMode") setEditorMode(!editorMode);
+    if (action === "previewAnimation") {
+      const index = slideIndex(activeSlide());
+      setEditorMode(false);
+      window.slideDeck?.show?.(index, false);
+      return;
+    }
     if (action === "bold" && selected) selected.style.fontWeight = selected.style.fontWeight === "900" ? "" : "900";
     if (action === "card" && selected) selected.classList.toggle("card");
     if (action === "front" && selected) bringForward(selected);
+    if (action === "stepLast" && selected) setAnimationLast(animationTarget(selected));
     if (action === "delete" && selected) {
       selected.remove();
       select(null);
     }
     if (action === "addText") addText();
     if (action === "addImage") imagePicker.click();
+    if (action === "addSpeechBubble") addSpeechBubble();
     if (action === "duplicateSlide") duplicateSlide();
     if (action === "addSlide") addBlankSlide();
     if (action === "prev") window.slideDeck?.previous?.();
@@ -856,10 +1092,58 @@ function editorRuntime() {
   function select(el) {
     if (selected) selected.classList.remove("lt-editor-selected");
     selected = el;
-    if (selected) selected.classList.add("lt-editor-selected");
+    if (selected) {
+      selected.classList.add("lt-editor-selected");
+      setEditorPanel("element");
+    }
     refreshFields();
     updateSelectionBox();
     setStatus(selected ? describe(selected) : "Select a .zone element.");
+  }
+
+  function setEditorPanel(name) {
+    const next = editorPanels.some((panel) => panel.dataset.editorPanel === name) ? name : "element";
+    editorTabs.forEach((tab) => {
+      const active = tab.dataset.editorTab === next;
+      tab.setAttribute("aria-selected", active ? "true" : "false");
+      tab.tabIndex = active ? 0 : -1;
+    });
+    editorPanels.forEach((panel) => {
+      panel.hidden = panel.dataset.editorPanel !== next;
+    });
+  }
+
+  function toggleEditorOverview(force) {
+    const open = document.body.classList.contains("overview");
+    const next = typeof force === "boolean" ? force : !open;
+    if (next) {
+      overviewReturnEditorMode = editorMode;
+      overviewSelected = selected;
+      if (editorMode) setEditorMode(false, false);
+      window.slideDeck?.toggleOverview?.(true);
+      return;
+    }
+    window.slideDeck?.toggleOverview?.(false);
+    restoreEditorAfterOverview();
+  }
+
+  function onOverviewGridClick(event) {
+    if (overviewReturnEditorMode === null || !event.target.closest(".pager-thumb")) return;
+    requestAnimationFrame(restoreEditorAfterOverview);
+  }
+
+  function restoreEditorAfterOverview() {
+    if (overviewReturnEditorMode === null) return;
+    const restoreEditMode = overviewReturnEditorMode;
+    const restoreSelection = overviewSelected;
+    overviewReturnEditorMode = null;
+    overviewSelected = null;
+    if (restoreEditMode) {
+      setEditorMode(true, false);
+      if (restoreSelection && activeSlide()?.contains(restoreSelection)) select(restoreSelection);
+      else select(null);
+    }
+    syncSlideContextSoon();
   }
 
   function getBoxStyle(el) {
@@ -878,21 +1162,24 @@ function editorRuntime() {
       return;
     }
     const box = getBoxStyle(selected);
+    const animated = animationTarget(selected);
     fields.x.value = Math.round(box.left);
     fields.y.value = Math.round(box.top);
     fields.w.value = Math.round(box.width);
     fields.h.value = Math.round(box.height);
     fields.fontSize.value = Math.round(px(getComputedStyle(primaryTextTarget(selected)).fontSize)) || "";
+    fields.step.value = animated?.hasAttribute("data-anim") ? String(Math.max(0, Math.round(Number(animated.dataset.step) || 0))) : "";
     fields.color.value = rgbToHex(getComputedStyle(selected).color);
     fields.background.value = rgbToHex(getComputedStyle(selected).backgroundColor);
     fields.textAlign.value = selected.style.textAlign || "";
     fields.zone.value = selected.dataset.zone || "text";
-    fields.anim.value = selected.dataset.anim || selected.querySelector("[data-anim]")?.dataset.anim || "";
+    fields.anim.value = animated?.dataset.anim || "";
   }
 
   function updateSelectionBox() {
     if (!editorMode || !selected || !document.body.contains(selected)) {
       selectionBox.hidden = true;
+      tailHandle.hidden = true;
       return;
     }
     const rect = selected.getBoundingClientRect();
@@ -901,11 +1188,163 @@ function editorRuntime() {
     selectionBox.style.top = rect.top + "px";
     selectionBox.style.width = rect.width + "px";
     selectionBox.style.height = rect.height + "px";
+    updateTailHandle();
+  }
+
+  function updateTailHandle() {
+    if (!editorMode || !isSpeechBubble(selected) || !document.body.contains(selected)) {
+      tailHandle.hidden = true;
+      return;
+    }
+    const rect = selected.getBoundingClientRect();
+    const scale = slideScale();
+    const point = tailPoint(selected);
+    tailHandle.hidden = false;
+    tailHandle.style.left = (rect.left + point.x / scale.x) + "px";
+    tailHandle.style.top = (rect.top + point.y / scale.y) + "px";
+  }
+
+  function isSpeechBubble(el) {
+    return Boolean(el?.classList?.contains("lt-editor-speech-bubble"));
+  }
+
+  function setTailTipFromPointer(el, clientX, clientY) {
+    const rect = el.getBoundingClientRect();
+    const scale = slideScale();
+    renderTailGeometry(el, (clientX - rect.left) * scale.x, (clientY - rect.top) * scale.y, true);
+  }
+
+  function tailPoint(el) {
+    const storedX = Number.parseFloat(el.dataset.tailTipX);
+    const storedY = Number.parseFloat(el.dataset.tailTipY);
+    if (Number.isFinite(storedX) && Number.isFinite(storedY)) return { x: storedX, y: storedY };
+    const style = getComputedStyle(el);
+    const left = px(style.getPropertyValue("--lt-bubble-tail-left")) || 34;
+    const width = px(style.getPropertyValue("--lt-bubble-tail-width")) || 72;
+    const height = px(style.getPropertyValue("--lt-bubble-tail-height")) || 30;
+    return { x: left + width * .14, y: (el.offsetHeight || getBoxStyle(el).height) - 1 + height };
+  }
+
+  function renderTailGeometry(el, rawX, rawY, persist) {
+    const width = Math.max(1, el.offsetWidth || getBoxStyle(el).width);
+    const height = Math.max(1, el.offsetHeight || getBoxStyle(el).height);
+    const elementBox = getBoxStyle(el);
+    const slidePadding = 8;
+    let x = clamp(Number(rawX) || 0, slidePadding - elementBox.left, 1280 - slidePadding - elementBox.left);
+    let y = clamp(Number(rawY) || 0, slidePadding - elementBox.top, 720 - slidePadding - elementBox.top);
+    const side = tailSide(width, height, x, y);
+    const minimumLength = 8;
+    if (side === "bottom") y = Math.max(y, height + minimumLength);
+    if (side === "top") y = Math.min(y, -minimumLength);
+    if (side === "left") x = Math.min(x, -minimumLength);
+    if (side === "right") x = Math.max(x, width + minimumLength);
+
+    const style = getComputedStyle(el);
+    const requestedBaseWidth = px(style.getPropertyValue("--lt-bubble-tail-width")) || 72;
+    const edgeLength = side === "top" || side === "bottom" ? width : height;
+    const baseHalf = Math.min(requestedBaseWidth / 2, Math.max(10, (edgeLength - 8) / 2));
+    const outline = 2;
+    const tipInset = 3;
+    let p1;
+    let p2;
+    let tip = { x, y };
+    let innerP1;
+    let innerP2;
+    let baseCenter;
+
+    if (side === "top" || side === "bottom") {
+      baseCenter = clamp(x, baseHalf + 4, Math.max(baseHalf + 4, width - baseHalf - 4));
+      const baseY = side === "bottom" ? height - 1 : 1;
+      p1 = { x: baseCenter - baseHalf, y: baseY };
+      p2 = { x: baseCenter + baseHalf, y: baseY };
+      innerP1 = { x: p1.x + outline, y: baseY + (side === "bottom" ? outline : -outline) };
+      innerP2 = { x: p2.x - outline, y: baseY + (side === "bottom" ? outline : -outline) };
+    } else {
+      baseCenter = clamp(y, baseHalf + 4, Math.max(baseHalf + 4, height - baseHalf - 4));
+      const baseX = side === "right" ? width - 1 : 1;
+      p1 = { x: baseX, y: baseCenter - baseHalf };
+      p2 = { x: baseX, y: baseCenter + baseHalf };
+      innerP1 = { x: baseX + (side === "right" ? outline : -outline), y: p1.y + outline };
+      innerP2 = { x: baseX + (side === "right" ? outline : -outline), y: p2.y - outline };
+    }
+
+    const baseMid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+    const tailLength = Math.max(1, Math.hypot(tip.x - baseMid.x, tip.y - baseMid.y));
+    const ratio = Math.min(.45, tipInset / tailLength);
+    const innerTip = {
+      x: tip.x + (baseMid.x - tip.x) * ratio,
+      y: tip.y + (baseMid.y - tip.y) * ratio
+    };
+    const all = [p1, p2, tip];
+    const boxLeft = Math.min(...all.map((point) => point.x));
+    const boxTop = Math.min(...all.map((point) => point.y));
+    const boxRight = Math.max(...all.map((point) => point.x));
+    const boxBottom = Math.max(...all.map((point) => point.y));
+    const boxWidth = Math.max(1, boxRight - boxLeft);
+    const boxHeight = Math.max(1, boxBottom - boxTop);
+    const local = (point) => ({ x: point.x - boxLeft, y: point.y - boxTop });
+    const outerP1 = local(p1);
+    const outerP2 = local(p2);
+    const outerTip = local(tip);
+    const localInnerP1 = local(innerP1);
+    const localInnerP2 = local(innerP2);
+    const localInnerTip = local(innerTip);
+
+    setTailBox(el, "outer", boxLeft, boxTop, boxWidth, boxHeight);
+    setTailBox(el, "inner", boxLeft, boxTop, boxWidth, boxHeight);
+    setTailPointVariables(el, "outer", outerP1, outerP2, outerTip);
+    setTailPointVariables(el, "inner", localInnerP1, localInnerP2, localInnerTip);
+    el.style.setProperty("--lt-bubble-tail-tip-x", tailPx(x));
+    el.style.setProperty("--lt-bubble-tail-tip-y", tailPx(y));
+    if (persist) {
+      el.dataset.tailTipX = tailNumber(x);
+      el.dataset.tailTipY = tailNumber(y);
+      el.dataset.tailSide = side;
+    }
+    return { x, y, side };
+  }
+
+  function tailSide(width, height, x, y) {
+    const outside = [];
+    if (x < 0) outside.push({ side: "left", distance: -x });
+    if (x > width) outside.push({ side: "right", distance: x - width });
+    if (y < 0) outside.push({ side: "top", distance: -y });
+    if (y > height) outside.push({ side: "bottom", distance: y - height });
+    if (outside.length) return outside.sort((a, b) => b.distance - a.distance)[0].side;
+    return [
+      { side: "left", distance: x },
+      { side: "right", distance: width - x },
+      { side: "top", distance: y },
+      { side: "bottom", distance: height - y }
+    ].sort((a, b) => a.distance - b.distance)[0].side;
+  }
+
+  function setTailBox(el, layer, left, top, width, height) {
+    el.style.setProperty("--lt-bubble-tail-" + layer + "-box-left", tailPx(left));
+    el.style.setProperty("--lt-bubble-tail-" + layer + "-box-top", tailPx(top));
+    el.style.setProperty("--lt-bubble-tail-" + layer + "-box-width", tailPx(width));
+    el.style.setProperty("--lt-bubble-tail-" + layer + "-box-height", tailPx(height));
+  }
+
+  function setTailPointVariables(el, layer, p1, p2, tip) {
+    [["p1", p1], ["p2", p2], ["tip", tip]].forEach(([name, point]) => {
+      el.style.setProperty("--lt-bubble-tail-" + layer + "-" + name + "-x", tailPx(point.x));
+      el.style.setProperty("--lt-bubble-tail-" + layer + "-" + name + "-y", tailPx(point.y));
+    });
+  }
+
+  function tailPx(value) {
+    return tailNumber(value) + "px";
+  }
+
+  function tailNumber(value) {
+    return String(Math.round(Number(value) * 10) / 10);
   }
 
   function exposeTextEditing() {
     deck.querySelectorAll(".zone").forEach((zone) => {
-      const editable = zone.matches("h1,h2,h3,p,li,span,div") ? zone : zone.querySelector("h1,h2,h3,p,li,span,div");
+      const bubbleText = zone.querySelector(":scope > .lt-editor-speech-text");
+      const editable = bubbleText || (zone.matches("h1,h2,h3,p,li,span,div") ? zone : zone.querySelector("h1,h2,h3,p,li,span,div"));
       if (editable && !editable.querySelector("img,svg")) {
         editable.setAttribute("contenteditable", "true");
         editable.setAttribute("spellcheck", "false");
@@ -932,8 +1371,9 @@ function editorRuntime() {
     } else {
       drag = null;
       pendingDrag = null;
+      tailDrag = null;
       panelDrag = null;
-      document.body.classList.remove("lt-editor-dragging");
+      document.body.classList.remove("lt-editor-dragging", "lt-editor-tail-dragging");
       select(null);
       disableTextEditing();
       if (announce) setStatus("View mode. Press V for editor mode, or E for normal URL.");
@@ -968,6 +1408,16 @@ function editorRuntime() {
     if (root.contains(event.target)) return false;
     if (event.target.closest('input, textarea, select, [contenteditable="true"]')) return false;
     return true;
+  }
+
+  function isPageOverviewShortcut(event) {
+    if (event.key.toLowerCase() !== "p") return false;
+    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return false;
+    return !isEditorTextEntryTarget(event.target);
+  }
+
+  function isEditorTextEntryTarget(target) {
+    return target instanceof Element && Boolean(target.closest('input, textarea, select, [contenteditable="true"]'));
   }
 
   function applyFontSize(el, value) {
@@ -1015,6 +1465,38 @@ function editorRuntime() {
     zone.setAttribute("contenteditable", "true");
     slide.appendChild(zone);
     select(zone);
+  }
+
+  function addSpeechBubble() {
+    const slide = activeSlide();
+    if (!slide) return;
+    const index = slide.querySelectorAll('[data-editor-element="speech-bubble"]').length + 1;
+    const zone = document.createElement("div");
+    zone.className = "zone lt-editor-speech-bubble";
+    zone.dataset.zone = "callout";
+    zone.dataset.editorElement = "speech-bubble";
+    zone.dataset.overlapOk = "true";
+    zone.dataset.anim = "pop";
+    zone.dataset.step = String(nextAnimationStep(slide));
+    zone.dataset.motionTarget = "speech-bubble-" + index;
+    zone.dataset.motionTargets = zone.dataset.motionTarget;
+    zone.dataset.motionReason = "追加した吹き出しを表示する";
+    zone.style.cssText = "left:420px;top:160px;width:440px;height:96px;";
+    const bubbleText = document.createElement("span");
+    bubbleText.className = "lt-editor-speech-text";
+    bubbleText.textContent = "新しい吹き出し";
+    bubbleText.setAttribute("contenteditable", "true");
+    bubbleText.setAttribute("spellcheck", "false");
+    zone.appendChild(bubbleText);
+    slide.appendChild(zone);
+    select(zone);
+  }
+
+  function nextAnimationStep(slide) {
+    const steps = [...slide.querySelectorAll("[data-step]")]
+      .map((el) => Number(el.dataset.step))
+      .filter((value) => Number.isFinite(value));
+    return Math.max(0, ...steps) + 1;
   }
 
   function addImage(src, alt) {
@@ -1130,8 +1612,72 @@ function editorRuntime() {
   }
 
   function setAnimation(el, value) {
-    if (value) el.dataset.anim = value;
-    else el.removeAttribute("data-anim");
+    if (!el) return;
+    if (value) {
+      el.dataset.anim = value;
+      if (!el.hasAttribute("data-step")) el.dataset.step = String(nextAnimationStep(activeSlide()));
+      normalizeAnimationSteps(activeSlide());
+    } else {
+      el.removeAttribute("data-anim");
+      el.removeAttribute("data-step");
+      el.classList.remove("shown");
+      normalizeAnimationSteps(activeSlide());
+    }
+    refreshFields();
+  }
+
+  function setAnimationStep(el, value) {
+    if (!el) return;
+    if (value === "") return;
+    if (!el.hasAttribute("data-anim")) {
+      el.dataset.anim = "fade";
+      fields.anim.value = "fade";
+    }
+    el.dataset.step = String(Math.max(0, Math.round(Number(value) || 0)));
+    normalizeAnimationSteps(activeSlide());
+    refreshFields();
+    setStatus(animationStatus(el));
+  }
+
+  function setAnimationLast(el) {
+    if (!el) return;
+    const slide = el.closest(".slide") || activeSlide();
+    if (!slide) return;
+    if (!el.hasAttribute("data-anim")) el.dataset.anim = "fade";
+    const otherSteps = [...slide.querySelectorAll("[data-anim][data-step]")]
+      .filter((item) => item !== el)
+      .map((item) => Number(item.dataset.step))
+      .filter(Number.isFinite);
+    el.dataset.step = String(Math.max(0, ...otherSteps) + 1);
+    normalizeAnimationSteps(slide);
+    refreshFields();
+    setStatus(animationStatus(el) + "（最後に表示）");
+  }
+
+  function normalizeAnimationSteps(slide) {
+    if (!slide) return;
+    const items = [...slide.querySelectorAll("[data-anim][data-step]")];
+    const uniqueSteps = [...new Set(items.map((item) => Math.max(0, Math.round(Number(item.dataset.step) || 0))))].sort((a, b) => a - b);
+    const normalized = new Map(uniqueSteps.map((step, index) => [step, index]));
+    items.forEach((item) => {
+      const step = normalized.get(Math.max(0, Math.round(Number(item.dataset.step) || 0))) || 0;
+      item.dataset.step = String(step);
+      if (item.hasAttribute("data-reading-order")) item.dataset.readingOrder = String(step);
+    });
+  }
+
+  function animationStatus(el) {
+    const slide = el.closest(".slide") || activeSlide();
+    const step = Math.max(0, Math.round(Number(el.dataset.step) || 0));
+    const max = slide ? Math.max(0, ...[...slide.querySelectorAll("[data-anim][data-step]")].map((item) => Number(item.dataset.step)).filter(Number.isFinite)) : step;
+    return "表示step " + step + " / 最終step " + max;
+  }
+
+  function animationTarget(el) {
+    if (!el) return null;
+    if (el.hasAttribute("data-anim")) return el;
+    const nested = [...el.querySelectorAll("[data-anim]")];
+    return nested.length === 1 ? nested[0] : el;
   }
 
   function bringForward(el) {
@@ -1264,10 +1810,11 @@ function editorRuntime() {
     clone.querySelector(".lt-editor-root")?.remove();
     clone.querySelector(".lt-editor-mode-badge")?.remove();
     clone.querySelector(".lt-editor-selection")?.remove();
+    clone.querySelector(".lt-editor-tail-handle")?.remove();
     clone.querySelectorAll(".lt-editor-selected").forEach((el) => el.classList.remove("lt-editor-selected"));
     clone.querySelectorAll("[contenteditable]").forEach((el) => el.removeAttribute("contenteditable"));
     clone.querySelectorAll("[spellcheck]").forEach((el) => el.removeAttribute("spellcheck"));
-    clone.querySelector("body")?.classList.remove("lt-editor-enabled", "lt-editor-edit-mode", "lt-editor-view-mode", "lt-editor-dragging");
+    clone.querySelector("body")?.classList.remove("lt-editor-enabled", "lt-editor-edit-mode", "lt-editor-view-mode", "lt-editor-dragging", "lt-editor-tail-dragging");
     const cleanDeck = clone.querySelector(".deck");
     cleanDeck?.style.removeProperty("left");
     cleanDeck?.style.removeProperty("top");
@@ -1278,7 +1825,10 @@ function editorRuntime() {
   }
 
   function describe(el) {
-    return (el.dataset.zone || "zone") + " " + Math.round(getBoxStyle(el).left) + "," + Math.round(getBoxStyle(el).top);
+    const position = (el.dataset.zone || "zone") + " " + Math.round(getBoxStyle(el).left) + "," + Math.round(getBoxStyle(el).top);
+    const animated = animationTarget(el);
+    const animation = animated?.hasAttribute("data-anim") ? " / " + animationStatus(animated) : "";
+    return isSpeechBubble(el) ? position + animation + " / 黄色いハンドルで尻尾の頂点を移動" : position + animation;
   }
 
   function setStatus(text) {
@@ -1292,6 +1842,7 @@ function editorRuntime() {
   function syncSlideContext(force) {
     const slide = activeSlide();
     if (!slide) return;
+    if (selected && !slide.contains(selected)) select(null);
     const slides = [...deck.querySelectorAll(".slide")];
     const index = slides.indexOf(slide);
     editorPosition.textContent = (index + 1) + " / " + slides.length;

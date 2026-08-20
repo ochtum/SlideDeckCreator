@@ -29,6 +29,16 @@ def flatten_strings(value):
     return []
 
 
+def rendered_content_model(value):
+    if not isinstance(value, dict):
+        return {}
+    return {
+        key: value.get(key)
+        for key in ("data", "focus", "highlight")
+        if value.get(key) not in (None, "", [], {})
+    }
+
+
 def matches_anchor(point, values):
     needle = compact(point)
     return any(needle == compact(value) or needle in compact(value) or compact(value) in needle for value in values)
@@ -66,6 +76,7 @@ def main():
             story = yaml.safe_load(story_path.read_text(encoding="utf-8")) or {}
             duration = int((story.get("project") or {}).get("duration_minutes", 0))
     talkability_version = int((story.get("project") or {}).get("talkability_version", 0) or 0)
+    authoring_mode = str((story.get("project") or {}).get("authoring_mode") or "")
     story_slides = {str(slide.get("id")): slide for slide in story.get("slides") or []}
     question_spine = {
         str(item.get("phase")): item
@@ -85,8 +96,27 @@ def main():
         sid = slide.get("id", "<missing-id>")
         if "spoken_note" not in slide or not isinstance(slide.get("spoken_note"), str):
             errors.append(f"{sid}: spoken_note must be present as a string")
+        source = story_slides.get(str(sid))
+        if authoring_mode == "section-faithful":
+            if not source:
+                errors.append(f"{sid}: slide does not exist in source Story")
+            else:
+                if slide.get("source_section_ids") != source.get("source_section_ids"):
+                    errors.append(f"{sid}: source_section_ids must be copied unchanged from Story")
+                if slide.get("talk_track") != source.get("talk_track"):
+                    errors.append(f"{sid}: talk_track must be copied unchanged from Story")
+                rendered_visible = compact(" ".join(flatten_strings({
+                    "title": slide.get("title"),
+                    "message": slide.get("message"),
+                    "text": slide.get("text") or {},
+                    "content_model": rendered_content_model(slide.get("content_model")),
+                    "annotations": (slide.get("visual") or {}).get("annotations") or [],
+                })))
+                for beat in ((source.get("talk_track") or {}).get("beats") or []):
+                    visible_text = str(beat.get("visible_text") or "") if isinstance(beat, dict) else ""
+                    if visible_text and compact(visible_text) not in rendered_visible:
+                        errors.append(f"{sid}: talk_track visible_text is not rendered: {visible_text}")
         if talkability_version == 2:
-            source = story_slides.get(str(sid))
             if not source:
                 errors.append(f"{sid}: slide does not exist in source Story")
             else:
@@ -105,7 +135,7 @@ def main():
                 visible = flatten_strings({
                     "delivery": slide.get("delivery") or {},
                     "text": slide.get("text") or {},
-                    "content_model": slide.get("content_model") or {},
+                    "content_model": rendered_content_model(slide.get("content_model")),
                     "annotations": (slide.get("visual") or {}).get("annotations") or [],
                 })
                 for point in point_at:

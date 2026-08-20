@@ -38,6 +38,8 @@ config/
 - `references/layout-rules.md`
 - `references/motion-choreography.md`
 - `../01-lt-slide-story/references/presentation-quality.md`
+- `../01-lt-slide-story/references/semantic-clarity.md`
+- Storyの `project.authoring_mode` が `section-faithful` なら `../01-lt-slide-story/references/section-faithful.md`
 - Storyの `knowledge_contract_version` が1以上なら `../01-lt-slide-story/references/knowledge-structure.md`
 - Storyの `delivery_profile` が `dual-use` なら `../01-lt-slide-story/references/dual-use-publication.md`
 - 20分以上では `../01-lt-slide-story/references/explanation-depth.md`
@@ -47,18 +49,18 @@ config/
 
 ## Workflow
 
-1. `.lt-slide-work/01-story.yaml` が単発ストーリーかシリーズマニフェストかを確認する。シリーズなら `Series Mode` に従って各パートを処理する。各スライドの `speaker_cue`、`spoken_note`、`reader_context`、`connection_from_previous`、`delivery`、`delivery_scope`、`knowledge_unit_ids`、`comprehension_check_ids`、`citation_ids` を同じIDの設計図へそのまま引き継ぐ。phaseに属するliveページには `question_spine` の問い・答え・接続を `phase_context` として引き継ぐ。Storyの `roadmap` はトップレベルと道筋スライドの `content_model.data.steps` へ変更せず引き継ぐ。`source_asset_inventory` があれば、対象パートに割り当てられた提供画像・表・コードを先に確認する。Storyの `style_profile.status` が `applied` の場合だけプロファイルを読み、`applied_rule_ids` に対応する表現を設計する。入力に根拠のない感情、失敗、記号、短文スライドを追加してはならない。
+1. `.lt-slide-work/01-story.yaml` が単発ストーリーかシリーズマニフェストかを確認する。シリーズなら `Series Mode` に従って各パートを処理する。各スライドの `speaker_cue`、`spoken_note`、`reader_context`、`connection_from_previous`、`delivery`、`delivery_scope`、`knowledge_unit_ids`、`comprehension_check_ids`、`citation_ids` を同じIDの設計図へそのまま引き継ぐ。`section-faithful` では `source_section_ids` と `talk_track` も変更せず引き継ぐ。`semantic_clarity.surface_text` と `talk_track.beats[].visible_text` は可視文の正本として、title、message、text、visual.annotations、実際に描画する `content_model.data` / `focus` / `highlight` のいずれかへ文字列を省略せず残す。検証専用の任意キーへ置くだけでは可視実装とみなさない。phaseに属するliveページには `question_spine` の問い・答え・接続を `phase_context` として引き継ぐ。Storyの `roadmap` はトップレベルと道筋スライドの `content_model.data.steps` へ変更せず引き継ぐ。`source_asset_inventory` があれば、対象パートに割り当てられた提供画像・表・コードを先に確認する。Storyの `style_profile.status` が `applied` の場合だけプロファイルを読み、`applied_rule_ids` に対応する表現を設計する。入力に根拠のない感情、失敗、記号、短文スライドを追加してはならない。
 1a. Storyに `design_system` があればregistryから同じID/versionのspecを読み、`design_system` を設計図へ変更せず引き継ぐ。theme、component、motionはspec tokenから解決し、別の色へ即興で置換しない。選択済みIDが見つからなければfallbackせず停止する。`full-equivalence` では各スライドの `source_unit_ids` も変更せず引き継ぐ。
-2. 各スライドに1つの `layout` と、実際に描画する1つの `visual_anchor` を割り当てる。`figure-patterns.md` に従い、知識型と読解タスクから表現を選び、`representation_reason` と `accuracy_constraints` を残す。表・フロー・設定・コード・プレイブックを表示する場合だけ、後工程がそのまま描画できる非空の `content_model` を置く。`content_model` には表の列と行、フローのvariant・ノード・矢印、設定・コマンド・チェックリストの実データを置く。
-2a. `role: profile` は `profile-three-zone` とし、`presenter.json` の表示名、bio、links、有効画像、QRラベル以外の可視本文を設計しない。`conclusion_zone` を作らず、`text.conclusion`、`bullets`、`details`、`anchor_labels` は空にする。テーマへの接続は変更せず引き継いだ `spoken_note` に残す。
+2. 各スライドに1つの `layout` と、実際に描画する1つの `visual_anchor` を割り当てる。`figure-patterns.md` に従い、知識型と読解タスクから表現を選び、`representation_reason` と `accuracy_constraints` を残す。表・フロー・設定・コード・プレイブックを表示する場合だけ、後工程がそのまま描画できる非空の `content_model` を置く。`content_model` には表の列と行、フローのvariant・ノード・矢印、設定・コマンド・チェックリストの実データを置く。`section-faithful` ではレイアウトを先に決めて記事内容を収めるのではなく、`talk_track` の `visible_text` と同じ節のartifactをすべて配置できる表現を選ぶ。
+2a. `role: profile` は `profile-three-zone` とし、`presenter.json` の表示名、任意の `name_note`、bio、links、有効画像、QRラベル以外の可視本文を設計しない。`name_note` はユーザーが設定した場合だけ、表示名に関連づく短い注釈として `visual.annotations` とアニメーション対象へ置ける。`conclusion_zone` を作らず、`text.conclusion`、`bullets`、`details`、`anchor_labels` は空にする。テーマへの接続は変更せず引き継いだ `spoken_note` に残す。
 3. 1280x720座標で `title_zone`, `text_zone`, `visual_zone`, `conclusion_zone`, `footer_zone` を定義する。
 3a. dual-useではStoryの `information_layers` を `glance`、`explanation`、`reader_support` として実装する。短い条件と可視出典だけを `reader_support` / `citation_zone` に置き、詳細はappendix/referenceへ分割する。essentialな知識をspoken-noteだけへ退避しない。
-4. テキスト量、文字サイズ、行数を確定する。
+4. テキスト量、文字サイズ、行数を確定する。収めるために `semantic_clarity.claims[].surface_text` の主語、行為者、変更対象、述語を削らない。長い場合はレイアウト、改行、本文の優先順位を調整し、意味を省略した短文化はStoryへ戻して契約ごと直す。
 5. 図版をコンポーネント、インラインSVG、提供画像、生成画像、なしから選ぶ。意味が一致する提供画像は `provided-image` として優先し、`visual_assets` に必ず列挙する。表・コード・設定例は、読める最小データを `content_model` としてHTMLへ再構成する。正確さが必要なフロー・表・コードを、生成画像や汎用カードに置き換えない。
 6. `references/motion-choreography.md` に従い、各ページへ `animation.intent`、`animation.family`、`animation.selection`、`animation.sequence` を置く。presetをスライド番号やページ位置へ固定せず、`role -> content_model.type -> targetの意味 -> phase境界` の順で選ぶ。各entrance/stepには選択理由を置き、同一stepで線とノードなど対象の役割が違う場合は `target_presets` と `target_reasons` で分ける。通常はページ内stepを最大6段階にまとめるが、番号付き工程・表の代表行など、話者が一項目ずつ説明する順序列は最大9段階まで許可する。`sequence` には初期表示、全対象、意味上の順序、完了要素を明記し、同じグループの一部だけを段階表示にして残りを初期表示へ漏らさない。全ページへ同じstep数とpreset列を複製しない。本編20枚以上では5preset・4family以上、3種類以上のstep数をデッキ全体で使い分ける。
 6a. 初見者向けの初出用語は、画面上で平易な定義と具体例を読めるようにする。各スライドについて、`speaker_cue.point_at` の全項目を実在する文字、表セル、コード行、図のHTML/SVGラベルとして配置する。直前からの橋渡しと次の一言は発表者ノートに残し、後読時に必要な `reader_context` を表示用・発表者ビュー用のどちらに置くか決める。
 7. 単発は `.lt-slide-work/02-blueprint.yaml`、シリーズは各パートの `blueprint_file` を出力する。
-8. 出力した各設計図に `scripts/validate_blueprint.py`、`scripts/validate_visual_plan.py --story <part-01-story.yaml> --blueprint <blueprint_file>`、`../01-lt-slide-story/scripts/validate_knowledge_contract.py --story <part-01-story.yaml> --blueprint <blueprint_file>`、`../01-lt-slide-story/scripts/validate_duration_floor.py --story <part-01-story.yaml> --blueprint <blueprint_file>`、`../01-lt-slide-story/scripts/validate_explanation_depth.py --story <part-01-story.yaml> --blueprint <blueprint_file>`、`../01-lt-slide-story/scripts/validate_talkability.py --story <part-01-story.yaml> --blueprint <blueprint_file>`、`../01-lt-slide-story/scripts/validate_roadmap.py --story <part-01-story.yaml> --blueprint <blueprint_file>` を実行し、エラーをゼロにする。
+8. 出力した各設計図に `scripts/validate_blueprint.py`、`scripts/validate_visual_plan.py --story <part-01-story.yaml> --blueprint <blueprint_file>`、`../01-lt-slide-story/scripts/validate_knowledge_contract.py --story <part-01-story.yaml> --blueprint <blueprint_file>`、`../01-lt-slide-story/scripts/validate_semantic_clarity.py --story <part-01-story.yaml> --blueprint <blueprint_file>`、`../01-lt-slide-story/scripts/validate_duration_floor.py --story <part-01-story.yaml> --blueprint <blueprint_file>`、`../01-lt-slide-story/scripts/validate_explanation_depth.py --story <part-01-story.yaml> --blueprint <blueprint_file>`、`../01-lt-slide-story/scripts/validate_talkability.py --story <part-01-story.yaml> --blueprint <blueprint_file>`、`../01-lt-slide-story/scripts/validate_roadmap.py --story <part-01-story.yaml> --blueprint <blueprint_file>` を実行する。`section-faithful` ではさらに `../01-lt-slide-story/scripts/validate_section_fidelity.py --manifest <source-sections.yaml> --story <part-01-story.yaml> --blueprint <blueprint_file>` を実行し、エラーをゼロにする。
 
 ## Non-Overlap Contract
 
@@ -147,6 +149,8 @@ lt-html-slide-skillの見栄えを維持しつつ、slide-builderの小さな文
 - `visual_plan.need: required` の各計画は `visual_plan_id` で同じ設計図スライドへ結び、提供画像、SVG、表、コードのいずれかへ解決する。`scripts/validate_visual_plan.py` が失敗する設計図を後工程へ渡さない。
 - 描画対象のないvisual zone、空のカード、空のプレイブックを残さない。設計図レビュー時に、各visual zoneが少なくともtable、code、config、flow、comparison、file-map、implementation-playbook、提供画像、または意味のあるSVG/CSS要素のいずれかを持つことを確認する。
 - 初見者が理解できる定義・具体例、前後ページの橋渡し、後読時の主語と結論が設計図から追跡できないスライドを後工程へ渡さない。
+- Storyの `semantic_clarity` にあるtitle、message、動作を述べる本文を、主語・行為者・変更対象・述語が同時に見える文字列のまま残す。カード見出しへの分割、図のラベル化、短文化によって一要素でも落ちた設計図を後工程へ渡さない。
+- `section-faithful` ではStoryの `source_section_ids` と `talk_track` が変更されておらず、全 `visible_text` が実描画フィールドへ存在する。`semantic_support` のようなrendererが消費しないキーだけに文字を置いて合格にしてはならない。
 - `knowledge_unit_ids`、`comprehension_check_ids`、`citation_ids`、`delivery_scope` がStoryから変わっていない。dual-useの出典ラベルがタイトル、本文、表、注記、citation zoneのいずれかで可視になっている。
 
 ## Output
