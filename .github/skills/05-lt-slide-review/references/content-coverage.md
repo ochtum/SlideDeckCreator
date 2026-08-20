@@ -1,0 +1,85 @@
+# LTスライドの内容・ノート・入力カバレッジ基準
+
+## 目的
+
+視覚的に美しいだけで、入力資料が失われたスライドを合格にしない。最優先は、元入力の主張、手順、注意点、表、コード、設定例、図、フロー、完了条件を、聴衆が理解・再現できる形で伝えることである。
+
+## ページ別 spoken-note レビュー
+
+各ページについて、HTMLの `data-spoken-note`、`data-reader-context`、`data-story-bridge`、ストーリーの同一IDの `spoken_note`、`reader_context`、`connection_from_previous`、画面のタイトル・message・content_modelを並べて確認する。
+
+`project.authoring_mode: section-faithful` では、さらに `source-sections.yaml`、`section_coverage`、Story/Blueprintの `source_section_ids` と `talk_track`、HTMLの `data-source-section-ids` を並べる。各節が順序どおり一枚以上へ対応し、複数節が一枚へ統合されていないことを確認する。`spoken_text` はSpoken Noteの「話す内容」、`visible_text` はdata属性ではなく実DOMの可視文字に存在しなければならない。
+
+- ノートは同一IDのストーリーから引き継がれている。これは必要条件にすぎず、文字列一致だけで合格にしてはならない。
+- talkability v2の各ノートは `橋渡し:`、`話す内容:`、`指差し:`、`次の一言:` の四行を持つ。`話す内容` は実際に口にする理由・例・判断、`指差し` は画面に実在するラベル、`次の一言` は次ページへ渡す発話にする。全ページ共通の文、完全重複、仮文言、説明方法のメタ説明は不合格にする。
+- ノートはそのページの主張を説明している。別ページの内容、一般論、空の相づちだけではない。
+- 表、コード、設定、図、フローが画面にある場合、ノートは少なくとも一つの具体的な読み方、判断、注意点を説明する。
+- How/Demoでは、翌日に作るもの、実行すること、確認する条件、または承認を求める判断を口頭説明に残す。
+
+## 通しで話せるかのレビュー
+
+- `opening_problem` から始まり、`narrative.phase_order` に対応する各 `audience_question` にページ群が答えている。旧Storyだけ既定のphase列を使う。
+- 各phase末尾の `次の一言` が次phaseの問いへ自然に接続し、話者がその場で接続を発明しなくてよい。
+- `central_example` が途中で別の例へすり替わっていない。切り替える場合は理由が橋渡しにある。
+- Demoは操作と `visible_result` を交互に追え、失敗時もfallbackで同じ学びを示せる。
+- Takeawayは `timebox`、`artifact`、`done_when` を含み、翌日に最初の一操作を開始できる。
+- ノートだけを順に読んで発表の要約が再現でき、スライドだけを順に読んでも主語・根拠・結論が再現できる。
+- 投影面の文章を単に復唱するだけで、具体物の意味や次の判断を補えていないノートは不十分とする。
+- 初見者が知らない用語・略語・固有工程は、最初の登場で平易な定義、必要性、具体例のいずれかを確認する。
+- 表紙、自己紹介、Thanks以外のページは、直前までの理解と、このページへ進む理由を説明できる。章の切替では前提の再導入がある。
+- 各ページは、数日後に単独で開いた人が主語・根拠・結論・次の一手を再構成できる。
+
+## 主語・行為者・変更対象のレビュー
+
+`semantic-clarity.md` と `project.semantic_clarity_version` を確認し、表紙、自己紹介、Thanksを除く全ページを一枚ずつ単独表示して照合する。
+
+- titleとmessageは、それぞれclaimまたは正当なlabelへ対応している。動作・変更・判断を述べる本文もclaimへ対応している。
+- 各原子節で、文法上の主語、実際の行為者、変更・確認・判断対象、述語を投影面の文字列から直接指せる。
+- 複文では行為ごとに行為者と対象が明記されている。「人が決め、Copilotが実行する」のように対象を共有・省略しない。
+- リポジトリ、ファイル、設定、仕様書が文法上の主語でも、実際に判断・操作する主体が人やAIなら同じ原子節に明記されている。
+- `これ`、`それ`、`対象`、`証拠`、`最初に` だけでは対象や行為者を特定したとみなさない。固有のファイル、成果物、条件、担当者、AIまたはツール名を使う。
+- 定義・状態で行為者や対象が存在しない場合は、不適用理由と主語・述語が整合している。行為動詞を定義・状態へ偽装していない。
+- Storyのclaim文字列がBlueprintと最終HTMLにそのまま残り、言い換えの過程で主語や対象が落ちていない。
+
+不一致は `semantic-clarity-missing`、誤った行為者は `semantic-actor-mismatch`、特定不能な対象は `semantic-target-ambiguous` としてレポートする。
+
+## 入力カバレッジ照合
+
+1. 元入力と `source_scope_audit` を読み、全ての `full coverage` 学習単位を一覧化する。
+2. `content_inventory` の事実、主張、手順、デモ候補、注意点を、シリーズなら各パートの割当まで追跡する。
+3. `source_asset_inventory` の画像、表、コード、config、Mermaid、フローを、設計図の `content_model`、`visual_plan_id`、最終HTMLの table/pre/code/svg/img へ照合する。
+4. 最終HTMLでは、各対応物が実際に表示され、見切れず読めることをスクリーンショットで確認する。
+5. `full-equivalence` ではsource inventoryの全unitを `coverage_matrix`、part、slide、`data-source-unit-ids` まで逆引きする。各unitについて、入力を開かずに目的、仕組み、手順または読み方、制約、完了条件を説明できるか確認する。
+6. `knowledge_contract_version: 1` では全 `knowledge_units` を `data-knowledge-unit-ids` まで逆引きし、`comprehension_checks` ごとに指定スライド本文だけで回答できるか確認する。
+7. dual-useではessential知識がliveまたはappendixへ可視化され、補足がlive時間へ混入せず、可視出典labelとreference一覧が静的PDFに残ることを確認する。
+
+次の場合は不合格にする。
+
+- `full coverage` の単位にスライドまたはHTML実装がない。
+- 採用した表・コード・設定・図が、根拠を失う抽象カードだけに置き換えられている。
+- 表の列と代表行、コードの最小断片、設定のキーと変更条件、フローの工程と判断ゲートが読めない。
+- 元入力の内容を省略したが、ユーザー承認済みの縮小範囲と理由が残っていない。
+- essential知識または理解確認の答えがspoken-noteにしか存在しない。
+- `citation_ids` はあるがlabelまたはreference一覧が投影面・PDFに見えない。
+- シリーズ概要でテーマ名に一度触れただけ、または同じ汎用カードへ複数unitを割り当てただけで、入力のテンプレート・設定値・判断条件を再構成できない。
+
+## 長時間LTの説明量照合
+
+20分以上では、ページ数だけでなく次を照合する。
+
+- `project.time_budget` が指定時間と一致し、各スライドの `delivery.estimated_seconds` 合計がbufferを除いた時間と一致する。
+- 通常ページの `talking_points` と `visible_anchors` が各2件以上あり、タイトル・messageの言い換えだけではない。
+- `visible_anchors` が最終HTMLの可視テキストに存在する。
+- 60秒以上を使うページに、仕組み、代表例、読み解き、判断・制約のいずれかがある。
+- 低密度のtransitionが本編の15%以下で、連続していない。
+- 同一content modelの再利用には、ページ固有のfocusとhighlightがある。
+- 汎用チェック項目や同じ図表の複製で、異なる学習単位を扱ったことにしていない。
+
+## レポート形式
+
+`content-coverage.md` には次を残す。
+
+| 入力／知識単位／理解問題／asset | 対応ストーリーID | スライドID | live／補足・時間 | HTML実装・可視出典 | 初見者理解 | 接続・後読性 | spoken-note判定 | 判定 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+
+未解決項目には、入力のパスまたは行範囲、削除された具体物、修正に必要なHTML表・コード・SVG・ノートを明記する。

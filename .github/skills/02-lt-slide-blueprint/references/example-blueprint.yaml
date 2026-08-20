@@ -1,0 +1,74 @@
+schema_version: 1
+source_story: "./01-story.yaml"
+canvas:
+  width: 1280
+  height: 720
+  safe_margin: 48
+slides:
+  - id: s01
+    role: cover
+    spoken_note: "タイトルと今日持ち帰ってほしいことを紹介する"
+    layout: hero-split
+    zones:
+      title_zone: {x: 64, y: 96, w: 620, h: 430}
+      visual_zone: {x: 740, y: 120, w: 430, h: 400}
+      footer_zone: {x: 48, y: 660, w: 1184, h: 44}
+    typography:
+      title_px: 96
+      message_px: 44
+      body_px: 30
+      source_px: 18
+    animation:
+      intent: "タイトルを静かに提示して発表を始める"
+      family: quiet-reveal
+      steps: []
+    text:
+      bullets: []
+    text_budget:
+      bullets_max: 0
+  - id: s02
+    role: recap
+    spoken_note: "3つの要点を一言ずつ振り返る"
+    layout: recap-split
+    zones:
+      title_zone: {x: 64, y: 80, w: 1152, h: 96}
+      text_zone: {x: 64, y: 210, w: 690, h: 390}
+      visual_zone: {x: 810, y: 210, w: 360, h: 250}
+      conclusion_zone: {x: 810, y: 500, w: 360, h: 100}
+      footer_zone: {x: 48, y: 660, w: 1184, h: 44}
+    typography:
+      title_px: 66
+      message_px: 44
+      body_px: 30
+      source_px: 18
+    animation:
+      intent: "三つの要点を順に振り返る"
+      family: quiet-reveal
+      steps:
+        - step: 1
+          targets: [text]
+          preset: rise
+    text:
+      bullets: ["要点1", "要点2", "要点3"]
+    text_budget:
+      bullets_max: 4
+  - id: s03
+    role: thanks
+    spoken_note: "お礼を伝えて質疑応答へ移る"
+    layout: thanks
+    zones:
+      title_zone: {x: 140, y: 200, w: 1000, h: 240}
+      footer_zone: {x: 48, y: 660, w: 1184, h: 44}
+    typography:
+      title_px: 110
+      message_px: 44
+      body_px: 30
+      source_px: 18
+    animation:
+      intent: "終了メッセージへ視線を集中させる"
+      family: focus
+      steps: []
+    text:
+      bullets: []
+    text_budget:
+      bullets_max: 0
