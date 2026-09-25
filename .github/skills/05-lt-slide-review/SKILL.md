@@ -1,11 +1,15 @@
 ---
 name: 05-lt-slide-review
-description: Playwrightを使ってLT用HTMLスライドの視覚表示と内容忠実性をレビューする。Use when GitHub Copilot needs to inspect a 16:9 HTML slide deck for animation-complete states, overlapping or clipped content, presenter notes that explain each page, and complete traceable coverage of the input including tables, code blocks, diagrams, and configuration examples.
+description: Playwrightを使ってLT用HTMLスライドの視覚表示と内容忠実性をレビューする。Use when Codex needs to inspect a 16:9 HTML slide deck for animation-complete states, overlapping or clipped content, presenter notes that explain each page, and complete traceable coverage of the input including tables, code blocks, diagrams, and configuration examples.
 ---
 
 # 05 LT Slide Review
 
 PlaywrightでHTMLスライドを実ブラウザ表示し、各ページをアニメーション完了後の状態にして視覚崩れを検査する。あわせて、ストーリー・設計図・元入力と照合し、各ページのspoken-noteがページの主張と具体例を説明していること、元資料の内容（表・コード・設定例・図を含む）が端折られず追跡可能であることを検査する。`04-lt-slide-build` 後の最終QA、またはユーザーから「見切れ」「重なり」「余白」「内容確認」を求められたときに使う。
+
+## 発表者の言葉
+
+制作対象の `config/presentation-language.md` があれば最初に読み、過去の観測傾向より現在の希望を優先する。新しく書く見出し・説明・ノートには「正本」「地図」「道具」のような抽象的な比喩を足さず、指すファイル・機能・操作を具体的に書く。引用・正式名称・コードの意味は変えない。
 
 ## 必ず読むもの
 
@@ -22,9 +26,9 @@ PlaywrightでHTMLスライドを実ブラウザ表示し、各ページをアニ
 ## ワークフロー
 
 1. 対象HTMLと対応する `01-story.yaml`、`02-blueprint.yaml`、元入力を確認する。指定がなければ `output/index.html` を対象にする。シリーズでは各パートを独立して確認する。
-2. Node.jsとPlaywrightの実行環境を確認する。プロジェクトにPlaywrightがない場合は、依存関係を追加してよいか確認してから導入する。
+2. Playwright実行環境を確認する。通常は同梱Node.jsと `NODE_PATH` を使う。
 3. 対応するストーリーの `visual_plan` と設計図を読み、`review_deck.js` に `--story <01-story.yaml> --blueprint <02-blueprint.yaml>` を渡す。スクリプトは `validate_knowledge_contract.py`、`validate_semantic_clarity.py`、`validate_spoken_notes.py`、`validate_talkability.py`、`validate_visual_plan.py`、`validate_explanation_depth.py`、`validate_roadmap.py`、`section-faithful` では `validate_section_fidelity.py`、自己紹介ありでは `validate_presenter_binding.py` を実行し、いずれかが失敗したら視覚findingがなくても不合格としてレポートに残す。シリーズの標準的な出力パスでは対応するファイルを自動検出できるが、明示指定を優先する。
-4. `references/content-coverage.md`、`presentation-quality.md`、`semantic-clarity.md` に従って、全スライドについて次を確認する。talkability v2の `spoken_note` は `橋渡し`、`話す内容`、`指差し`、`次の一言` の四区画を持つ。ノートだけを上から読んで、冒頭の問題、`narrative.phase_order` の各問いと答え、次への接続、採用したDemoまたは根拠、最後の判断を再現できるか確認する。ストーリーとHTMLの文字列一致だけで合格にしてはならない。`section-faithful` では各source sectionが順序どおり一枚以上へ対応し、複数節が一枚へ統合されていないこと、`talk_track.spoken_text` がSpoken Noteへ、`visible_text` が実DOMへ現れることを照合する。初見者に必要な定義・具体例、前ページからの接続、後読時の主語と結論も確認する。各タイトル、message、動作を述べる本文では、文法上の主語、実際の行為者、変更・確認・判断対象、述語を投影面だけから指せるかを確認する。入力から採用した表、コード、設定例、図、フローは、要約の過程で消さず、HTMLのtable/pre/code/SVGまたは提供画像に追跡可能に解決する。スタイルプロファイルが適用されている場合は、入力にある検証過程や失敗が成功結果だけへ圧縮されていないこと、発表者の疑問・判断・気づきが残ること、具体物が口調だけで置換されていないことを確認する。
+4. `references/content-coverage.md`、`presentation-quality.md`、`semantic-clarity.md` に従って、全スライドについて次を確認する。talkability v2の `spoken_note` は `橋渡し`、`話す内容`、`指差し`、`次の一言` の四区画を持つ。v3では短い要点と任意の発話例を使う。スライドとノートを一緒に確認して、冒頭の問題、`narrative.phase_order` の各問いと答え、次への接続、採用したDemoまたは根拠、最後の判断を再現できるか確認する。ストーリーとHTMLの文字列一致だけで合格にしてはならない。`section-faithful` では各source sectionが順序どおり一枚以上へ対応し、複数節が一枚へ統合されていないこと、話すbeatの `spoken_text` がSpoken Noteへ、`visible_text` が実DOMへ現れることを照合する。初見者に必要な定義・具体例、前ページからの接続、後読時の主語と結論も確認する。各タイトル、message、動作を述べる本文では、文法上の主語、実際の行為者、変更・確認・判断対象、述語を投影面だけから指せるかを確認する。入力から採用した表、コード、設定例、図、フローは、要約の過程で消さず、HTMLのtable/pre/code/SVGまたは提供画像に追跡可能に解決する。スタイルプロファイルが適用されている場合は、入力にある検証過程や失敗が成功結果だけへ圧縮されていないこと、発表者の疑問・判断・気づきが残ること、具体物が口調だけで置換されていないことを確認する。
 4b. `knowledge_contract_version: 1` では、各 `knowledge_units` を最終HTMLから逆引きし、5〜10件の `comprehension_checks` へスライド本文だけで回答できるか確認する。dual-useではessential知識がspoken-noteだけにないこと、live末尾がrecap/thanksであること、appendix/referenceがその後にまとまり、各 `citation_ids` のlabelとreference一覧がPDF上で可視であることを確認する。
 4a. `full-equivalence` ではルートStoryに対して `audit_content_equivalence.py --inventory <source-inventory.yaml> --story <root-story.yaml> --html <all-part-index.html> --require-full-equivalence --report <review>/content-equivalence.md` を実行する。シリーズ概要のtopic coverageや文字列一致だけで合格にしない。design-system選択時はStory、Blueprint、HTMLのID/versionとregistryを `manage_design_system.py validate-binding` で照合する。
 5. `scripts/review_deck.js` を実行し、通常表示と発表者ビューの両方を全スライドのアニメーション完了状態で撮影・検査する。通常表示では `.zone` だけでなく、card、flow node、code frame、根拠ラベル、結論帯などの本文surface同士の交差と、各surfaceの `scrollWidth` / `scrollHeight` を検査する。ブランドバッジは余白検査から全面除外せず、既定16pxの専用safe areaで上下左右を検査する。発表者ビューでは `話す内容` の主領域、phaseの問いの独立領域、タイマー更新中のスクロール保持も検査する。同スクリプトから `validate_animation_choreography.py` を実行し、BlueprintからHTMLへのpreset消失、同じsignatureの3ページ連続、step数の均一化、一種類への偏りも不合格にする。代表的な定義、比較、フロー、Demo、Takeawayは初期状態と各stepも実ブラウザで確認する。
@@ -35,18 +39,18 @@ PlaywrightでHTMLスライドを実ブラウザ表示し、各ページをアニ
 
 ## 標準実行
 
-PowerShellでは次を使う。標準では通常表示と `?presenter=1` の発表者ビューを両方レビューする。スクリプトはプロジェクト依存関係と `NODE_PATH` からPlaywrightを探索する。
+PowerShellでは次を使う。標準では通常表示と `?presenter=1` の発表者ビューを両方レビューする。スクリプトは同梱Node.jsの隣にあるPlaywrightを自動探索するが、見つからない場合は `NODE_PATH` を明示する。
 
 ```powershell
-$node=(Get-Command node -ErrorAction Stop).Source
+$node=Join-Path $env:LOCALAPPDATA ".cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe"
+if (!(Test-Path $node)) { $node=(Get-Command node -ErrorAction Stop).Source }
 & $node .github\skills\05-lt-slide-review\scripts\review_deck.js output\index.html --story .lt-slide-work\01-story.yaml --blueprint .lt-slide-work\02-blueprint.yaml --out .lt-slide-work\review
 ```
 
-Playwrightの解決に失敗し、プロジェクトへの依存関係追加が許可されている場合は、次を実行する。
+Playwrightの解決に失敗する場合は、次を先に設定する。
 
 ```powershell
-npm install --save-dev playwright
-npx playwright install chromium
+$env:NODE_PATH="C:\Users\okuto\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\node_modules;C:\Users\okuto\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\node_modules\.pnpm\node_modules"
 ```
 
 findingを確認しながら途中で止めずにレポートだけ作りたい場合は `--no-fail` を付ける。
@@ -74,14 +78,14 @@ findingを確認しながら途中で止めずにレポートだけ作りたい�
 - visual zone、card、playbook、table containerについて、可視テキスト、画像、SVG、table、pre/code、または意味のある図解要素を持たない枠線だけの領域を検出する。これは `empty-visual-zone` として不合格にする。意図的な余白は要素そのものを置かず、空のcontainerで表現しない。
 - `need: required` の `visual_plan` が、画像・SVG・表・コードのいずれにも解決されていない場合は `unresolved-visual-plan` として不合格にする。汎用カードだけでは解決扱いにしない。
 - 各HTMLスライドの `data-spoken-note` を対応するストーリーの同じIDの `spoken_note` と照合する。欠落・空文字・別ページの説明・画面の文字の単純な復唱は `spoken-note-missing`、`spoken-note-mismatch`、`spoken-note-insufficient` として不合格にする。
-- `validate_spoken_notes.py` または `validate_talkability.py` の失敗、全ページ共通の仮ノート、同一ノートの完全重複、橋渡し・話す内容・指差し・次の一言の欠落は `spoken-note-template` として不合格にする。HTMLとストーリーが同じ仮ノートを持つことは、引継ぎ成功ではなく同じ不備の伝播である。
+- `validate_spoken_notes.py` または `validate_talkability.py` の失敗、全ページ共通の仮ノート、同一ノートの完全重複、使用バージョンで必須のノート項目の欠落は `spoken-note-template` として不合格にする。HTMLとストーリーが同じ仮ノートを持つことは、引継ぎ成功ではなく同じ不備の伝播である。
 - スタイルプロファイルが適用されている場合、適用ルールとApplication Limitsを照合する。実験・検証資料で成功だけに圧縮された場合は `style-under-applied`、記号・顔文字・感情ページが上限を超える、または無関係なページへ機械的に追加された場合は `style-over-applied`、入力にない体験が追加された場合は `style-fabricated-experience` として不合格にする。
 - spoken-noteは、そのページの主張、表示している具体物（表・コード・設定・図・フロー）の読み方、聴衆が取る判断または次の一手のうち必要なものを説明しているか、ページ単位で人間またはレビュー担当エージェントが意味を確認する。機械的な文字列一致だけで合格にしてはならない。
-- `narrative.phase_order` と `question_spine` の各phaseで、聴衆の問いに対する答えがページ群と台本から実際に得られ、最後のページの `次の一言` が次phaseの問いを必要にしているか確認する。phase名だけの章区切りは `narrative-discontinuity` とする。
+- `narrative.phase_order` と `question_spine` の各phaseで、聴衆の問いに対する答えがページ群と台本から実際に得られ、ページを進める理由が画面または必要な接続文から分かるか確認する。phase名だけの章区切りは `narrative-discontinuity` とする。
 - 自己紹介ページの可視本文は `presenter.json` の表示名、指定時の `name_note`、bio、links、QRラベルだけに限定する。構造ラベル・フッター・ページ番号を除き、JSONにない補足や結論帯があれば `contract-presenter-binding-failed` とする。
 - 30分以上または本編20枚超の道筋は、内部のphase名だけでなく、実際の後続ページ群を要約したラベル・要約・ページ範囲を表示する。全項目の `data-roadmap-slide-ids` がStory/Blueprintのスライド列を順序どおり過不足なく覆わなければ `contract-roadmap-failed` とする。
 - Demo phaseを採用した場合は3つ以上の具体操作と画面で観測できる結果を持ち、fallbackを含む。構成図の説明だけ、または「確認する」だけなら `demo-not-observable` とする。Demo phaseがなければ実演を捏造していないことを確認する。
-- Takeaway phaseを採用した場合は時間枠、最初の操作、残る成果物、完了条件を持つ。「試す」「検討する」だけなら `takeaway-not-actionable` とする。
+- まとめは、発表した主要な内容・関係・結論を回収しているか、各要点を本文ページと対応付けて意味を確認する。新しい行動課題だけで要約を置き換えた場合は `recap-not-summary` とする。`tomorrow_action` を設定した行動提案だけに、時間枠・最初の操作・成果物・完了条件を要求する。通常のまとめへ行動提案を強制しない。
 - 全本編ページの説明時間が同じ値へ均一化されていないか確認する。定義・比較・手順・Demoの役割差があるのに同一秒数なら `uniform-pacing` とする。
 - 初見者が知らない用語・略語・固有工程について、初出の平易な定義、必要性、具体例のいずれかが画面またはノートにあることを確認する。欠落は `first-time-audience-gap` として不合格にする。
 - 表紙、自己紹介、Thanks以外の各スライドで、`reader_context` と `connection_from_previous` またはHTMLの `data-reader-context` と `data-story-bridge` を照合する。前ページとの因果が説明できない場合は `narrative-discontinuity`、後から一枚だけを見て主語・根拠・結論を再構成できない場合は `reader-context-missing` として不合格にする。
@@ -107,6 +111,12 @@ findingを確認しながら途中で止めずにレポートだけ作りたい�
 - 発表者ビューのfindingは、投影側との差分や手元画面の操作性に直結するため、通常表示のfindingがない場合でも確認する。
 - 入力資料の完全性が最優先である。読みやすさのための圧縮は許可するが、入力の表、コード、設定、図、フロー、完了条件を無断で削除したり、説明力を失う要約へ置き換えたりしてはならない。
 - スタイルレビューの結論は `under-applied`、`balanced`、`over-applied` のいずれかで報告し、各findingには対応する入力またはプロファイルのrule IDを残す。
+
+## 発話の通し確認
+
+`scripts/review_speaking.py --story <part-01-story.yaml> --out .lt-slide-work/review/speaking-review.json` を実行する。確認候補は合否ではない。画面を指しながら読む想定で、全ページについて今回追加する情報、前ページとの重複、表の不要な全行読み、長い一文、発表者の語彙、終端・補足への遷移を確認する。意図的な振り返りには役割を記録する。短いメモ、接続文なし、見る時間は設計意図が明確なら許容する。
+
+結果には「自動チェック」「エージェントによる意味確認」「本人の通し練習」の実施状況を別々に書く。本人が実施していなければ未実施とする。修正はStoryとBlueprintへ戻し、HTMLだけを変更して一致チェックを外さない。
 
 ## 出力
 

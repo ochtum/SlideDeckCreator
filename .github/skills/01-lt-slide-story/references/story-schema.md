@@ -17,7 +17,7 @@ project:
   content_fidelity: full-equivalence # overview, representative, full-equivalence
   knowledge_contract_version: 1 # 記事・URL入力では必須
   semantic_clarity_version: 1 # 可視文の主語・行為者・変更対象契約
-  talkability_version: 2 # 20分以上で必須
+  talkability_version: 2 # 以下は既存v2の完全例。新規作成はtalkability.mdのv3へ差し替える
   target_slide_count: 3
   appendix_slide_count: 1
   time_budget: # 20分以上で必須
@@ -221,13 +221,13 @@ narrative:
     - phase: demo
       audience_question: "実際に何が起きるのか？"
       answer: "観測できる結果を含む一文回答"
-      transition_to_next: "見えた変化を、明日の一手へ縮めます。"
+      transition_to_next: "実演で見えた変化を含めて、今日の要点を振り返ります。"
       time_seconds: 360
       source_items: [demo-1]
     - phase: takeaway
-      audience_question: "明日、最初に何をするのか？"
-      answer: "時間・成果物・完了条件を含む一文回答"
-      transition_to_next: "この一手から始めてください。"
+      audience_question: "今日の説明から何が分かったのか？"
+      answer: "本文で説明した要点と結論を結び直す一文回答"
+      transition_to_next: "最後に、発表全体で伝えたかった結論へ戻ります。"
       time_seconds: 180
       source_items: [caution-1]
   flow:
@@ -256,7 +256,7 @@ narrative:
         - demo-1
       reason: ""
     - phase: takeaway
-      purpose: "明日から何をするか"
+      purpose: "発表した内容の要点と結論を振り返る"
       key_message: "Takeawayの中心メッセージ"
       source_items:
         - caution-1
@@ -276,7 +276,7 @@ demo_runbook:
   end_state: "差分、検証結果、完了条件の三つが同じ画面で追える"
   fallback: "同じ操作の差分画像と実行ログを順に表示する"
   source_items: [demo-1]
-tomorrow_action:
+tomorrow_action: # 任意。行動提案を採用する場合の例であり、通常のまとめでは省略する
   timebox: "15分"
   action: "自分の題材で最小の変更候補を一件書き出す"
   artifact: "変更候補、確認方法、完了条件を持つ一枚のメモ"
@@ -517,7 +517,7 @@ open_questions: []
 
 `roadmap.items` は後続のphase付きスライドを順序どおり、重複も欠落もなく覆う。各項目の `slide_ids` は連続していなければならず、`page_start` / `page_end` は `slides` の物理位置、`start_title` / `end_title` は範囲の実タイトルと一致させる。道筋スライド自身の `content_model.data.steps` には同じitemsをそのまま置く。ページ追加・削除・並べ替え後は手修正ではなく `slides` から再生成する。
 
-`demo_runbook` と `tomorrow_action` を使う場合は `narrative` の直後に置く。形式と記述基準は `talkability.md` を正本とする。`phase_order` にDemoがある場合だけ `demo_runbook`、Takeawayがある場合だけ `tomorrow_action` を必須にする。
+`demo_runbook` と `tomorrow_action` を使う場合は `narrative` の直後に置く。形式と記述基準は `talkability.md` を参照元とする。`phase_order` にDemoがある場合だけ `demo_runbook` を必須にする。`tomorrow_action` は行動提案を採用する場合だけ設定し、通常のまとめには要求しない。
 
 `role` は `cover`, `profile`, `goal`, `conclusion`, `problem`, `comparison`, `list`, `flow`, `matrix`, `evidence`, `action`, `demo`, `recap`, `thanks` から選ぶ。自己紹介なしの場合は `profile` を省く。
 
@@ -527,13 +527,13 @@ open_questions: []
 
 20分以上では `project.time_budget` と各live本編スライドの `delivery` を必須とする。time budgetはQ&Aとbufferを含めて発表枠と一致し、liveスライドの `estimated_seconds` 合計はQ&Aとbufferを除いた秒数と一致させる。appendix/referenceは時間合計から除外する。通常ページは具体的な `talking_points` と、最終HTMLで読める `visible_anchors` を各2件以上持つ。詳細は `explanation-depth.md` に従い、`scripts/validate_explanation_depth.py --story <01-story.yaml>` が成功するまで次工程へ渡さない。
 
-20分以上では `project.talkability_version: 2`、`narrative.question_spine`、全スライドの `speaker_cue` と四行 `spoken_note` を必須とする。`question_spine` は `narrative.phase_order` と一致させる。Demo phaseを含む場合だけ `demo_runbook`、Takeaway phaseを含む場合だけ `tomorrow_action` を必須にし、記事種別にない実演を捏造しない。詳細は `talkability.md` に従い、`scripts/validate_talkability.py --story <01-story.yaml>` が成功するまで次工程へ渡さない。
+新規作成は `project.talkability_version: 3` とし、`talkability.md` のcue/script/hybrid形式を使う。上のv2例は互換性の参照用であり、新規ノートへ四行・文字数条件を持ち込まない。20分以上は `narrative.question_spine` も必須とする。`question_spine` は `narrative.phase_order` と一致させる。Demo phaseを含む場合だけ `demo_runbook` を必須にし、記事種別にない実演を捏造しない。Takeawayは発表内容の要点・結論を基本とし、任意の行動提案を採用した場合だけ `tomorrow_action` を設定する。詳細は `talkability.md` に従い、`scripts/validate_talkability.py --story <01-story.yaml>` が成功するまで次工程へ渡さない。
 
 `flow_phase` は `narrative.phase_order` の値から選ぶ。`phase_order` がない旧Storyだけ `why`, `what`, `how`, `demo`, `takeaway` を使う。表紙、自己紹介、今日のゴール、サンクス、appendix、referenceは空文字にできる。`recap` は新情報を持ち込まない。
 
-`reader_context` は後から一枚だけを読む人に必要な前提または現在地を短く記録する。`connection_from_previous.prior_state` と `bridge` は前ページからの論理的接続を記録する。表紙、自己紹介、Thanksは空文字または省略してよいが、その他のスライドでは両方を必須とする。
+`reader_context` は後から一枚だけを読む人に必要な前提または現在地を短く記録する。`connection_from_previous.prior_state` と `bridge` は前ページからの論理的接続を記録する。表紙、自己紹介、Thanksは空文字または省略してよいが、その他のスライドでもv3のbridgeは必要なときだけ指定する。設計用のprior_stateは保持する。
 
-`project.authoring_mode` は、完成記事の節構造を保つ `section-faithful` と、トピック・メモ・複数資料から発表向けの新しい順序を作る `narrative-recompose` のいずれかとする。`section-faithful` では `source_section_manifest`、`section_coverage`、節スライドの `source_section_ids` と `talk_track` を必須とする。通常は一節一枚で、複数節を一枚へ統合しない。一節を複数枚へ分ける場合だけ `split_reason` を使う。`talk_track.beats[].spoken_text` は `speaker_cue.script` と `spoken_note` の「話す内容」に含め、`visible_text` はStory、Blueprint、HTMLの実際の描画面へ残す。詳細は `section-faithful.md` と `scripts/validate_section_fidelity.py` を正本とする。
+`project.authoring_mode` は、完成記事の節構造を保つ `section-faithful` と、トピック・メモ・複数資料から発表向けの新しい順序を作る `narrative-recompose` のいずれかとする。`section-faithful` では `source_section_manifest`、`section_coverage`、節スライドの `source_section_ids` と `talk_track` を必須とする。通常は一節一枚で、複数節を一枚へ統合しない。一節を複数枚へ分ける場合だけ `split_reason` を使う。v3のbeatはdeliveryでspoken/visualを分け、spoken_textは話すbeatだけをcuesまたはscriptへ含める。旧v2では全spoken_textをscriptとノートに含める。`visible_text` はStory、Blueprint、HTMLの実際の描画面へ残す。詳細は `section-faithful.md` と `scripts/validate_section_fidelity.py` を参照元とする。
 
 `semantic_clarity_version: 1` では `semantic-clarity.md` に従い、表紙、自己紹介、Thanksを除く各スライドに `semantic_clarity` を必須とする。`title` と `message` はclaimまたは正当なlabelへ一対一で対応させ、動作・変更・判断を述べる本文もclaimへ含める。`action`、`change`、`decision` は主語、行為者、対象、述語を同じ可視原子節へ明記する。`definition` と `state` で行為者または対象が存在しない場合だけ `not_applicable` を使う。reference専用ページは書誌情報だけを表示し主張を持たない場合に限り `status: exempt` と具体的な理由を使える。`scripts/validate_semantic_clarity.py --story <01-story.yaml>` が成功するまで後工程へ渡さない。
 
@@ -541,6 +541,6 @@ open_questions: []
 
 `style_profile` は `config/slide-style-profile.md` がある場合だけそのルールを参照したことを記録する。スタイルを理由に入力にない体験を追加しない。ファイルがない場合は `data_file` を残して `status: absent`、`applied_rule_ids: []` とする。
 
-`full-equivalence` では `source_inventory`、`coverage_matrix`、`approved_omissions`、各スライドの `source_unit_ids` が必須である。正本は `content-equivalence.md` とし、表・コード・設定・図などの構造化unitには `artifact_ids` と構造保存方法を必ず指定する。
+`full-equivalence` では `source_inventory`、`coverage_matrix`、`approved_omissions`、各スライドの `source_unit_ids` が必須である。参照元は `content-equivalence.md` とし、表・コード・設定・図などの構造化unitには `artifact_ids` と構造保存方法を必ず指定する。
 
 `knowledge_contract_version: 1` では `knowledge-structure.md` に従い、`knowledge_units`、`comprehension_checks`、各スライドの意味IDを必須とする。`delivery_profile: dual-use` ではさらに `dual-use-publication.md` に従い、live末尾のrecap/thanks後へappendix/referenceを置ける。可視出典ラベルを `spoken_note` や `data-*` 属性だけへ退避しない。

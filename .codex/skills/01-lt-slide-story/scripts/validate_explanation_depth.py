@@ -115,9 +115,11 @@ def validate_story(path: Path, story: dict) -> list[str]:
 
         points = string_list(delivery.get("talking_points"))
         anchors = string_list(delivery.get("visible_anchors"))
-        minimum = 1 if mode == "transition" or role in LOW_DENSITY_ROLES else 2
-        if len(points) < minimum:
-            errors.append(f"{path}:{sid}: requires at least {minimum} concrete talking_points")
+        v3 = int((story.get("project") or {}).get("talkability_version") or 0) == 3
+        minimum = 1 if v3 or mode == "transition" or role in LOW_DENSITY_ROLES else 2
+        spoken_minimum = 0 if v3 and (slide.get("speaker_cue") or {}).get("silence_reason") else minimum
+        if len(points) < spoken_minimum:
+            errors.append(f"{path}:{sid}: requires at least {spoken_minimum} concrete talking_points")
         if len(anchors) < minimum:
             errors.append(f"{path}:{sid}: requires at least {minimum} visible_anchors")
 

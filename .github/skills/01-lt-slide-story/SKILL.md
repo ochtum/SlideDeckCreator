@@ -1,11 +1,15 @@
 ---
 name: 01-lt-slide-story
-description: 日本語の記事、メモ、URL、またはトピックを、登壇中と後日閲覧の両方で理解できるライトニングトークのストーリーに変換する。完成記事では節ごとのSpoken Noteを先に作るsection-faithful、断片素材では発表向けに再構成するnarrative-recomposeを使い分け、知識単位、出典、本編／補足、時間配分を `.lt-slide-work/01-story.yaml` に保存する。
+description: 日本語の記事、メモ、URL、またはトピックを、登壇中と後日閲覧の両方で理解できるライトニングトークのストーリーに変換する。発表の目的から説明順と話す・見せる分担を決め、記事順の保持指定時だけsection-faithfulを使い、知識単位、出典、本編／補足、時間配分を `.lt-slide-work/01-story.yaml` に保存する。
 ---
 
 # 01 LT Slide Story
 
 LTの素材整理、話の流れ、スライドへの割り付けを決める。HTML、レイアウト、画像はまだ作らない。成果物は後工程がそのまま読める `.lt-slide-work/01-story.yaml` とする。単発なら従来のストーリー、シリーズなら各パートへの参照を持つマニフェストにする。
+
+## 発表者の言葉
+
+制作対象の `config/presentation-language.md` があれば最初に読み、過去の観測傾向より現在の希望を優先する。新しく書く見出し・説明・ノートには「正本」「地図」「道具」のような抽象的な比喩を足さず、指すファイル・機能・操作を具体的に書く。引用・正式名称・コードの意味は変えない。
 
 ## Workspace Contract
 
@@ -42,7 +46,7 @@ LTの素材整理、話の流れ、スライドへの割り付けを決める。
 ## Workflow
 
 1. 入力を Markdown、URL、Markdown+URL、トピックのみのいずれかに分類する。記事またはURLでは `knowledge-structure.md` に従い `source.document_types`、`narrative.archetype`、`narrative.phase_order` を決める。
-1a. H1〜H4の意図的な見出し構造を持つ完成記事で、ユーザーが再構成を求めていない場合は `project.authoring_mode: section-faithful` とする。見出し・記事順・各セクションをそのまま使う指定があれば必ずこのモードにする。トピック、メモ、複数資料を一つの新しい物語へ編成する場合は `narrative-recompose` とする。
+1a. 新規作成は完成記事でも `project.authoring_mode: narrative-recompose` を基本にし、聴衆に伝える目的から説明順を決める。見出し・記事順・各セクションの保持をユーザーが指定した場合は `section-faithful` とする。内容を保持することと、記事順・全文章を口頭で再現することを区別する。既存Storyの保持指定は引き継ぎ、無断で変更しない。
 1b. `section-faithful` では `references/section-faithful.md` を読み、コードフェンス内の見出しを除外して `scripts/validate_section_fidelity.py --source <article.md> --manifest-out .lt-slide-work/source-sections.yaml` を実行する。見出し台帳を作る前に、phaseや代表例へ記事を再編成してはならない。
 2. URLがある場合は取得可能なものを並列で読み、主題、根拠、数値、出典だけを抽出する。取得不能なURLは記録して残りで進める。
 3. 不足情報だけを質問する。質問は一度に最大3件にまとめ、ソースから分かることは聞かない(`Ask Only What Is Missing`を参照)。公開先、must-keep、out-of-scope、fact-check方針を `request` に保存し、合理的に補完した値は `request.assumptions` に値・理由を残す。
@@ -50,8 +54,8 @@ LTの素材整理、話の流れ、スライドへの割り付けを決める。
 4a. `config/slide-style-profile.md` がある場合は読み、`python .github/skills/00-lt-slide-style-extraction/scripts/validate_style_profile.py config/slide-style-profile.md` を実行する。発表者の姿勢、ストーリー、失敗・成功、具体性、話者ノートのルールだけを利用し、`style_profile` に参照パスと採用したrule IDを残す。プロファイルを理由に、入力にない失敗、実験、感情、具体物を追加してはならない。本文総数の下限・目標・固定値はstyle profileから採用せず、見つけた場合は00へ戻して修正する。存在しない場合は `style_profile.status: absent` を残して通常のストーリー設計を続ける。
 4b. `config/design-systems/registry.yaml` がある場合は一覧を読み、ユーザーがIDを指定していればそのversionとpathを確認する。未指定なら既存の内蔵fallbackを使い、新しいデザインシステムを勝手に選択しない。選択時は `design_system` をルートStoryと全パートへ保存する。新規追加・変更・削除は `07-lt-design-system-manager` に戻す。
 5. `references/presentation-quality.md` を読み、初見者の既知語・未知語・誤解しやすい前提を `audience` に残す。用語の初出、平易な定義、具体例を決める。
-5a. 発表時間が20分以上なら `references/explanation-depth.md` と `references/talkability.md` を読み、`project.talkability_version: 2`、`project.time_budget`、各liveスライドの `delivery`（mode、estimated_seconds、talking_points、visible_anchors）を先に設計する。time budgetにはQ&Aとbufferを独立して置き、appendix/referenceを登壇時間へ加算しない。短時間LTの枚数・余白・一枚一言を引き延ばしてはならない。
-6. 全体の主張を1文に圧縮し、聴衆が持ち帰る行動を1つ決める。
+5a. 新規作成は時間にかかわらず `project.talkability_version: 3` とし、`references/talkability.md` の短い要点メモを基本にする。発表時間が20分以上なら `references/explanation-depth.md` と `references/talkability.md` を読み、`project.time_budget`、各liveスライドの `delivery`（mode、estimated_seconds、talking_points、visible_anchors）を先に設計する。time budgetにはQ&Aとbufferを独立して置き、appendix/referenceを登壇時間へ加算しない。短時間LTの枚数・余白・一枚一言を引き延ばしてはならない。
+6. 全体の主張を1文に圧縮し、聴衆に持ち帰ってほしい理解・判断を決める。行動提案は、ユーザーの希望または発表の目的に合う場合だけ追加する。
 7. 入力から `content_inventory` を作り、事実、主張、手順、デモ候補、注意点に加え、表・フロー・設定例・コマンド・ファイル構成・変更パターンを `evidence_artifacts` として素材化する。記事の順番に依存せず、出典と再利用できる最小データを残す。ユーザーが「全内容」「入力と同等」「シリーズですべて」と指定した場合は `project.content_fidelity: full-equivalence` とし、`references/content-equivalence.md` に従って `scripts/audit_content_equivalence.py --source ... --inventory-out .lt-slide-work/source-inventory.yaml` を先に実行する。
 7a. **Source Asset Audit**を行う。Markdown画像、添付画像、表、Mermaid、コードブロック、設定例を列挙し、`source_asset_inventory` にパスまたは行範囲、意味、再利用候補のスライド、採否を残す。元資料に意味を担う画像・表・コードがある場合、抽象的なカードだけで置き換えない。`usage_rights` が明示されない素材は `unknown` とし、直接コピーを選ばない。`provided-for-reuse` だけを提供画像として再利用し、`reference-only` と `unknown` は意味を保ったSVG・HTML・生成画像へ再構成する。
 7b. 記事またはURL入力では `knowledge-structure.md` に従い `knowledge_units` を作る。主張、定義、根拠、因果、比較、手順、例、注意、判断、参考情報を分類し、重要度、前提、アーティファクト、出典、割当スライドを残す。`full-equivalence` または `dual-use` では5〜10件の `comprehension_checks` を作り、スライド本文だけで回答できることを完成条件にする。
@@ -60,10 +64,10 @@ LTの素材整理、話の流れ、スライドへの割り付けを決める。
 9. `coverage_matrix` を作る。各学習単位について、割当パート、スライドID、表示／口頭の伝達面、構造の保存方法、代表アーティファクト、最初の作業、完了条件を記録する。`full-equivalence` ではsource inventoryの全unitを一対一でcoverageへ置き、表・コード・設定・Mermaid・画像・チェックリストをテーマ名だけのカードへ縮約しない。入力が実装ガイドで、ユーザーが要約・入門と明示していない場合は、全ての主要見出しを `full coverage` と仮定する。
 10. `Series Analysis And Split` に従い、単発かシリーズか、必要なら話数と各回の境界を判定する。dual-useではsupporting/reference知識をappendix/referenceへ移してlive時間を守れるか先に確認し、essentialな学習ループ自体が収まらない場合だけシリーズを優先する。
 11. 単発なら一つ、シリーズなら各パートごとに、一つの `central_example` と `question_spine` を先に作る。`narrative.phase_order` の各phaseについて、聴衆の問い、一文の答え、次の問いへ渡す実際の一言、時間を決める。記事種別に合うphaseを使い、phaseラベルだけを骨格の代わりにしない。
-11a. Demo phaseを採用した場合は `demo_runbook` に開始状態、3つ以上の操作と観測結果、終了状態、失敗時のfallbackを置く。Takeaway phaseを採用した場合は `tomorrow_action` に時間枠、最初の操作、残る成果物、完了条件を置く。入力にないDemoを捏造しない。
+11a. Demo phaseを採用した場合は `demo_runbook` に開始状態、3つ以上の操作と観測結果、終了状態、失敗時のfallbackを置く。Takeawayは発表内容の要点・結論を基本とし、phase名だけを理由に行動課題を追加しない。行動提案を採用する場合だけ `tomorrow_action` に時間枠、最初の操作、残る成果物、完了条件を置く。入力にないDemoを捏造しない。
 11b. 30分以上または本編20枚超では、全スライドの順序と `flow_phase` を確定した後に `roadmap` を生成する。可視ラベルは内部のphase名をそのまま出さず、実際のページ群が答える具体的な節目にする。各項目へ連続した `slide_ids`、物理 `page_start` / `page_end`、`start_title` / `end_title` を保存し、道筋スライドの `content_model.data.steps` と一致させる。
-11c. `section-faithful` ではスライド本文より先に `section_coverage.points` と各節スライドの `talk_track.beats` を作る。各beatへsource point、実際に話す `spoken_text`、投影面へ残す `visible_text` を置く。通常は一節一枚とし、複数節を一枚へ統合しない。長い一節だけ `split_reason` 付きで複数枚へ分けられる。記事順を保ち、時間内に収める短縮は `coverage: abridged` と `abridgement_note` に明示する。
-12. `narrative-recompose` では `question_spine` と `narrative.flow` をスライドへ割り付ける。`section-faithful` では `talk_track` の後に、同じ節の `visible_text` とartifactだけからtitle、message、support、表示要素を作る。どちらのモードでも各ページに `speaker_cue` を置き、表示前後の聴衆状態、実際に話す台本、指差す表示要素、次ページへ渡す一言を決める。`section-faithful` の `speaker_cue.script` と `spoken_note` の「話す内容」は全beatの `spoken_text` を順序どおり含める。表紙、自己紹介、Thanksを除く各スライドに `reader_context` と `connection_from_previous` を置く。
+11c. `section-faithful` ではスライド本文より先に `section_coverage.points` と各節スライドの `talk_track.beats` を作る。各beatへsource point、`delivery: spoken | visual` と投影面へ残す `visible_text` を置き、spokenのbeatだけに要点または台詞の `spoken_text` を置く。画面で伝わる情報に台詞を追加しない。補足・参照は `delivery_scope` で分ける。通常は一節一枚とし、複数節を一枚へ統合しない。長い一節だけ `split_reason` 付きで複数枚へ分けられる。記事順を保ち、時間内に収める短縮は `coverage: abridged` と `abridgement_note` に明示する。
+12. `narrative-recompose` では `question_spine` と `narrative.flow` をスライドへ割り付ける。`section-faithful` では `talk_track` の後に、同じ節の `visible_text` とartifactだけからtitle、message、support、表示要素を作る。どちらのモードでも各ページに `speaker_cue` を置き、表示前後の聴衆状態、今回追加する説明の要点、見る対象を決める。接続が必要なページだけbridge・transitionを置く。v3は `speaker_notes.py` の `render_note` でノートを生成し、spokenのbeatだけをcuesまたはscriptへ対応させる。旧v2は従来の4行と全beatの台詞を保持する。表紙、自己紹介、Thanksを除く各スライドに `reader_context` と `connection_from_previous` を置く。
 12a. `references/semantic-clarity.md` に従い `project.semantic_clarity_version: 1` と各ページの `semantic_clarity` を作る。タイトル、message、動作・判断・変更を述べる本文を原子節へ分け、文法上の主語、実際の行為者、変更・確認対象、述語を可視文へ明記する。「対象を確認する」「最初に作る」のように前ページや暗黙の「私たち」へ依存する文は、話者ノートで補わず投影面を直す。
 13. `scripts/validate_knowledge_contract.py --story <01-story.yaml>`、`scripts/validate_semantic_clarity.py --story <01-story.yaml>`、`scripts/validate_talkability.py --story <01-story.yaml>`、`scripts/validate_spoken_notes.py --story <01-story.yaml>`、`scripts/validate_duration_floor.py --story <01-story.yaml>`、`scripts/validate_explanation_depth.py --story <01-story.yaml>`、`scripts/validate_roadmap.py --story <01-story.yaml>` を実行する。`section-faithful` ではさらに `scripts/validate_section_fidelity.py --manifest .lt-slide-work/source-sections.yaml --story <01-story.yaml>`、`full-equivalence` では `scripts/audit_content_equivalence.py --inventory .lt-slide-work/source-inventory.yaml --story .lt-slide-work/01-story.yaml --require-full-equivalence` を実行する。失敗時は成果物を次工程へ渡さず、未割当の節・source point・話す内容・可視要素、知識、出典、主語・行為者・変更対象、接続、時間、道筋を修正する。複数節の統合や枚数だけの追加で解決しない。
 14. 単発は `references/story-schema.md`、シリーズは `references/series-schema.md` に従って成果物を出力する。
@@ -129,6 +133,10 @@ LTの素材整理、話の流れ、スライドへの割り付けを決める。
 
 ユーザーが「使わない」と回答した項目だけを不使用として確定する。画像を使わない場合は代替レイアウトを許可する。情報は永続設定として `config/presenter.json` に保存し、`.lt-slide-work/01-story.yaml` から `../config/presenter.json` で参照する。`.lt-slide-work/` や `output/` には保存しない。秘密情報は保存しない。自己紹介スライドの可視本文は `display_name`、ユーザーが明示した任意の `name_note`、`bio`、`links`、QRラベルと有効画像だけに限定し、登壇テーマの補足、意気込み、実績、結論を推測して追加しない。テーマへ戻す一言は `speaker_cue` / `spoken_note` に置き、投影面へ常設しない。
 
+## 説明イメージの確認
+
+ユーザー自身のメモ、ブレインマップ、発話記録があれば、説明したい順、強調点、具体例、話さず画面に任せる部分を拾う。記事本文をそのまま台詞にしない。各ページの `speaker_cue.purpose` は「前ページに対して今回何を加えるか」にする。作成時は画面案とメモを一緒に通して読み、重複する定義・長い列挙・機械的な次ページ予告を削る。本人の実演がなければ「本人確認済み」としない。
+
 ## Presenter Style Profile
 
 `config/slide-style-profile.md` は、過去資料から抽出した発表者固有の永続設定である。存在する場合だけ読み、内容を今回の事実より優先しない。
@@ -154,9 +162,9 @@ LTの素材整理、話の流れ、スライドへの割り付けを決める。
 - 提供画像は、その画像が伝える関係・変化・実例が当該スライドの主張と一致する場合に再利用候補として優先する。採用しない場合は、`source_asset_inventory` に理由（重複、低解像度、比率不適合、正確なSVG/CSSへの置換など）を残す。
 - `narrative.question_spine` を話の背骨、`narrative.flow` を素材の割当として使い分ける。各phaseは聴衆の問い、一文の答え、次phaseへの接続、時間、根拠を持つ。`narrative.phase_order` と同じ順序にし、記事種別に不要なphaseを追加しない。
 - 記事種別が不明な短いLTだけ、タイトル、自己紹介、今日のゴール、Why、What、How、Demo、Takeaway、まとめ、Thanks をfallbackとして使う。記事入力では `knowledge-structure.md` のarchetypeを優先する。
-- 発表時間が30分以上、または本編が20枚を超える場合は、「今日のゴール」の直後に話の地図を必ず1枚置く。`narrative.phase_order` の値は内部分類に留め、可視ラベルは「判断できない理由」「変更地図を作る」のように実際の後続ページを要約する。各項目は後続ページの連続範囲へ一対一で対応させ、ページ追加・削除・並べ替えのたびに再生成する。
+- 発表時間が30分以上、または本編が20枚を超える場合は、「今日のゴール」の直後に説明順の一覧を必ず1枚置く。`narrative.phase_order` の値は内部分類に留め、可視ラベルは「判断できない理由」「変更箇所の対応表を作る」のように実際の後続ページを要約する。各項目は後続ページの連続範囲へ一対一で対応させ、ページ追加・削除・並べ替えのたびに再生成する。
 - 今日のゴールは agenda ではなく、聴衆への約束として書く。「何を理解し、何を試せる状態になるか」を明示する。
-- 実務手順、設定、設計資料、運用を扱う発表では、聴衆が翌営業日に開始できる最小単位（作るファイル、実行するコマンド、確認する条件、承認を求める判断）を必ず決める。
+- 実務手順、設定、設計資料、運用を扱う発表でも、翌営業日の作業課題を一律に追加しない。行動提案が目的に合う場合だけ、開始できる最小単位を具体化し、内容のまとめとは区別する。
 - 複数の部品・手順・概念を扱う発表では、個別説明の前に一つの代表例を開始から結果まで通す。各工程には入力、操作、成果物、完了条件を少なくとも一つずつ示し、途中で例を無断で切り替えない。
 - 入力に表、図、チェックリスト、設定例、ドキュメント例、変更パターンがある場合は、抽象的な説明だけで済ませない。各phaseに少なくとも1つ、投影できる代表サンプルまたはデモ候補を `content_inventory` と `slides` に残す。
 - `support` は話の要約であり、表・フロー・設定例・チェックリストの代替にしてはならない。HowまたはDemoの各スライドには `evidence_artifact_ids` を割り当て、後工程が具体的なHTML要素を作れるようにする。
@@ -166,7 +174,7 @@ LTの素材整理、話の流れ、スライドへの割り付けを決める。
 - 同じ証拠を複数ページで使う場合は、各ページで新しく読む `focus` または差分を決める。異なる主張に同一の図・表を無注釈で再掲しない。
 - `narrative-recompose` では3秒で要点が読めるタイトルにする。`section-faithful` で見出しをそのまま使う指定がある場合は原見出しをtitleに保持し、3秒で読める中心主張はmessageに置く。
 - 今日のゴール（何を伝えたいか）を序盤に出す。
-- `narrative.phase_order` を理解順の正本とする。順序を変更した場合は `narrative.flow` の `reason` に理由を残す。
+- `narrative.phase_order` を理解順の参照元とする。順序を変更した場合は `narrative.flow` の `reason` に理由を残す。
 - `narrative-recompose` の `slides` は `narrative.flow` の結果として作る。`section-faithful` の節スライドは `source-sections.yaml` と `talk_track` の結果として作り、`narrative.flow` は順序を変えずphaseを注釈する。各スライドに対応するphaseを `flow_phase` で示す。
 - `target_slide_count` は初回生成時の固定値ではなく、現在のliveストーリーに必要な本編枚数を表す。説明の追加・分割・統合を行ったら、実際のlive本編枚数に必ず更新する。
 - `target_slide_count` とlive本編枚数は、表紙、自己紹介、Thanksを除き、まとめを含めて一致させる。`appendix_slide_count` はappendix/referenceの物理枚数と一致させる。枚数目安だけを理由に次工程を止めない。
@@ -177,11 +185,11 @@ LTの素材整理、話の流れ、スライドへの割り付けを決める。
 - `spoken_note` は各ページ固有の四行形式にする。`橋渡し:`、`話す内容:`、`指差し:`、`次の一言:` を順に書き、`speaker_cue` と接続情報から生成する。「このページでは〜を確認します」のようなメタ説明、仮文言、全ページ共通の文、画面の単純な復唱を使わない。
 - `section-faithful` では `talk_track` をSpoken Noteより先に作る。`話す内容:` からスライドを逆算し、スライド完成後に画面の説明としてノートを書き足す順序へ戻さない。
 - 数値や最新情報には出典と確認日を残す。
-- まとめは新情報を持ち込まず、1枚にまとめる。今日のゴールとTakeawayを回収し、最後は `recap` と `thanks` を連続させる。
+- まとめは、発表した主要な内容・関係・結論を振り返るページにする。各要点を本文の説明へ対応付け、新しい課題・手順・時間枠を持ち込まない。「明日やること」は任意の行動提案として区別し、内容の要約を置き換えない。最後は `recap` と `thanks` を連続させる。
 
 ## Output
 
-単発では `.lt-slide-work/01-story.yaml` だけを正本とする。シリーズでは同ファイルを正本マニフェストとし、`.lt-slide-work/parts/<part-id>/01-story.yaml` を各回の正本とする。チャットにはタイトル、単発／シリーズ判定、分割理由、各回のゴールと枚数内訳、未解決事項を短く示す。後工程を同じターンで依頼されている場合は停止せず `02-lt-slide-blueprint` へ進む。
+単発では `.lt-slide-work/01-story.yaml` だけを参照元とする。シリーズでは同ファイルを処理順のマニフェストとし、`.lt-slide-work/parts/<part-id>/01-story.yaml` を各回の参照元とする。チャットにはタイトル、単発／シリーズ判定、分割理由、各回のゴールと枚数内訳、未解決事項を短く示す。後工程を同じターンで依頼されている場合は停止せず `02-lt-slide-blueprint` へ進む。
 
 ## Quality Gate
 
@@ -194,7 +202,7 @@ LTの素材整理、話の流れ、スライドへの割り付けを決める。
 - `source_asset_inventory` があり、入力の画像・表・コードブロック・設定例ごとに採否と理由が追跡できる。
 - `Source Scope Audit` と `coverage_matrix` があり、主要見出し・実装ループごとに、入門要約か全内容か、割当パート、代表アーティファクト、最初の作業、完了条件が追跡できる。
 - `narrative.question_spine` が `phase_order` と一致し、各phaseの聴衆の問い、答え、次への接続、時間が分かる。
-- 一つの `central_example` が全体を通る。Demoを採用した場合は `demo_runbook`、Takeawayを採用した場合は `tomorrow_action` が具体化されている。
+- 一つの `central_example` が全体を通る。Demoを採用した場合は `demo_runbook`、行動提案を採用した場合だけ `tomorrow_action` が具体化されている。
 - `narrative-recompose` では `slides` が `narrative.flow` から割り付けられている。`section-faithful` では全source sectionが順序どおり一枚以上へ割り当てられ、各節の `talk_track` から投影面が作られている。
 - 技術・実務テーマのHow/Demoスライドに、少なくとも一つの `evidence_artifact_ids` がある。各アーティファクトは出典と、画面に載せる最小データを持つ。
 - 全スライドの `message` が重複していない。
@@ -212,10 +220,10 @@ LTの素材整理、話の流れ、スライドへの割り付けを決める。
 - 自己紹介の採否が確定している。
 - 自己紹介の可視本文が `config/presenter.json` の値だけで構成され、テーマ固有の結論や補足が混入していない。
 - SNSまたはWebサイト、顔写真またはアバター、QR画像の使用有無がすべて明示回答で確定している。
-- まとめが今日のゴールとTakeawayを回収し、新情報を持ち込んでいない。
-- Takeawayが「明日何を作成・実行・確認するか」を具体的に言えており、必要な代表サンプルの採否が追跡できる。
+- まとめの各要点が発表済みの本文へ対応し、主要な説明と結論を振り返れている。行動提案だけでまとめを代用していない。
+- Takeawayは持ち帰る理解・判断を示す。行動提案を別途採用した場合は、具体的な操作・成果物・完了条件と必要な代表サンプルを確認する。
 - 複数の構成要素を扱う発表では、部品一覧ではなく、最初の一件を開始から改善まで通す実装プレイブックが存在し、各工程の成果物と完了条件が読める。
-- 30分以上または本編20枚超の発表では、ゴール直後に話の地図があり、`scripts/validate_roadmap.py --story <01-story.yaml>` が成功する。可視ラベルがphase名だけでなく、全 `slide_ids`・ページ範囲・先頭／末尾タイトルが実際のスライド列と一致している。
+- 30分以上または本編20枚超の発表では、ゴール直後に説明順の一覧があり、`scripts/validate_roadmap.py --story <01-story.yaml>` が成功する。可視ラベルがphase名だけでなく、全 `slide_ids`・ページ範囲・先頭／末尾タイトルが実際のスライド列と一致している。
 - `scripts/validate_duration_floor.py --story <01-story.yaml>` が成功する。シリーズは各パートが個別に成功する。
 - 20分以上では `scripts/validate_explanation_depth.py --story <01-story.yaml>` が成功し、時間配分、ページ固有のtalking points、投影面のvisible anchors、低密度ページ比率が妥当である。
 - シリーズ判定では、分割理由、分割数、各パートの独立した学習ゴール、入力素材のカバレッジがマニフェストにある。

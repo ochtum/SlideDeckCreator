@@ -116,7 +116,7 @@ def main():
                     visible_text = str(beat.get("visible_text") or "") if isinstance(beat, dict) else ""
                     if visible_text and compact(visible_text) not in rendered_visible:
                         errors.append(f"{sid}: talk_track visible_text is not rendered: {visible_text}")
-        if talkability_version == 2:
+        if talkability_version in {2, 3}:
             if not source:
                 errors.append(f"{sid}: slide does not exist in source Story")
             else:

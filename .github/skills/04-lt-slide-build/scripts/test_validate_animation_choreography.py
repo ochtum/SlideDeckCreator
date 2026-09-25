@@ -4,15 +4,16 @@ from validate_animation_choreography import validate
 
 
 class AnimationChoreographyTest(unittest.TestCase):
-    def test_repetitive_long_deck_fails(self):
+    def test_repetitive_long_deck_warns_without_variety_gate(self):
         slides = [{"id": f"s{i}", "animation": {
             "intent": "順序を示す", "family": "quiet-reveal",
             "entrance": [{"target": "title", "preset": "rise"}],
             "steps": [{"step": n, "targets": [f"x{n}"], "preset": "rise"} for n in range(1, 4)],
         }} for i in range(20)]
-        errors, _ = validate({"slides": slides})
-        self.assertTrue(any("at least 5 presets" in error for error in errors))
-        self.assertTrue(any("pacing is too uniform" in error for error in errors))
+        errors, stats = validate({"slides": slides})
+        self.assertFalse(any("preset variety advisory" in error for error in errors))
+        self.assertTrue(any("preset variety advisory" in error for error in stats["warnings"]))
+        self.assertTrue(any("pacing is too uniform" in error for error in stats["warnings"]))
 
     def test_blueprint_preset_loss_fails(self):
         blueprint = {"slides": [{"id": "s1", "animation": {

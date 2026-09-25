@@ -7,6 +7,8 @@ import re
 
 import yaml
 
+from speaker_notes import validate_note
+
 
 LEGACY_LABELS = ("橋渡し", "読み方", "次の判断")
 TALKABILITY_LABELS = ("橋渡し", "話す内容", "指差し", "次の一言")
@@ -40,7 +42,7 @@ class SlideParser(HTMLParser):
 
 
 def compact(value: str) -> str:
-    return re.sub(r"\s+", "", value).lower()
+    return re.sub(r"\s+", "", str(value or "")).lower()
 
 
 def sections(note: str, labels: tuple[str, ...]) -> dict[str, str]:
@@ -55,6 +57,8 @@ def sections(note: str, labels: tuple[str, ...]) -> dict[str, str]:
 
 def validate_slides(slides: list[dict], talkability_version: int = 1) -> tuple[list[str], dict[str, str]]:
     errors: list[str] = []
+    if talkability_version not in {1, 2, 3}:
+        return [f"未対応の talkability_version: {talkability_version}"], {}
     notes: dict[str, str] = {}
     seen: dict[str, str] = {}
     for index, slide in enumerate(slides, start=1):
@@ -68,10 +72,20 @@ def validate_slides(slides: list[dict], talkability_version: int = 1) -> tuple[l
         normalized = compact(note)
         if any(compact(phrase) in normalized for phrase in FORBIDDEN):
             errors.append(f"{slide_id}: 仮ノートまたはプレースホルダーを使えません")
-        if normalized in seen:
+        cue = slide.get("speaker_cue") or {}
+        if not isinstance(cue, dict):
+            errors.append(f"{slide_id}: speaker_cue はmappingで指定してください")
+            continue
+        intentional_recap = talkability_version == 3 and seen.get(normalized) in (cue.get("recap_of") or []) and cue.get("recap_reason")
+        if normalized in seen and not intentional_recap:
             errors.append(f"{slide_id}: spoken_note が {seen[normalized]} と完全一致しています")
         else:
             seen[normalized] = slide_id
+
+        if talkability_version == 3:
+            next_id = str(slides[index].get("id") or "") if index < len(slides) else ""
+            errors.extend(f"{slide_id}: {error}" for error in validate_note(slide, next_id))
+            continue
 
         labels = TALKABILITY_LABELS if talkability_version >= 2 else LEGACY_LABELS
         parts = sections(note, labels)

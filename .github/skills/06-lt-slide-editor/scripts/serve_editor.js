@@ -205,7 +205,7 @@ function loadPlaywright() {
     return require("playwright");
   } catch (error) {
     throw new Error(
-      "Playwright was not found. Add Playwright to the project or set NODE_PATH to a node_modules directory that contains it. " +
+      "Playwright was not found. Run with the bundled Codex Node.js or set NODE_PATH to the bundled node_modules. " +
       `Original error: ${error.message}`
     );
   }

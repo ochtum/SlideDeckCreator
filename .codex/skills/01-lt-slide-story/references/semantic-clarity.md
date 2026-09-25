@@ -36,7 +36,7 @@ slides:
   - id: s10
     role: action
     title: "保守担当者がCopilotへの入口を3層に分ける"
-    message: "Copilotが変更対象の正本へ最短で到達できるようにする"
+    message: "Copilotが変更対象の設計資料へ最短で到達できるようにする"
     semantic_clarity:
       status: required
       claims:
@@ -51,13 +51,13 @@ slides:
           predicate: "3層に分ける"
           not_applicable: []
         - surface: message
-          surface_text: "Copilotが変更対象の正本へ最短で到達できるようにする"
-          clause: "Copilotが変更対象の正本へ最短で到達できるようにする"
+          surface_text: "Copilotが変更対象の設計資料へ最短で到達できるようにする"
+          clause: "Copilotが変更対象の設計資料へ最短で到達できるようにする"
           kind: action
           subject: "Copilot"
           actor: "Copilot"
           actor_kind: ai
-          target: "変更対象の正本"
+          target: "変更対象の設計資料"
           predicate: "到達できるようにする"
           not_applicable: []
       labels: []

@@ -358,14 +358,54 @@ async function main() {
     findings.push("second P does not close page overview and restore editor mode");
   }
 
+  if (args.testSave) {
+    await page.evaluate((index) => window.slideDeck?.show?.(index, false, false), pageIndexBeforeOverview);
+    await page.locator("[data-action='save']").click();
+    try {
+      await page.waitForFunction(() => /Overwritten HTML/.test(document.querySelector("[data-status]")?.textContent || ""), null, { timeout: 5000 });
+      const persisted = await page.evaluate(async () => {
+        const sourceUrl = new URL(location.href);
+        sourceUrl.searchParams.set("verify", String(Date.now()));
+        sourceUrl.hash = "";
+        const response = await fetch(sourceUrl, { cache: "no-store" });
+        const html = await response.text();
+        const saved = new DOMParser().parseFromString(html, "text/html");
+        return {
+          allSlides: saved.querySelectorAll(".slide").length,
+          deckSlides: saved.querySelectorAll(".deck > .slide").length,
+          pagerChildren: saved.querySelector("#pagerGrid")?.children.length ?? -1,
+          overview: saved.body.classList.contains("overview"),
+        };
+      });
+      if (persisted.pagerChildren !== 0 || persisted.allSlides !== persisted.deckSlides || persisted.overview) {
+        findings.push(`saved HTML retains page-overview state or thumbnail clones: ${JSON.stringify(persisted)}`);
+      }
+    } catch (error) {
+      const message = await page.locator("[data-status]").textContent().catch(() => "status unavailable");
+      findings.push(`Save HTML after page overview did not persist a clean deck: ${message}`);
+    }
+  }
+
   await page.evaluate(() => document.activeElement instanceof HTMLElement && document.activeElement.blur());
   await page.keyboard.press("v");
   await page.waitForTimeout(100);
-  const viewMode = await page.evaluate(() => ({
-    enabled: document.body.classList.contains("lt-editor-view-mode"),
-    rootDisplay: getComputedStyle(document.querySelector(".lt-editor-root")).display,
-  }));
+  const viewMode = await page.evaluate(() => {
+    const rect = document.querySelector("body > .deck")?.getBoundingClientRect();
+    return {
+      enabled: document.body.classList.contains("lt-editor-view-mode"),
+      rootDisplay: getComputedStyle(document.querySelector(".lt-editor-root")).display,
+      margins: rect ? {
+        left: rect.left,
+        top: rect.top,
+        right: innerWidth - rect.right,
+        bottom: innerHeight - rect.bottom,
+      } : null,
+    };
+  });
   if (!viewMode.enabled || viewMode.rootDisplay !== "none") findings.push("V does not switch to the clean view mode");
+  if (!viewMode.margins || Math.abs(viewMode.margins.left - viewMode.margins.right) > 2 || Math.abs(viewMode.margins.top - viewMode.margins.bottom) > 2) {
+    findings.push(`editor view mode deck is not centered after responsive scaling: ${JSON.stringify(viewMode.margins)}`);
+  }
   await page.keyboard.press("v");
   await page.waitForTimeout(100);
   if (!(await page.evaluate(() => document.body.classList.contains("lt-editor-edit-mode")))) findings.push("second V does not restore editor mode");
@@ -377,6 +417,29 @@ async function main() {
   const normalUrl = new URL(page.url());
   if (normalUrl.searchParams.get("edit") === "1") findings.push("E does not leave the edit URL");
   if (await page.locator(".lt-editor-root").count()) findings.push("editor UI remains mounted after E returns to normal mode");
+  const normalAlignment = await page.evaluate(() => {
+    const deck = document.querySelector("body > .deck");
+    if (!deck) return null;
+    const rect = deck.getBoundingClientRect();
+    return {
+      left: rect.left,
+      top: rect.top,
+      right: innerWidth - rect.right,
+      bottom: innerHeight - rect.bottom,
+    };
+  });
+  if (!normalAlignment) {
+    findings.push("normal mode deck is missing");
+  } else {
+    const horizontalDrift = Math.abs(normalAlignment.left - normalAlignment.right);
+    const verticalDrift = Math.abs(normalAlignment.top - normalAlignment.bottom);
+    if (horizontalDrift > 2 || verticalDrift > 2) {
+      findings.push(`normal mode deck is not centered after responsive scaling: ${JSON.stringify(normalAlignment)}`);
+    }
+    if (Math.min(normalAlignment.left, normalAlignment.top, normalAlignment.right, normalAlignment.bottom) < -1) {
+      findings.push(`normal mode deck extends outside the viewport: ${JSON.stringify(normalAlignment)}`);
+    }
+  }
 
   await page.emulateMedia({ reducedMotion: "reduce" });
   const profileUrl = new URL(page.url());

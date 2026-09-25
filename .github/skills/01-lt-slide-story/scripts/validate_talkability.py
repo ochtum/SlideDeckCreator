@@ -141,7 +141,8 @@ def validate_takeaway(path: Path, story: dict, errors: list[str]) -> None:
 
 def validate_page_cues(path: Path, story: dict, spine: dict[str, dict], errors: list[str]) -> None:
     slides = story.get("slides") or []
-    note_errors, _ = validate_slides(slides, talkability_version=2)
+    version = int((story.get("project") or {}).get("talkability_version") or 2)
+    note_errors, _ = validate_slides(slides, talkability_version=version)
     errors.extend(f"{path}:{error}" for error in note_errors)
     script_signatures: dict[str, str] = {}
     phase_totals = Counter()
@@ -156,7 +157,10 @@ def validate_page_cues(path: Path, story: dict, spine: dict[str, dict], errors: 
         cue = slide.get("speaker_cue")
         if not isinstance(cue, dict):
             continue
-        for key in ("purpose", "audience_state_before", "audience_state_after", "script", "transition"):
+        required = ("purpose", "audience_state_before", "audience_state_after")
+        if version == 2:
+            required += ("script", "transition")
+        for key in required:
             if len(compact(cue.get(key))) < 8:
                 errors.append(f"{path}:{sid}: speaker_cue.{key} must be concrete")
         if compact(cue.get("audience_state_before")) == compact(cue.get("audience_state_after")):
@@ -164,7 +168,7 @@ def validate_page_cues(path: Path, story: dict, spine: dict[str, dict], errors: 
 
         script = text(cue.get("script"))
         signature = compact(script)
-        if signature in script_signatures:
+        if version == 2 and signature in script_signatures:
             errors.append(f"{path}:{sid}: speaker_cue.script duplicates {script_signatures[signature]}")
         elif signature:
             script_signatures[signature] = sid
@@ -181,9 +185,9 @@ def validate_page_cues(path: Path, story: dict, spine: dict[str, dict], errors: 
         if role not in NON_BODY_ROLES and isinstance(seconds, int):
             body_timings.append(seconds)
             expected_chars = min(240, max(50, math.ceil(seconds * 1.5)))
-            if len(compact(script)) < expected_chars:
+            if version == 2 and len(compact(script)) < expected_chars:
                 errors.append(f"{path}:{sid}: script is too short for {seconds}s; need about {expected_chars}+ characters")
-            if seconds >= 45 and sentence_count(script) < 2:
+            if version == 2 and seconds >= 45 and sentence_count(script) < 2:
                 errors.append(f"{path}:{sid}: 45+ second script must contain multiple spoken sentences")
             if phase:
                 phase_totals[phase] += seconds
@@ -219,15 +223,19 @@ def validate_story(path: Path, story: dict) -> list[str]:
     project = story.get("project") or {}
     duration = int(project.get("duration_minutes") or 0)
     version = int(project.get("talkability_version") or 0)
-    if duration >= 20 and version != 2:
-        errors.append(f"{path}: 20+ minute deck requires project.talkability_version: 2")
+    if version not in {0, 1, 2, 3}:
+        return [f"{path}: unsupported talkability_version: {version}"]
+    if duration >= 20 and version not in {2, 3}:
+        errors.append(f"{path}: 20+ minute deck requires project.talkability_version: 2 or 3")
         return errors
-    if version != 2:
+    if version not in {2, 3}:
         return errors
-    spine = validate_question_spine(path, story, errors)
+    spine = validate_question_spine(path, story, errors) if version == 2 or duration >= 20 or (story.get("narrative") or {}).get("question_spine") else {}
     if "demo" in spine:
         validate_demo(path, story, errors)
-    if "takeaway" in spine:
+    # A takeaway can summarize the talk without assigning the audience a task.
+    # Validate an explicitly supplied action, even when its phase has another name.
+    if "tomorrow_action" in story:
         validate_takeaway(path, story, errors)
     validate_page_cues(path, story, spine, errors)
     return errors
@@ -284,7 +292,7 @@ def validate_blueprint(path: Path, story: dict) -> list[str]:
                     errors.append(f"{path}:{sid}: phase_context.{key} does not match question_spine")
         points = [point for point in string_list((source.get("speaker_cue") or {}).get("point_at")) if compact(point) != "none"]
         visible = flatten_strings({
-            "delivery": slide.get("delivery") or {},
+            "delivery": (slide.get("delivery") or {}) if int((story.get("project") or {}).get("talkability_version") or 0) < 3 else {},
             "text": slide.get("text") or {},
             "content_model": slide.get("content_model") or {},
             "annotations": (slide.get("visual") or {}).get("annotations") or [],
@@ -317,6 +325,12 @@ def validate_html(path: Path, story: dict) -> list[str]:
     parser.feed(path.read_text(encoding="utf-8"))
     spine = {text(item.get("phase")): item for item in (story.get("narrative") or {}).get("question_spine") or []}
     errors: list[str] = []
+    visible_by_id = {}
+    if int((story.get("project") or {}).get("talkability_version") or 0) == 3:
+        from validate_explanation_depth import SlideHTMLParser
+        visible_parser = SlideHTMLParser()
+        visible_parser.feed(path.read_text(encoding="utf-8"))
+        visible_by_id = {item["attrs"].get("data-slide-id"): compact(" ".join(item["text"])) for item in visible_parser.slides}
     for slide in story.get("slides") or []:
         sid = text(slide.get("id"))
         attrs = parser.slides.get(sid)
@@ -336,6 +350,10 @@ def validate_html(path: Path, story: dict) -> list[str]:
                 errors.append(f"{path}:{sid}: {key} is missing")
             elif attrs.get(key, "") != value:
                 errors.append(f"{path}:{sid}: {key} does not match Story")
+        if visible_by_id:
+            for point in string_list((slide.get("speaker_cue") or {}).get("point_at")):
+                if compact(point) != "none" and compact(point) not in visible_by_id.get(sid, ""):
+                    errors.append(f"{path}:{sid}: point_at '{point}' is missing from HTML text")
     return errors
 
 
@@ -357,7 +375,7 @@ def main() -> int:
         errors.append("--blueprint and --html require a single part Story")
     elif stories:
         _, story = stories[0]
-        if int((story.get("project") or {}).get("talkability_version") or 0) == 2:
+        if int((story.get("project") or {}).get("talkability_version") or 0) in {2, 3}:
             if args.blueprint:
                 errors.extend(validate_blueprint(args.blueprint.resolve(), story))
             if args.html:

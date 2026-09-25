@@ -4,7 +4,7 @@
 
 ## 1. 発表全体の問いの背骨
 
-20分以上では `project.talkability_version: 2` を置き、`narrative.phase_order` と同じ順序の `question_spine` を必須とする。以下はfallbackの一例であり、記事入力では `knowledge-structure.md` のarchetypeを優先する。
+新規作成では `project.talkability_version: 3` を使う。既存v1/v2は明示的に移行するまで維持する。20分以上では`narrative.phase_order` と同じ順序の `question_spine` を必須とする。以下はfallbackの一例であり、記事入力では `knowledge-structure.md` のarchetypeを優先する。
 
 ```yaml
 narrative:
@@ -34,13 +34,13 @@ narrative:
     - phase: demo
       audience_question: "実際に何が起きるのか？"
       answer: "観測できる変化を含む一文回答"
-      transition_to_next: "見えた変化を、明日の一手へ縮めます。"
+      transition_to_next: "実演で見えた変化を含めて、今日の要点を振り返ります。"
       time_seconds: 360
       source_items: [demo-1]
     - phase: takeaway
-      audience_question: "明日、最初に何をするのか？"
-      answer: "時間・成果物・完了条件を含む一文回答"
-      transition_to_next: "この一手から始めてください。"
+      audience_question: "今日の説明から何が分かったのか？"
+      answer: "本文で説明した要点と結論を結び直す一文回答"
+      transition_to_next: "最後に、発表全体で伝えたかった結論へ戻ります。"
       time_seconds: 180
       source_items: [caution-1]
 ```
@@ -70,7 +70,11 @@ demo_runbook:
 
 Demo phaseを採用した20分以上の発表では3手順以上を原則とする。`visible_result` が「確認する」「理解する」だけの手順は不可。ファイル名、表示値、状態変化、出力、差分などを観測できるようにする。
 
-## 3. Takeawayは明日の一手まで縮める
+## 3. 発表内容のまとめと任意の行動提案を分ける
+
+まとめでは、発表済みの主要な内容・関係・結論を振り返る。各要点がどの本文ページの説明に対応するか確認する。`speaker_cue.recap_of` と `recap_reason` は、この対応と振り返る目的を記録するために使える。新しい課題や「明日15分」の作業を、まとめの代わりに追加しない。
+
+`takeaway` は持ち帰る理解・判断を含み、行動提案を意味するとは限らない。ユーザーの希望や発表の目的に合って行動提案を採用する場合だけ、次の任意フィールドを設定する。設定した場合は、操作・成果物・完了条件を具体化する。
 
 ```yaml
 tomorrow_action:
@@ -81,44 +85,54 @@ tomorrow_action:
   first_step: "PCを開いて最初に行う一操作"
 ```
 
-「試してみる」「検討する」だけでは不可。時間枠、残る成果物、完了条件を必ず含める。
+行動提案を設定した場合は「試してみる」「検討する」だけでは不可。時間枠、残る成果物、完了条件を含める。設定しないまとめに、これらを捏造して埋めてはならない。
 
-## 4. ページ単位の話者キュー
+## 4. 短いメモを基本にする（v3）
 
-全スライドに `speaker_cue` を置く。これは説明の設計図であり、投影面にそのまま載せる文章ではない。appendix/referenceの台本は短くてよいが、そのページを開く条件と読み方を固有に書く。
+`speaker_cue` のpurpose、audience_state_before/afterは設計用。発表者が読むノートには、そのページで補う説明だけを残す。`mode` は `cue`（既定）、`script`（台詞が必要）、`hybrid`（要点＋任意に開く発話例）。短いメモに最低文字数を設けず、時間から台詞を水増ししない。秒数は図を見る時間、操作、間、質問も含めて見積もる。
 
 ```yaml
-speaker_cue:
-  purpose: "このページが発表全体で果たす役割"
-  audience_state_before: "表示前の聴衆の理解・疑問"
-  audience_state_after: "説明後に聴衆が言えること"
-  script: "話者がそのまま話せる自然な説明。理由、具体例、判断を含める。"
-  point_at: ["画面に実在するラベル", "具体的な値"]
-  transition: "このページの最後に実際に言う一文"
-spoken_note: |-
-  橋渡し: 前ページからこのページが必要になる理由
-  話す内容: speaker_cue.script と同じ文章
-  指差し: 画面に実在するラベル / 具体的な値
-  次の一言: speaker_cue.transition と同じ文章
+project:
+  talkability_version: 3
+slides:
+  - id: s15
+    speaker_cue:
+      mode: hybrid
+      purpose: "資料一覧を見て、AGENTS.mdへ何を書くかを判断できるようにする"
+      audience_state_before: "設計内容を全部AGENTS.mdへ入れるか迷っている"
+      audience_state_after: "読む順序と共通ルールをAGENTS.mdに残すと説明できる"
+      cues:
+        - "全部入れると、最初に読む情報が埋もれる"
+        - "読む順序と共通ルールに絞る"
+      script: "全部入れると、最初に読む情報が埋もれるんですよね。ここには読む順序と共通ルールに絞って書きます。"
+      point_at: ["AGENTS.md"]
+    spoken_note: |-
+      形式: hybrid
+      要点: 全部入れると、最初に読む情報が埋もれる
+      要点: 読む順序と共通ルールに絞る
+      話す内容: 全部入れると、最初に読む情報が埋もれるんですよね。ここには読む順序と共通ルールに絞って書きます。
+      指差し: AGENTS.md
 ```
 
-- `script` はスライドの説明方法ではなく、発表で実際に口にする文章にする。「このページでは」「タイトルの通り」「表示内容を確認します」のようなメタ説明は禁止する。
-- 45秒以上の本編ページは、理由・例・判断のうち二つ以上を含む複数文にする。目安は1分あたり90〜220字。長文を一息で読むのではなく、画面を指す位置と間を設計する。
-- `point_at` は `delivery.visible_anchors` と対応させ、02で実在する文字・表セル・コード行・図のラベルにする。生成画像の中に埋め込んだ読めない文字を指差し対象にしない。
-- cover / profile / thanks または真のtransitionだけは `point_at: [none]` を許可する。
-- `audience_state_before` と `audience_state_after` が同じなら、そのページは不要か、説明目的が未設計である。
-- `spoken_note` は上記4行を正本とし、01から06まで文字列を保持する。
+この発話例は作成例であり、発表者の実際の発話ではない。
 
-## 5. 合格条件
+- `cues` は一つの思考または補足につき一項目。画面の表を全行読むリストにしない。要点は通常1〜3件を目安とし、内容に応じて調整する。
+- `script` は実際に口に出す文。cueでは省略、script/hybridでは指定する。列挙を一文に連結しない。
+- `point_at` は実在する `delivery.visible_anchors` を指定する。03/04で対応する文字・表セル・コード行が読める状態にする。
+- `connection_from_previous.bridge` と `speaker_cue.transition` は必要な場合だけ指定する。transitionを指定したら `next_slide_id` も付け、実際の次ページIDに合わせる。最終ページに次の予告を置かない。設計用の前提 `prior_state` と、口に出すbridgeは分ける。
+- 画面を読む時間だけ取るページは `mode: cue`、具体的な `silence_reason` と `point_at` を指定し、cues/script/bridge/transitionを省略する。空欄を放置したノートとは区別する。既存の `delivery.mode` はexplain等を使い、推定秒数に見る時間を含める。
+- `spoken_note` は `scripts/speaker_notes.py` の `render_note(slide)` で生成する。`形式`、複数の `要点`、任意の `話す内容`、`指差し`、`橋渡し`、`次の一言`、`次のスライド`、`話さない理由` を1項目1行で保存する。値の中に改行を入れない。指差しが複数なら ` / ` で区切る。
+- section-faithfulではbeatの `delivery: spoken` だけをcues/scriptへ含める。`delivery: visual` はvisible_textを必須にしてspoken_textは空にする。補足・出典はスライドの `delivery_scope` を使う。全内容の保持は、全内容の読み上げを意味しない。
+- 同じ説明を意図的に振り返る場合だけ、任意の `speaker_cue.recap_of: [s01]` と `recap_reason` に、何を思い出してほしいかを残せる。自動チェックの警告を消すためだけに付けない。
 
-`scripts/validate_talkability.py` は少なくとも次を機械判定する。
+## 5. 画面を見てノートを調整する
 
-- 20分以上にarchetypeと問いの背骨がある。Demo phaseを採用した場合はDemo runbook、Takeaway phaseを採用した場合は明日の一手がある。
-- phase時間、framing時間、ページ時間がtime budgetと一致する。
-- 全ページに具体的で固有の話者キューと4行ノートがある。
-- 指差し対象がStory、Blueprint、HTMLで失われていない。
-- Blueprintが `speaker_cue` を変更していない。
-- HTMLが `data-flow-phase`、`data-phase-question`、`data-speaker-purpose`、`data-spoken-note` を持つ。
-- メタ説明テンプレート、完全重複ノート、観測不能なDemo、成果物のないTakeawayを不合格にする。
+01で説明意図を作り、02で配置と表示内容を決めたら、画面とノートを同時に確認する。画面だけで伝わる説明を削り、追加する理由・判断を残す。変更はStoryのcue、該当beat、spoken_noteへ戻し、同じ変更をBlueprintへ反映してから再検証する。以後の工程は、この更新後のデータを一致させる。「最初の台本を永久に変更しない」という意味ではない。
 
-機械判定の合格は必要条件である。05ではノートだけを上から読み、発表の問い・答え・接続・実演・結論を再現できるかを人間の意味判断でも確認する。
+機械検証は `validate_talkability.py` と `validate_spoken_notes.py`。時間、指す対象、次ページID、データ一致、未記入を確認する。v3のノートにv2の文字数下限・四区画の必須条件を適用しない。
+
+05では `review_speaking.py` で語彙・長文・反復の確認候補を出し、スライドとメモを一緒に通して意味を確認する。自動チェック、エージェントによる意味確認、本人の通し練習を別々に報告する。短いメモから本人が自然に話せるかは、文字数や文字列一致では保証できない。
+
+## 6. 旧形式の互換性
+
+既存v1は「橋渡し／読み方／次の判断」、v2は「橋渡し／話す内容／指差し／次の一言」と既存のspeaker_cueを保持する。上位バージョン番号だけを付け替えない。移行する場合は全ページのcueとノートを作り直し、section-faithfulのbeatsに伝達方法を付け、Story・Blueprint・HTMLを同時に更新する。
