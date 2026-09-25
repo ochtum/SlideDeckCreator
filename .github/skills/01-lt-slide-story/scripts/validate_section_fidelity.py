@@ -358,7 +358,19 @@ def validate_story(path: Path, manifest: dict[str, Any], story: dict[str, Any]) 
                     errors.append(f"{path}:{slide_id}:beats[{beat_index}].point_id is not declared by {section_id}")
                 else:
                     covered_points.add(point_id)
-                if len(compact(spoken_text)) < 8:
+                v3 = int((story.get("project") or {}).get("talkability_version") or 0) == 3
+                if v3:
+                    delivery = text(beat.get("delivery"))
+                    if delivery not in {"spoken", "visual"}:
+                        errors.append(f"{path}:{slide_id}:beats[{beat_index}].delivery must be spoken or visual")
+                    if delivery == "visual" and (not visible_text or spoken_text):
+                        errors.append(f"{path}:{slide_id}: visual beat requires visible_text and empty spoken_text")
+                    if delivery == "spoken":
+                        cue = slide.get("speaker_cue") or {}
+                        actual = " ".join(cue.get("cues") or []) + " " + script
+                        if not spoken_text or compact(spoken_text) not in compact(actual):
+                            errors.append(f"{path}:{slide_id}: spoken beat must occur in speaker_cue.cues or script")
+                elif len(compact(spoken_text)) < 8:
                     errors.append(f"{path}:{slide_id}:beats[{beat_index}].spoken_text must be concrete")
                 elif compact(spoken_text) not in compact(script):
                     errors.append(f"{path}:{slide_id}:beats[{beat_index}].spoken_text is missing from speaker_cue.script")

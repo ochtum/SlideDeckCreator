@@ -143,29 +143,30 @@ def validate(blueprint: dict[str, Any], html_text: str | None = None) -> tuple[l
         if declared_family and declared_family not in set(FAMILIES.values()):
             errors.append(f"{sid}: unknown animation.family '{declared_family}'")
 
+    warnings: list[str] = []
     substantive = len(slides) >= 20
     total = sum(preset_counts.values())
     if substantive:
         if len(preset_counts) < 5:
-            errors.append(f"deck: use at least 5 presets; found {len(preset_counts)} ({', '.join(sorted(preset_counts))})")
+            warnings.append(f"deck: preset variety advisory (no quota); found {len(preset_counts)} ({', '.join(sorted(preset_counts))})")
         if len(family_counts) < 4:
-            errors.append(f"deck: use at least 4 motion families; found {len(family_counts)}")
+            warnings.append(f"deck: motion family variety advisory (no quota); found {len(family_counts)}")
         if len(set(step_counts)) < 3:
-            errors.append(f"deck: use at least 3 different step counts; found {sorted(set(step_counts))}")
+            warnings.append(f"deck: step count variety advisory (no quota); found {sorted(set(step_counts))}")
         most_common_steps = Counter(step_counts).most_common(1)[0]
         if most_common_steps[1] / len(step_counts) > 0.65:
-            errors.append(f"deck: {most_common_steps[1]}/{len(step_counts)} slides use {most_common_steps[0]} steps; pacing is too uniform")
+            warnings.append(f"deck: {most_common_steps[1]}/{len(step_counts)} slides use {most_common_steps[0]} steps; pacing is too uniform")
         for start in range(max(0, len(signatures) - 2)):
             if len(set(signatures[start:start + 3])) == 1:
-                errors.append(f"deck: identical motion signature repeats on slides {start + 1}-{start + 3}")
+                warnings.append(f"deck: identical motion signature repeats on slides {start + 1}-{start + 3}")
                 break
         if total:
             preset, count = preset_counts.most_common(1)[0]
             if count / total > 0.65:
-                errors.append(f"deck: preset '{preset}' is {count}/{total} ({count / total:.0%}); motion is too repetitive")
+                warnings.append(f"deck: preset '{preset}' is {count}/{total} ({count / total:.0%}); motion is too repetitive")
             strong = sum(preset_counts[preset] for preset in STRONG)
             if strong / total > 0.20:
-                errors.append(f"deck: strong presets are {strong}/{total} ({strong / total:.0%}); reserve them for key moments")
+                warnings.append(f"deck: strong presets are {strong}/{total} ({strong / total:.0%}); reserve them for key moments")
 
     html_counts: Counter[str] = Counter()
     if html_text is not None:
@@ -184,15 +185,15 @@ def validate(blueprint: dict[str, Any], html_text: str | None = None) -> tuple[l
         if missing:
             errors.append(f"html: blueprint presets were lost or normalized: {', '.join(missing)}")
         if substantive and len(html_counts) < 5:
-            errors.append(f"html: only {len(html_counts)} presets are implemented ({', '.join(sorted(html_counts))})")
+            warnings.append(f"html: only {len(html_counts)} presets are implemented ({', '.join(sorted(html_counts))})")
         html_total = sum(html_counts.values())
         if substantive and html_total:
             preset, count = html_counts.most_common(1)[0]
             if count / html_total > 0.65:
-                errors.append(f"html: data-anim '{preset}' is {count}/{html_total} ({count / html_total:.0%}); final motion is monotonous")
+                warnings.append(f"html: data-anim '{preset}' is {count}/{html_total} ({count / html_total:.0%}); final motion is monotonous")
 
     return errors, {
-        "slides": len(slides), "preset_counts": dict(preset_counts),
+        "warnings": warnings, "slides": len(slides), "preset_counts": dict(preset_counts),
         "family_counts": dict(family_counts), "step_counts": dict(Counter(step_counts)),
         "html_preset_counts": dict(html_counts),
     }
@@ -210,6 +211,7 @@ def write_report(path: Path, stats: dict[str, Any], errors: list[str]) -> None:
         "", "## Findings", "",
     ]
     lines.extend([f"- {error}" for error in errors] or ["- なし"])
+    lines.extend(["", "## 確認候補（種類数を満たすための演出追加は不要）", ""] + [f"- {warning}" for warning in stats.get("warnings", [])])
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
@@ -225,6 +227,8 @@ def main() -> int:
     errors, stats = validate(blueprint, html_text)
     if args.report:
         write_report(args.report, stats, errors)
+    for warning in stats.get("warnings", []):
+        print(f"WARNING: {warning}")
     if errors:
         print("\n".join(f"ERROR: {error}" for error in errors))
         return 1

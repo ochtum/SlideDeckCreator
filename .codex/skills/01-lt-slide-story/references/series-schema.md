@@ -46,7 +46,7 @@ parts:
     learning_goal: "一件の変更をタスクカードから検証まで通せる"
     scope:
       include: ["題材選定", "タスクカード", "AGENTS.md", "完了条件"]
-      exclude: ["大規模リポジトリの全体地図"]
+      exclude: ["大規模リポジトリの構成一覧"]
     source_items: [step-1, step-2, demo-1]
     story_file: "parts/part-01-start-safe/01-story.yaml"
     blueprint_file: "parts/part-01-start-safe/02-blueprint.yaml"
@@ -58,10 +58,10 @@ parts:
     duration_minutes: 30
     target_slide_count: 22
     appendix_slide_count: 4
-    slide_count_rationale: "機能地図と設定地図の二つの代表サンプルを比較して扱うため"
-    learning_goal: "機能地図と読み順をリポジトリに置ける"
+    slide_count_rationale: "機能とファイルの対応表と設定と依存関係の一覧の二つの代表サンプルを比較して扱うため"
+    learning_goal: "機能とファイルの対応表と読み順をリポジトリに置ける"
     scope:
-      include: ["機能地図", "設計資料", "設定と依存関係"]
+      include: ["機能とファイルの対応表", "設計資料", "設定と依存関係"]
       exclude: ["本番運用の改善"]
     source_items: [fact-3, step-3, demo-2]
     story_file: "parts/part-02-knowledge-map/01-story.yaml"

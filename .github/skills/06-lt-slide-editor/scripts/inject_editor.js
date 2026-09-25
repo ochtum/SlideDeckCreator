@@ -99,6 +99,11 @@ function editorCss() {
     transform: none !important;
   }
 }
+@media screen and (max-width: 1600px), screen and (max-height: 900px) {
+  :root {
+    --viewport-gutter: 24px;
+  }
+}
 body.lt-editor-enabled {
   --lt-editor-accent: #1d74e8;
   display: block;
@@ -143,6 +148,16 @@ body.lt-editor-enabled.lt-editor-view-mode > .deck {
   top: auto !important;
   z-index: auto;
   transform-origin: center !important;
+}
+@media screen {
+  body:not(.presenter-mode):not(.lt-editor-enabled) > .deck,
+  body.lt-editor-enabled.lt-editor-view-mode > .deck {
+    position: fixed !important;
+    left: 50% !important;
+    top: 50% !important;
+    margin: 0 !important;
+    translate: -50% -50%;
+  }
 }
 .lt-editor-root {
   position: fixed;
@@ -654,9 +669,9 @@ function editorRuntime() {
     '<div class="lt-editor-side-head"><span>台本・出力</span><span>P: ページ一覧 / E: 終了 / V: 表示切替</span></div>',
     '<section class="lt-editor-section lt-editor-note-section">',
     '<h2>Spoken Note</h2>',
-    '<textarea data-spoken-note rows="8" spellcheck="false" placeholder="橋渡し: 前ページから進む理由&#10;話す内容: 実際に口にする説明&#10;指差し: 画面にあるラベル&#10;次の一言: 次へ渡す発話"></textarea>',
+    '<textarea data-spoken-note rows="8" spellcheck="false" placeholder="形式: cue&#10;要点: このページで補う一言&#10;指差し: 画面にあるラベル"></textarea>',
     '<p class="lt-editor-note-status" data-note-status>台本形式を確認中</p>',
-    '<p class="lt-editor-muted">Storyの台本と同じ四区画を保ちます。</p>',
+    '<p class="lt-editor-muted">短い要点メモと必要な発話例を編集できます。保存後に元データへの反映と確認が必要です。</p>',
     '</section>',
     '<section class="lt-editor-section lt-editor-output-section">',
     '<h2>Output</h2>',
@@ -1065,19 +1080,35 @@ function editorRuntime() {
   function onSpokenNoteInput() {
     const slide = activeSlide();
     if (!slide) return;
+    if (!Object.prototype.hasOwnProperty.call(slide.dataset, "originalSpokenNote")) {
+      slide.dataset.originalSpokenNote = slide.dataset.spokenNote || "";
+    }
     slide.dataset.spokenNote = spokenNoteInput.value;
+    slide.dataset.noteReview = "pending";
     noteSlide = slide;
     updateSpokenNoteStatus();
   }
 
   function updateSpokenNoteStatus() {
+    const note = spokenNoteInput.value;
+    const mode = note.match(/^形式[:：]\s*(cue|script|hybrid)\s*$/m)?.[1];
+    if (mode) {
+      const cue = /^要点[:：]\s*\S/m.test(note);
+      const script = /^話す内容[:：]\s*\S/m.test(note);
+      const silence = /^話さない理由[:：]\s*\S/m.test(note);
+      const valid = silence ? mode === "cue" && !cue && !script && /^指差し[:：]\s*\S/m.test(note)
+        : mode === "cue" ? cue && !script : mode === "script" ? script && !cue : cue && script;
+      noteStatus.classList.toggle("is-ok", valid);
+      noteStatus.textContent = valid ? "メモ形式を確認済み。保存後にStoryへ反映・再レビューしてください" : "形式に必要な要点・話す内容・見る対象を確認してください";
+      return;
+    }
     const labels = ["橋渡し", "話す内容", "指差し", "次の一言"];
     const missing = labels.filter((label) => {
       const pattern = new RegExp("^\\s*" + label + "\\s*[:：]\\s*\\S.+$", "m");
       return !pattern.test(spokenNoteInput.value);
     });
     noteStatus.classList.toggle("is-ok", missing.length === 0);
-    noteStatus.textContent = missing.length ? "未入力: " + missing.join(" / ") : "台本形式OK（四区画入力済み）";
+    noteStatus.textContent = missing.length ? "未入力: " + missing.join(" / ") : "旧台本形式を確認済み。保存後にStoryへ反映・再レビューしてください";
   }
 
   function onImagePicked(event) {
@@ -1566,7 +1597,7 @@ function editorRuntime() {
 
   function refreshDeckSlides() {
     if (window.slideDeck) {
-      window.slideDeck.slides = [...document.querySelectorAll(".slide")];
+      window.slideDeck.slides = [...deck.querySelectorAll(":scope > .slide")];
       window.slideDeck.applyZFlow?.();
     }
   }
@@ -1712,7 +1743,7 @@ function editorRuntime() {
         printPdfFromFileUrl(error);
         return;
       }
-      setStatus("PDF export unavailable. Start serve_editor.js with Playwright available. " + error.message);
+      setStatus("PDF export unavailable. Start serve_editor.js with bundled Node.js. " + error.message);
     }
   }
 
@@ -1807,6 +1838,7 @@ function editorRuntime() {
 
   function cleanDocumentHtml() {
     const clone = document.documentElement.cloneNode(true);
+    clone.querySelector("#pagerGrid")?.replaceChildren();
     clone.querySelector(".lt-editor-root")?.remove();
     clone.querySelector(".lt-editor-mode-badge")?.remove();
     clone.querySelector(".lt-editor-selection")?.remove();
@@ -1814,7 +1846,7 @@ function editorRuntime() {
     clone.querySelectorAll(".lt-editor-selected").forEach((el) => el.classList.remove("lt-editor-selected"));
     clone.querySelectorAll("[contenteditable]").forEach((el) => el.removeAttribute("contenteditable"));
     clone.querySelectorAll("[spellcheck]").forEach((el) => el.removeAttribute("spellcheck"));
-    clone.querySelector("body")?.classList.remove("lt-editor-enabled", "lt-editor-edit-mode", "lt-editor-view-mode", "lt-editor-dragging", "lt-editor-tail-dragging");
+    clone.querySelector("body")?.classList.remove("overview", "lt-editor-enabled", "lt-editor-edit-mode", "lt-editor-view-mode", "lt-editor-dragging", "lt-editor-tail-dragging");
     const cleanDeck = clone.querySelector(".deck");
     cleanDeck?.style.removeProperty("left");
     cleanDeck?.style.removeProperty("top");

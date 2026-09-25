@@ -1,11 +1,15 @@
 ---
 name: 06-lt-slide-editor
-description: 04-lt-slide-build によって生成された HTML ライトニングトークデッキに、ブラウザ内エディタを追加する。GitHub Copilot が output/index.html を変更し、スライドをインタラクティブに編集できるようにする必要がある場合に使用する。具体的には、配置済み要素の移動、テキスト編集、spoken_note編集、テキスト・画像・吹き出しの追加、基本的なスタイルの適用、エディタパネルがスライドを邪魔する場合の移動、キーボードショートカットによるエディタモードと表示モードの切り替え、スライドの複製、空白スライドの追加、Save HTML による元HTMLの上書き、Export PDF による同名PDF出力を行う。その際、プレゼン表示、発表者ビュー、印刷、レビューの挙動は維持すること。
+description: 04-lt-slide-build によって生成された HTML ライトニングトークデッキに、ブラウザ内エディタを追加する。Codex が output/index.html を変更し、スライドをインタラクティブに編集できるようにする必要がある場合に使用する。具体的には、配置済み要素の移動、テキスト編集、spoken_note編集、テキスト・画像・吹き出しの追加、基本的なスタイルの適用、エディタパネルがスライドを邪魔する場合の移動、キーボードショートカットによるエディタモードと表示モードの切り替え、スライドの複製、空白スライドの追加、Save HTML による元HTMLの上書き、Export PDF による同名PDF出力を行う。その際、プレゼン表示、発表者ビュー、印刷、レビューの挙動は維持すること。
 ---
 
 # 06 LT Slide Editor
 
 `04-lt-slide-build` が生成したHTMLデッキに、ブラウザ内エディターを追加する。単発は `output/index.html`、シリーズは対象パートの `output/<part-id>/index.html` を明示する。通常の発表モードは変えず、`?edit=1` のときだけ編集UIを表示する。
+
+## 発表者の言葉
+
+制作対象の `config/presentation-language.md` があれば最初に読み、過去の観測傾向より現在の希望を優先する。新しく書く見出し・説明・ノートには「正本」「地図」「道具」のような抽象的な比喩を足さず、指すファイル・機能・操作を具体的に書く。引用・正式名称・コードの意味は変えない。
 
 ## Required Reads
 
@@ -18,7 +22,7 @@ description: 04-lt-slide-build によって生成された HTML ライトニン�
 2. 対象が `04-lt-slide-build` 系の構造を持つことを確認する。最低限 `.deck` と `.slide` が必要。
 3. `scripts/inject_editor.js` を実行して編集ランタイムを注入する。
 4. `scripts/serve_editor.js` で対象HTMLをローカル配信し、表示された `http://127.0.0.1:<port>/?edit=1` を開く。
-5. 編集画面が発表者ビュー風の固定ワークスペースになり、左上に保存対象の実スライド、左下に編集パネル、右側にSpoken Noteと出力操作が表示されることを確認する。左下は「選択要素」「追加」「表示・移動」の3タブへ分け、同時に全操作を詰め込まず、選択中の作業だけをパネル全面へ表示する。要素選択、ドラッグ移動、テキスト編集、spoken_note編集、テキスト追加、画像追加、尻尾付き吹き出し追加、吹き出し選択時の頂点ハンドル移動、アニメーションstep指定と最終step移動、フォントサイズを含むスタイル変更、ページ追加、ページ複製、`P` キーによるページ一覧からの移動、`E` キーによる通常URL/編集URLの切り替え、`V` キーによる編集UI表示/非表示切り替え、`Save HTML` による対象HTMLの上書き保存を確認する。Spoken Note欄では `橋渡し`、`話す内容`、`指差し`、`次の一言` の不足がその場で分かることを確認する。
+5. 編集画面が発表者ビュー風の固定ワークスペースになり、左上に保存対象の実スライド、左下に編集パネル、右側にSpoken Noteと出力操作が表示されることを確認する。左下は「選択要素」「追加」「表示・移動」の3タブへ分け、同時に全操作を詰め込まず、選択中の作業だけをパネル全面へ表示する。要素選択、ドラッグ移動、テキスト編集、spoken_note編集、テキスト追加、画像追加、尻尾付き吹き出し追加、吹き出し選択時の頂点ハンドル移動、アニメーションstep指定と最終step移動、フォントサイズを含むスタイル変更、ページ追加、ページ複製、`P` キーによるページ一覧からの移動、`E` キーによる通常URL/編集URLの切り替え、`V` キーによる編集UI表示/非表示切り替え、`Save HTML` による対象HTMLの上書き保存を確認する。Spoken Note欄ではv3の要点・任意の台詞、または旧v2の4行形式の不足が分かることを確認する。形式確認と本人の話しやすさの確認を区別する。
 6. `Export PDF` で対象HTMLを先に上書きし、同じディレクトリに同名PDF（既定は `output/index.pdf`）が生成されることを確認する。
 7. `file://` で開いた場合、`Save HTML` はブラウザのファイル保存ピッカーまたはダウンロードへフォールバックし、`Export PDF` は印刷ダイアログを開くことを確認する。
 8. `scripts/validate_editor_workspace.js <index.html> --width 1280 --height 720` と1920x980相当を実行し、実スライドが左上のstage内に収まること、編集パネルがその下へドックされること、右側の台本欄が十分な高さを持つこと、フロート／再ドック、`V` 切替を確認する。その後、`?edit=1` なしの通常表示で、キーボード操作、発表者ビュー、印刷表示が壊れていないことを確認する。
@@ -30,12 +34,13 @@ description: 04-lt-slide-build によって生成された HTML ライトニン�
 PowerShellでは次を使う。
 
 ```powershell
-$node=(Get-Command node -ErrorAction Stop).Source
+$node=Join-Path $env:LOCALAPPDATA ".cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe"
+if (!(Test-Path $node)) { $node=(Get-Command node -ErrorAction Stop).Source }
 & $node .github\skills\06-lt-slide-editor\scripts\inject_editor.js output\index.html
 & $node .github\skills\06-lt-slide-editor\scripts\serve_editor.js output\index.html
 ```
 
-`serve_editor.js` は `Save HTML` 用の `POST /__lt_editor_save` と、`Export PDF` 用の `POST /__lt_editor_export_pdf` を提供する。PDF生成は Playwright を使うため、プロジェクトにPlaywrightがない場合は依存関係を追加してよいか確認してから導入する。
+`serve_editor.js` は `Save HTML` 用の `POST /__lt_editor_save` と、`Export PDF` 用の `POST /__lt_editor_export_pdf` を提供する。PDF生成は Playwright を使うため、通常は同梱 Node.js で起動する。
 
 出力先を分ける場合:
 
@@ -50,12 +55,13 @@ $node=(Get-Command node -ErrorAction Stop).Source
 - `V` キーで `?edit=1` 内の編集UI表示/非表示を切り替える。テキスト編集中、フォーム入力中、修飾キー付き入力では切り替えない。
 - `P` キーで既存のページ一覧を開き、サムネイルから任意ページへ移動できるようにする。一覧を開く前が編集モードなら、ページ選択または `P` / `Escape` で一覧を閉じた後に編集モードへ戻す。テキスト、Spoken Note、フォームの入力中は `P` をショートカットとして扱わない。
 - 閲覧モードでは編集パネル、選択枠、`contenteditable`、要素ドラッグ、編集用キー操作を無効化し、既存のスライド閲覧ショートカットを優先する。
+- 通常表示と編集URL内の閲覧モードでは、縮小前の1280x720要素をCSS Gridへ直接中央配置しない。画面中央を基準に `translate: -50% -50%` で固定し、拡大縮小後のスライドが左右・上下それぞれ等しい余白になるようにする。1600x900以下のノートPC相当では `--viewport-gutter` を24pxへ縮め、表示面積を確保する。
 - 編集画面は発表者ビュー風の2列構成を標準とする。左上に保存対象の実スライド、左下に要素・追加・移動パネル、右側にSpoken Note・保存・PDF操作を置き、スライドへ編集UIを重ねない。
 - 左下の編集パネルは「選択要素」「追加」「表示・移動」の3タブを標準とし、一度に一つの作業面だけを表示する。要素をスライド上で選択したときは「選択要素」タブへ自動的に戻す。フィールドと操作ボタンは横スクロールなしで収め、暗い背景上のラベルに十分なコントラストを持たせる。
 - 左下の編集パネルは既定でドックする。ヘッダーのドラッグまたは「フロート」で切り離せ、「ドックへ戻す」で元の領域へ戻せる。フロート位置は同じブラウザの `localStorage` に保存する。
 - 対象要素は主に `.zone`。絶対配置の `left`, `top`, `width`, `height` を編集する。
 - テキスト編集は選択要素内の文字要素を `contenteditable` にする。
-- Spoken Note 欄は現在スライドの `data-spoken-note` を編集する。`橋渡し`、`話す内容`、`指差し`、`次の一言` の四区画を案内し、不足区画をdraft警告として表示する。スライド移動時は現在スライドのノートを読み直し、保存時はHTML属性として残す。
+- Spoken Note 欄は現在スライドの `data-spoken-note` を編集する。v3の選択形式、または旧v2の四区画に応じて不足を警告する。スライド移動時は現在スライドのノートを読み直し、保存時はHTML属性として残す。
 - 画像追加はローカルファイルをData URLとしてHTMLに埋め込む。配布用に軽く保ちたい場合は、後で `output/assets/` 参照へ差し替える。
 - 選択要素のアニメーション順序は `Step` 欄で0以上の整数として変更できるようにする。選択したzone自身に `data-anim` がなく、子孫にアニメーション要素が一つだけある場合は、その子要素を編集対象にする。`最後に表示` は同じスライドの他要素より後へ移し、stepの空番が生じないよう0から連続値へ正規化する。アニメーション未設定の要素へstepを指定した場合は `fade` を既定にする。`アニメ確認` は現在ページをstep 0へ戻して閲覧モードに入り、矢印キーで順番を確認できるようにする。
 - `prefers-reduced-motion: reduce` では移動・拡大・トランジションを止めても、未到達stepを最初から表示しない。印刷時だけは従来どおり全要素を表示する。
@@ -66,7 +72,7 @@ $node=(Get-Command node -ErrorAction Stop).Source
 - `file://` で開いた場合、`Save HTML` は File System Access API のファイル保存ピッカーへフォールバックする。利用できない場合は編集済みHTMLをダウンロードする。
 - `file://` で開いた場合、`Export PDF` は先に閲覧モードへ切り替え、自動PDF生成の代わりに印刷ダイアログを開き、ユーザーが Save as PDF を選べるようにする。
 - 通常の静的サーバーで開いた場合、`Save HTML` と `Export PDF` はローカル編集サーバーが必要である旨を表示する。完全自動の上書き保存や同名PDF出力が必要なときは必ず `serve_editor.js` を使う。
-- 保存時は編集UI、選択枠、頂点ハンドル、`contenteditable`、一時クラスを取り除いてからHTML化する。尻尾の先端座標・接続辺・再描画用CSS変数はスライド内容として保持する。
+- 保存時は編集UI、選択枠、頂点ハンドル、`contenteditable`、一時クラスを取り除いてからHTML化する。ページ一覧用の `#pagerGrid` は空に戻し、そこへ動的生成されたサムネイル内の `.slide` cloneを保存しない。尻尾の先端座標・接続辺・再描画用CSS変数はスライド内容として保持する。
 
 ## Implementation Rules
 
@@ -95,3 +101,9 @@ $node=(Get-Command node -ErrorAction Stop).Source
 - 注入時に既存HTMLを上書きした場合のバックアップ。例: `output/index.html.bak-YYYYMMDD-HHMMSS`
 
 最終回答では、対象HTML、注入結果、確認した編集機能、Save HTML の上書き結果、PDF出力結果、未確認の項目を簡潔に示す。
+
+## ノートを元データへ反映する
+
+v3は `形式: cue | script | hybrid` と要点・任意の台詞を編集できる。旧v2は従来の4行を扱う。HTML保存だけではStory/Blueprintは更新されない。保存後に `scripts/export_note_revisions.py --story <01-story.yaml> --blueprint <02-blueprint.yaml> --html <saved.html> --out <new-candidate-directory>` を実行する。初回編集時のノートとStoryが違う場合やページ構成が変わった場合は競合として止まる。
+
+候補のノートと実画面を比較し、必要なら対応beat、talking_points、指す対象、接続も修正する。候補を一時コピーで全該当validatorに通した後、同じ作業でStoryとBlueprintの両方へ採用する。HTMLを再構築して編集前ノートの記録をリセットし、05でレビューする。候補出力や画面上の「形式確認」は意味の確認完了を示さない。元ファイルを直接上書きする取り込みや競合の無視はしない。

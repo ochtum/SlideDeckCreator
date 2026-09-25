@@ -13,6 +13,10 @@ description: .lt-slide-work の成果物をもとに、最終的なライトニ�
 2. `references/04b-animation.md` - アニメーション付与とstep整理
 3. `references/04c-runtime.md` - ランタイム、発表者ビュー、PDF、ZIP、検証
 
+## 発表者の言葉
+
+制作対象の `config/presentation-language.md` があれば最初に読み、過去の観測傾向より現在の希望を優先する。新しく書く見出し・説明・ノートには「正本」「地図」「道具」のような抽象的な比喩を足さず、指すファイル・機能・操作を具体的に書く。引用・正式名称・コードの意味は変えない。
+
 ## Workspace Contract
 
 ```text
@@ -32,7 +36,7 @@ description: .lt-slide-work の成果物をもとに、最終的なライトニ�
    └─ assets/
 ```
 
-発表者情報は `config/presenter.json` を唯一の正本として参照する。`presenter.include: true` の場合、自己紹介スライドはこのJSONの表示名、任意の `name_note`、自己紹介文、全リンク、QRラベル、`use: true` の画像だけを可視内容として反映する。登壇テーマから推測した補足・結論・実績・意気込みを追加しない。削除対象フォルダへ移動または複製しない。ビルド中の一時ファイルは `.lt-slide-work/` に置き、`output/` には利用者へ渡す完成品だけを残す。
+発表者情報は `config/presenter.json` を唯一の参照元として参照する。`presenter.include: true` の場合、自己紹介スライドはこのJSONの表示名、任意の `name_note`、自己紹介文、全リンク、QRラベル、`use: true` の画像だけを可視内容として反映する。登壇テーマから推測した補足・結論・実績・意気込みを追加しない。削除対象フォルダへ移動または複製しない。ビルド中の一時ファイルは `.lt-slide-work/` に置き、`output/` には利用者へ渡す完成品だけを残す。
 
 ## Series Mode
 
@@ -105,13 +109,13 @@ output/
 - liveのまとめとサンクスを連続配置し、live末尾を `data-role="recap"`、`data-role="thanks"` にする。dual-useではその後に `data-delivery-scope="appendix"` / `"reference"` を置いてよい。appendix/referenceの後にliveへ戻らない。
 - 各 `.slide` に設計図の `spoken_note` を `data-spoken-note` として埋め込む。HTML属性として正しくエスケープし、投影面には表示しない。talkability v2では四行を発表者ビューで「橋渡し・話す内容・指差し・次の一言」の区画に分けて表示する。
 - `presenter.include: true` の自己紹介スライドでは、`config/presenter.json` を実際に読み込む。`display_name`、指定時の `name_note`、`bio`、すべての `links[].platform` と `links[].account`、`qr.use: true` の `qr.label` だけを可視本文として表示する。構造ラベルの「自己紹介」「PROFILE」、章フッター、ページ番号を除き、JSONにない補足・結論・実績・意気込みを追加してはならない。プロフィールページには `conclusion-zone` / `conclusion-bar` を生成しない。
-- `avatar.use` または `qr.use` が true の場合は、対応する `path` のファイルを対象デッキの `assets/` にコピーし、HTMLから相対参照する。`use: false` の要素は表示・コピーしない。`visuals-manifest.yaml` は作業用の出力記録に限り、JSONと異なるassetを正本として採用してはならない。
+- `avatar.use` または `qr.use` が true の場合は、対応する `path` のファイルを対象デッキの `assets/` にコピーし、HTMLから相対参照する。`use: false` の要素は表示・コピーしない。`visuals-manifest.yaml` は作業用の出力記録に限り、JSONと異なるassetを参照元として採用してはならない。
 - 各 `.slide` に `reader_context` と `narrative_continuity.bridge` を `data-reader-context`、`data-story-bridge` として埋め込む。発表者ビューではノートとともに表示し、話者が後からページ間の接続を再現できるようにする。
 - talkability v2では各 `.slide` に `flow_phase`、対応phaseの聴衆の問い、`speaker_cue.purpose` を `data-flow-phase`、`data-phase-question`、`data-speaker-purpose` として埋め込む。Storyにない文言へ要約・改変しない。
 - 20分以上では、Story/Blueprintの `delivery` を `data-delivery-mode`、`data-estimated-seconds` として各 `.slide` へ埋め込む。`visible_anchors` は投影面の可視テキストとしてすべて残す。
 - Story/Blueprintの `delivery_scope`、`knowledge_unit_ids`、`comprehension_check_ids`、`citation_ids` を `data-delivery-scope`、`data-knowledge-unit-ids`、`data-comprehension-check-ids`、`data-citation-ids` として保持する。dual-useでは出典ラベルも投影面とPDFへ可視表示し、referenceスライドに資料名、発行元、URL、確認日を描画する。
 - 初見者向けに必要な平易な定義・具体例は、タイトルだけに頼らず本文または `content_model` で可視にする。章の切替、新用語、抽象度の切替では、設計図が指定した文脈ラベルを表示する。
-- Storyの `semantic_clarity.claims[].surface_text` は可視文の正本である。HTML化の際に短縮・言い換え・カード分割を行わず、主語、実際の行為者、変更・確認・判断対象、述語を同じ可視文として残す。改行やインライン装飾でDOMが分かれても、連結した表示文字列は正本と一致させる。
+- Storyの `semantic_clarity.claims[].surface_text` は可視文の確定データである。HTML化の際に短縮・言い換え・カード分割を行わず、主語、実際の行為者、変更・確認・判断対象、述語を同じ可視文として残す。改行やインライン装飾でDOMが分かれても、連結した表示文字列は参照元と一致させる。
 - `content_model` を持つスライドは、型に対応する専用HTMLコンポーネントとして描画する。`table` は列と行、`flow` はvariantに応じたノード・矢印・判断ゲート、`implementation-playbook` は成果物・担当・完了条件、`code` / `config` は読める最小断片、`hierarchy`、`timeline`、`chart`、`case-study` は設計図の固有データを表示する。
 - `content_model` を持つ `.slide` には `data-content-model-type` と `data-evidence-artifact-ids` を埋め込む。HTMLの表示文字はBlueprintの列、行、ノード、項目、コードを忠実に含み、型だけを見て汎用部品へ差し替えない。
 - 同じ `content_model.data` を再利用するページは、Blueprintの `focus` と `highlight` を可視の注釈または強調として実装する。focusがない再利用はBlueprintへ戻す。
@@ -158,3 +162,7 @@ output/
 - シリーズ: `output/<part-id>/index.html`、`output/<part-id>/index.pdf`、`output/<part-id>/index_html.zip`、`output/<part-id>/assets/*`
 
 最終回答ではファイルへのリンク、物理枚数、検証結果だけを簡潔に示す。
+
+## 短いノートの実装
+
+v3の `spoken_note` は要点を主表示し、hybridの話す内容は開閉できる発話例として表示する。空のbridge/transitionのために固定文を生成しない。deck-shell.htmlは旧4行ノートにも対応する。新規生成で編集開始時の `data-original-spoken-note` や `data-note-review` を持ち越さない。意味修正はStory/Blueprintへ戻し、更新後のデータをHTMLへ反映する。

@@ -38,7 +38,7 @@ request:
 
 `source.document_types` には `concept`, `tutorial`, `hands-on`, `comparison`, `design`, `troubleshooting`, `case-study`, `retrospective`, `research`, `experiment`, `opinion`, `proposal` の正規化トークンを一つ以上保存する。
 
-`narrative.phase_order` を正本とし、`question_spine` を同じ順序にする。20分以上でも、記事種別に存在しないDemoを捏造しない。Demoを含める場合だけ `demo_runbook` を必須にする。Takeawayを含める場合だけ `tomorrow_action` を必須にする。
+`narrative.phase_order` を参照元とし、`question_spine` を同じ順序にする。20分以上でも、記事種別に存在しないDemoを捏造しない。Demoを含める場合だけ `demo_runbook` を必須にする。Takeawayは発表済みの要点・結論を基本とし、`tomorrow_action` は行動提案を採用する場合だけ設定する。
 
 ## Knowledge units
 

@@ -191,4 +191,4 @@ visual_assets:
 
 `project.authoring_mode: section-faithful` のStoryでは、各節スライドの `source_section_ids` と `talk_track` を同じIDのBlueprintへ変更せず引き継ぐ。`talk_track.beats[].visible_text` はtitle、message、`text`、`visual.annotations`、またはrendererが実際に描画する `content_model.data` / `focus` / `highlight` に存在させる。未知の補助キー、metadata、data属性だけに存在する文字列は投影面へ実装したものとみなさない。
 
-`animation` の正本は `motion-choreography.md` とする。最終HTMLへ `preset` を同名の `data-anim` として引き継ぎ、一律 `rise` へ正規化しない。本編20枚以上ではデッキ全体のpreset、family、step数、連続signatureの分布を検査する。
+`animation` の参照元は `motion-choreography.md` とする。最終HTMLへ `preset` を同名の `data-anim` として引き継ぎ、一律 `rise` へ正規化しない。本編20枚以上ではデッキ全体のpreset、family、step数、連続signatureの分布を検査する。

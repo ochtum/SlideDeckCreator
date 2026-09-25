@@ -352,6 +352,7 @@ async function prepareSlideViewport(page, options) {
       }
       #deck {
         transform: none !important;
+        translate: none !important;
         position: relative !important;
         left: 0 !important;
         top: 0 !important;
@@ -382,6 +383,12 @@ async function inspectSlide(page, index, options) {
     if (!slide) return { findings: [{ type: "missing-slide", message: "slide not found" }] };
 
     const slideRect = slide.getBoundingClientRect();
+    if (slideRect.left < -1 || slideRect.top < -1 ||
+        slideRect.right > window.innerWidth + 1 || slideRect.bottom > window.innerHeight + 1) {
+      findings.push({ type: "slide-outside-viewport", message: "スライドが撮影範囲からはみ出しています", rect: {
+        x: slideRect.x, y: slideRect.y, width: slideRect.width, height: slideRect.height,
+      } });
+    }
     const isVisible = (el) => {
       const style = getComputedStyle(el);
       const rect = el.getBoundingClientRect();
@@ -842,6 +849,10 @@ function buildMarkdown(report) {
   lines.push(`- viewport: ${report.viewport.width}x${report.viewport.height}`);
   lines.push(`- 最小余白: ${report.minMargin}px`);
   lines.push(`- ブランド最小余白: ${report.brandMinMargin}px`);
+  if (report.speakingReview) {
+    lines.push(`- 発話の確認候補: ${report.speakingReview.findings.length}件（speaking-review.json）`);
+    lines.push("- 発話の意味レビュー: 未実施／本人の通し練習: 未実施（自動実行では判定しない）");
+  }
   lines.push("");
   lines.push("## 契約検証");
   lines.push("");
@@ -905,6 +916,13 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
   ensureDir(args.out);
   const contract = validateContracts(args);
+  let speakingReview = null;
+  if (contract.paths.story && fs.existsSync(contract.paths.story)) {
+    const speakingPath = path.join(args.out, "speaking-review.json");
+    const check = runPythonCheck(args.python || "python", path.join(__dirname, "review_speaking.py"), ["--story", contract.paths.story, "--out", speakingPath]);
+    if (check.exitCode === 0) speakingReview = JSON.parse(fs.readFileSync(speakingPath, "utf8"));
+    else contract.failures.push({ type: "speaking-review-generation-failed", message: check.output });
+  }
   const playwright = loadPlaywright();
   const browser = await launchBrowser(playwright);
   const audiencePage = await browser.newPage({ viewport: { width: args.width, height: args.height }, deviceScaleFactor: 1 });
@@ -933,6 +951,7 @@ async function main() {
       checks: contract.checks,
       findings: contract.failures,
     },
+    speakingReview,
   };
 
   if (!args.presenterOnly) {
@@ -992,7 +1011,8 @@ async function main() {
   if (report.findingCount > 0 && !args.noFail) process.exit(1);
 }
 
-main().catch((error) => {
+module.exports = { prepareSlideViewport, inspectSlide };
+if (require.main === module) main().catch((error) => {
   console.error(error.stack || error.message);
   process.exit(2);
 });

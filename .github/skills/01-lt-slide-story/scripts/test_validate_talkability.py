@@ -154,6 +154,31 @@ class TalkabilityTests(unittest.TestCase):
         errors = validate_story(self.path, story)
         self.assertTrue(any("tomorrow_action.artifact" in error for error in errors))
 
+    def test_summary_takeaway_does_not_require_a_new_action(self) -> None:
+        story = good_story()
+        story.pop("tomorrow_action")
+        ending = story["narrative"]["question_spine"][-1]
+        ending["audience_question"] = "電力ログの比較から何が分かったのか？"
+        ending["answer"] = "同時刻の値と行動を結ぶことで増加の原因候補を絞れる"
+        self.assertEqual([], validate_story(self.path, story))
+
+    def test_explicit_empty_action_still_fails(self) -> None:
+        story = good_story()
+        for action in (None, {}, ""):
+            with self.subTest(action=action):
+                story["tomorrow_action"] = action
+                errors = validate_story(self.path, story)
+                self.assertTrue(any("tomorrow_action" in error for error in errors))
+
+    def test_action_is_checked_independently_of_phase_name(self) -> None:
+        story = good_story()
+        story["narrative"]["phase_order"] = ["why", "what", "how", "demo", "summary"]
+        story["narrative"]["question_spine"][-1]["phase"] = "summary"
+        story["slides"][-2]["flow_phase"] = "summary"
+        story["tomorrow_action"]["artifact"] = ""
+        errors = validate_story(self.path, story)
+        self.assertTrue(any("tomorrow_action.artifact" in error for error in errors))
+
     def test_uniform_pacing_fails(self) -> None:
         story = good_story()
         counts = {"why": 0, "what": 0, "how": 0, "demo": 0, "takeaway": 0}

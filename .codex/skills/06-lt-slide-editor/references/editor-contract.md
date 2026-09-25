@@ -23,7 +23,7 @@ The editor augments a finished HTML deck. It is not a replacement for the story,
 - Move selected elements by dragging.
 - Edit text in place.
 - Edit the active slide's `data-spoken-note`.
-- Show whether the note contains non-empty `橋渡し`, `話す内容`, `指差し`, and `次の一言` sections while editing.
+- Validate the selected note format: v3 cue/script/hybrid or legacy v2 four sections. A format hint is not a semantic review. Preserve the first pre-edit note in `data-original-spoken-note` and mark changed notes `data-note-review="pending"`. Export conflict-checked Story/Blueprint candidates with `export_note_revisions.py`; adopt both only after applicable validation and rebuild HTML to clear the edit baseline.
 - Add text zones.
 - Add image zones from a local file or pasted asset.
 - Add speech-bubble zones with a two-layer CSS pseudo-element tail that protrudes about 30px beyond the bubble body, editable text, movable geometry, and an animation step after the current maximum step. When a bubble is selected, show a draggable tail-tip handle; moving it must recompute the two triangle layers and automatically attach the base to the nearest bubble edge.
@@ -38,6 +38,7 @@ The editor augments a finished HTML deck. It is not a replacement for the story,
 - Move the editor panel without moving selected slide elements.
 - Keep editor labels readable against the dark dock background and keep all controls in the active tab within the dock width.
 - Keep the editable `.deck` inside the upper-left stage bounds at both 1280x720 and a large desktop viewport; do not edit a presenter-preview clone.
+- In normal and editor view modes, center the scaled deck by its rendered bounds. At laptop viewports, opposite margins must remain equal and the deck must not drift toward the bottom-right when the unscaled 1280x720 box is larger than the available area.
 - Toggle normal/editor URLs with `E` when focus is not inside editable text or a form control.
 - Toggle editor/view mode with `V` when focus is not inside editable text or a form control.
 - Open the page overview with `P`, move to a selected thumbnail, and restore editor mode without treating `P` as a shortcut while text, notes, or form fields have focus.
@@ -83,6 +84,7 @@ Before delivery, verify:
 - The Spoken Note field warns when any talkability v2 section is missing and reports ready only when all four sections are non-empty.
 - Edited spoken notes remain after saving and reopening the saved HTML.
 - `Save HTML` overwrites the original target file when opened from `serve_editor.js`.
+- Saving after opening the page overview leaves `#pagerGrid` empty in the persisted HTML; thumbnail `.slide` clones must never become additional deck pages after reload.
 - `Save HTML` reports the saved path or a concrete failure reason in the editor status.
 - `Export PDF` switches the active editor UI to view mode before exporting or opening print.
 - `Export PDF` overwrites the target HTML first, then writes a same-basename PDF such as `output/index.pdf`.

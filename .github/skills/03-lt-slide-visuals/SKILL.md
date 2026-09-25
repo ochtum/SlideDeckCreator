@@ -7,6 +7,10 @@ description: .lt-slide-work/02-blueprint.yaml から画像アセットを生成�
 
 `.lt-slide-work/02-blueprint.yaml` が要求した画像だけを生成または整形する。シリーズでは各パートの設計図を個別に処理する。スライドHTMLは作らない。
 
+## 発表者の言葉
+
+制作対象の `config/presentation-language.md` があれば最初に読み、過去の観測傾向より現在の希望を優先する。新しく書く見出し・説明・ノートには「正本」「地図」「道具」のような抽象的な比喩を足さず、指すファイル・機能・操作を具体的に書く。引用・正式名称・コードの意味は変えない。
+
 ## Workspace Contract
 
 すべての画像中間成果物をプロジェクトルート直下の `.lt-slide-work/` に置く。
@@ -125,3 +129,7 @@ assets:
 - 20分以上では、生成画像が `delivery.visible_anchors` や具体的な `content_model` の代替になっていない。
 - talkability v2では、すべての `speaker_cue.point_at` が画像外のHTML/SVGアンカーとして解決されている。
 - design-system選択時はmanifestのID/versionがBlueprintと一致し、生成画像のpalette・明暗・形がspec tokenと矛盾しない。
+
+## 発話との対応
+
+`speaker_cue.point_at` が示すラベル・行・差分が、投影時に読めることを確認する。話さず表示だけで伝える要素を、文字のない装飾へ置き換えない。画像に合わせて説明が変わる場合は02と01へ戻して更新する。

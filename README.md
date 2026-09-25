@@ -9,14 +9,14 @@
 
 ## 特徴
 
-- 完成記事では、原稿の見出し順を保つ `section-faithful` モードを使用
-- 原則として **1セクション＝1スライド** で対応関係を維持
-- セクション本文からページ固有の `Spoken Note` を先に作ることで、説明内容とスライド内容が一致する設計
+- 記事入力でも、発表で伝える目的から説明順を組み立てる。記事順の保持指定がある場合は `section-faithful` を使用
+- 内容を「話す」「画面で伝える」「補足に残す」に分け、原文との対応を維持
+- 短い要点メモを基本にし、必要なページだけ発話例を併記。配置後に画面とノートを一緒に確認して調整
 - 1280×720のHTMLスライド、発表者ビュー、PDF、配布ZIPを生成
 - 生成後のHTMLをブラウザ上で編集し、HTML/PDFへ再保存できる
 - 単発LTと複数回シリーズの両方に対応できる
 
-30分登壇資料もAIへの指示は一瞬で、AIの作業時間30分で作成できます。
+作成後は発表者自身の言葉で通し練習を行い、説明が重なる箇所や口に出しづらい表現を調整します。
 
 ![alt text](/img/00005.png)
 
@@ -322,3 +322,27 @@ node .codex/skills/05-lt-slide-review/scripts/review_deck.js output/index.html -
 ## License
 
 ISC
+
+## 話すためのノートと確認
+
+新規作成は `talkability_version: 3` を使います。`cue` は要点メモ、`script` は台詞、`hybrid` は要点メモと開閉できる発話例です。詳しくは [.codex/skills/01-lt-slide-story/references/talkability.md](.codex/skills/01-lt-slide-story/references/talkability.md) を参照してください。旧v1/v2資料は明示的に移行するまで従来形式で検証できます。
+
+発表者が避けたい言葉や説明の希望は [config/presentation-language.md](config/presentation-language.md) に置きます。全スキルが参照し、過去資料で頻出していた表現より現在の希望を優先します。
+
+エディタのノート修正はHTML保存だけではStory/Blueprintへ戻りません。保存したHTMLから `export_note_revisions.py` で候補を出力し、対応する説明データの修正・検証後に両方へ採用します。詳細は [06の手順](.codex/skills/06-lt-slide-editor/SKILL.md) を参照してください。編集中に元データが変わった場合は競合として検出します。
+
+```powershell
+python -X utf8 .codex/skills/05-lt-slide-review/scripts/review_speaking.py --story .lt-slide-work/01-story.yaml --out .lt-slide-work/review/speaking-review.json
+```
+
+この結果は語彙・反復・長い発話の確認候補です。AIのチェックだけで「本人が話しやすい」とは判定しません。
+
+## スキル変更時の検証
+
+`.codex/skills` を編集し、`python -X utf8 scripts/sync_skills.py --write` で `.github/skills` へ反映します。スキル参照パスのみを環境に合わせて変換し、Codex専用の `agents` 設定はコピーしません。既存のCopilot側の独立変更がある場合は、先に差分を確認してCodex側へ取り込みます。
+
+- `npm test`: Pythonテストと両環境のスキル差分検査
+- `npm run test:browser`: Chrome/Playwrightでノート表示・編集・撮影位置・reduced motion・印刷を確認
+- `npm run skills:check`: スキルの同期漏れだけを確認
+
+ブラウザテストにはPlaywrightとChromeが必要です。同梱Nodeを使う場合は `NODE_PATH` に同梱のnode_modulesを指定してください。

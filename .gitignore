@@ -3,8 +3,15 @@ output
 assets
 !.codex/skills/*/assets/
 !.codex/skills/*/assets/**
+!.github/skills/*/assets/
+!.github/skills/*/assets/**
 config
+!/config/
+/config/*
+!/config/presentation-language.md
 .lt-slide-work/
 .DS_Store
 .venv
 .venv_pptx
+__pycache__/
+*.pyc
